@@ -1,0 +1,113 @@
+import { Link } from 'react-router'
+import Logo from '../assets/pcred_logo.webp'
+import { suits } from '../lib/suits'
+import { WHATSAPP_NUMBER, generalEnquireHref } from '../lib/whatsapp'
+
+const explore = [
+  { to: '/', label: 'Home' },
+  { href: '/#categories', label: 'Categories' },
+  { to: '/contact', label: 'Talk to us' },
+]
+
+// 912235120060 -> +91 22 3512 0060
+const displayNumber = `+${WHATSAPP_NUMBER.slice(0, 2)} ${WHATSAPP_NUMBER.slice(2, 4)} ${WHATSAPP_NUMBER.slice(4, 8)} ${WHATSAPP_NUMBER.slice(8)}`
+
+function Footer() {
+  return (
+    <footer className="relative isolate overflow-hidden bg-[#00245A] text-white">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00B2FC]/60 to-transparent" />
+        <div className="absolute -top-40 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-[#00B2FC]/20 blur-[120px]" />
+        <div className="absolute bottom-[-30%] left-[-10%] h-[26rem] w-[26rem] rounded-full bg-[#003BD9]/60 blur-[120px]" />
+      </div>
+
+      <div className="mx-auto w-full max-w-screen-xl px-6 pt-16 sm:pt-20">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] md:gap-12">
+          <div className="col-span-2 max-w-xs md:col-span-1">
+            <Link to="/" className="inline-flex rounded-2xl bg-white px-3 py-2">
+              <img src={Logo} alt="PCRED" className="h-8" />
+            </Link>
+            <p className="mt-5 text-sm leading-relaxed text-white/60">
+              Credit reports, scheme discovery, and advisory suits for businesses.
+            </p>
+            
+          </div>
+
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Explore</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {explore.map((item) => (
+                <li key={item.label}>
+                  {item.to ? (
+                    <Link to={item.to} onClick={() => window.scrollTo(0, 0)} className="text-white/70 transition hover:text-white">
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a href={item.href} className="text-white/70 transition hover:text-white">
+                      {item.label}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Suits</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {suits.map((suit) => (
+                <li key={suit.slug}>
+                  <Link to={`/suits/${suit.slug}`} className="text-white/70 transition hover:text-white">
+                    {suit.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Contact</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              <li>
+                <a
+                  href={generalEnquireHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 transition hover:text-white"
+                >
+                  {displayNumber}
+                </a>
+              </li>
+              <li className="text-white/50">WhatsApp enquiries</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 py-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} PCRED. All rights reserved.</p>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="group inline-flex cursor-pointer items-center gap-2 transition hover:text-white"
+          >
+            Back to top
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 transition group-hover:border-[#00B2FC] group-hover:bg-[#00B2FC] group-hover:text-[#00245A]">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <p
+        aria-hidden="true"
+        className="pointer-events-none -mb-[0.22em] bg-gradient-to-b from-white/[0.12] to-transparent bg-clip-text text-center text-[26vw] leading-none font-semibold tracking-[-0.06em] text-transparent select-none"
+      >
+        PCRED
+      </p>
+    </footer>
+  )
+}
+
+export default Footer

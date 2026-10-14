@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-navy: #00245a;
+  --color-brand: #004fdf;
+  --color-brand-bright: #0072e8;
+  --color-brand-soft: #e7f1ff;
+  --color-brand-wash: #f4f8ff;
+  --color-brand-ring: #c5dbfa;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: #fff;
+  color: #0b1f40;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+}
+
+::selection {
+  background: #c5dbfa;
+  color: #00245a;
+}
+
+@keyframes banner-mesh {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(8%, -6%, 0) scale(1.14); }
+}
+
+@keyframes banner-mesh-alt {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.08); }
+  50% { transform: translate3d(-10%, 7%, 0) scale(1); }
+}
+
+@keyframes banner-grid {
+  to { background-position: 26px 26px; }
+}
+
+.banner-mesh {
+  animation: banner-mesh 18s ease-in-out infinite;
+}
+
+.banner-mesh-alt {
+  animation: banner-mesh-alt 22s ease-in-out infinite;
+}
+
+.banner-grid {
+  animation: banner-grid 28s linear infinite;
+}
+
+@keyframes banner-aurora {
+  0%, 100% {
+    background-position: 0% 18%, 100% 8%, 48% 78%;
+  }
+  50% {
+    background-position: 22% 42%, 76% 32%, 38% 58%;
+  }
+}
+
+.banner-aurora {
+  background-image:
+    radial-gradient(ellipse 48% 42%, rgba(0, 114, 232, 0.2), transparent 70%),
+    radial-gradient(ellipse 44% 48%, rgba(0, 79, 223, 0.16), transparent 70%),
+    radial-gradient(ellipse 40% 36%, rgba(255, 255, 255, 0.9), transparent 70%);
+  background-size: 86% 78%, 82% 80%, 70% 62%;
+  background-repeat: no-repeat;
+  animation: banner-aurora 16s ease-in-out infinite;
+}
+
+@keyframes banner-shine {
+  0%, 100% { transform: translate3d(-8%, 4%, 0); opacity: 0.45; }
+  50% { transform: translate3d(10%, -6%, 0); opacity: 0.8; }
+}
+
+.banner-shine {
+  animation: banner-shine 14s ease-in-out infinite;
+}
+
+@keyframes banner-trace {
+  0% { transform: translateX(-40%); opacity: 0; }
+  15% { opacity: 0.9; }
+  100% { transform: translateX(140%); opacity: 0; }
+}
+
+.banner-trace {
+  animation: banner-trace 6.5s ease-in-out infinite;
+}
+
+.banner-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #003bd9;
+}
+
+@keyframes banner-orbit {
+  to { transform: rotate(1turn); }
+}
+
+.banner-ring {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 62%,
+    rgba(0, 114, 232, 0.15) 74%,
+    rgba(0, 79, 223, 0.85) 84%,
+    rgba(255, 255, 255, 0.9) 90%,
+    transparent 96%
+  );
+  animation: banner-orbit 16s linear infinite;
+}
+
+@keyframes banner-sheet {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(8px, -6px, 0); }
+}
+
+@keyframes banner-sheet-alt {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-6px, 5px, 0); }
+}
+
+.banner-sheet {
+  animation: banner-sheet 14s ease-in-out infinite;
+}
+
+.banner-sheet-alt {
+  animation: banner-sheet-alt 16s ease-in-out infinite;
+}
+
+@keyframes hero-gradient-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.hero-gradient-text {
+  animation: hero-gradient-text 8s ease-in-out infinite;
+}
+
+.hero-aurora {
+  background: conic-gradient(from 0deg, #00b2fc, #9be3ff, #003bd9, #5cd0ff, #00b2fc);
+  animation: banner-orbit 24s linear infinite;
+}
+
+@keyframes hero-word {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hero-word {
+  animation: hero-word 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.form-ring {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 55%,
+    rgba(0, 178, 252, 0.4) 70%,
+    #00b2fc 82%,
+    #ffffff 88%,
+    transparent 94%
+  );
+  animation: banner-orbit 4s linear infinite;
+}
+
+@keyframes form-glow {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.form-glow {
+  animation: form-glow 3s ease-in-out infinite;
+}
+
+@keyframes btn-shine {
+  0%, 55% { transform: translateX(-150%) skewX(-12deg); }
+  100% { transform: translateX(400%) skewX(-12deg); }
+}
+
+.btn-shine {
+  animation: btn-shine 3.2s ease-in-out infinite;
+}
+
+@keyframes cart-bump {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.cart-bump {
+  animation: cart-bump 0.35s ease-out;
+}
+
+@keyframes cta-shine {
+  0% { left: -30%; transform: rotate(18deg); }
+  100% { left: 120%; transform: rotate(18deg); }
+}
+
+.cta-shine {
+  animation: cta-shine 7s ease-in-out infinite;
+}
+
+@keyframes cta-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.cta-pulse {
+  animation: cta-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes client-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.client-marquee {
+  animation: client-marquee 42s linear infinite;
+}
+
+@keyframes client-marquee-reverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.client-marquee-reverse {
+  animation: client-marquee-reverse 48s linear infinite;
+}
+
+section[aria-label="Clients"]:hover .client-marquee,
+section[aria-label="Clients"]:hover .client-marquee-reverse {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-mesh,
+  .banner-mesh-alt,
+  .banner-grid,
+  .banner-aurora,
+  .banner-shine,
+  .banner-trace,
+  .banner-ring,
+  .banner-sheet,
+  .banner-sheet-alt,
+  .hero-gradient-text,
+  .hero-aurora,
+  .hero-word,
+  .cart-bump,
+  .form-ring,
+  .form-glow,
+  .btn-shine,
+  .cta-shine,
+  .cta-pulse,
+  .client-marquee,
+  .client-marquee-reverse {
+    animation: none;
+  }
+
+  .btn-shine {
+    display: none;
+  }
+}
+
+/* Chrome, Safari, Edge, Opera */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
