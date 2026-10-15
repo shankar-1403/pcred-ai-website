@@ -1,8 +1,12 @@
 // Product prices are in rupees. Lines marked placeholder still need real prices.
 
-export const suits = [
+// Starter data: shown while Firebase is not configured, and used by the CMS
+// "Import starter data" button to fill an empty database.
+export const starterSuits = [
   {
     slug: 'msme-advisory-suit',
+    icon: 'building',
+    order: 1,
     name: 'MSME Advisory Suit',
     summary: 'Scheme, credit, and compliance products for an existing small business.',
     products: [
@@ -34,6 +38,8 @@ export const suits = [
   },
   {
     slug: 'startup-suit',
+    icon: 'rocket',
+    order: 2,
     name: 'Startup Suit',
     summary: 'Scheme, guarantee, and structuring products for a new company.',
     products: [
@@ -64,7 +70,3 @@ export const suits = [
     ],
   },
 ]
-
-export function findSuit(slug) {
-  return suits.find((suit) => suit.slug === slug)
-}

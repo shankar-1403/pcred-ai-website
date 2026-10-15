@@ -19,9 +19,15 @@ export function cartItemId(suitSlug, productName) {
   return `${suitSlug}/${productName}`
 }
 
-export function checkoutHref(items, total) {
+// `discount` is { percent, amount } when a discount tier applies
+export function checkoutHref(items, subtotal, discount) {
   const lines = items.map((item, index) => `${index + 1}. ${item.name} (${item.suitName}) - ${formatPrice(item.price)}`)
-  return whatsappHref(
-    ['Hello, I would like to order these products:', ...lines, `Total: ${formatPrice(total)}`, 'Please share the next steps.'].join('\n'),
-  )
+  const totals = discount
+    ? [
+        `Subtotal: ${formatPrice(subtotal)}`,
+        `Discount (${discount.percent}%): -${formatPrice(discount.amount)}`,
+        `Total: ${formatPrice(subtotal - discount.amount)}`,
+      ]
+    : [`Total: ${formatPrice(subtotal)}`]
+  return whatsappHref(['Hello, I would like to order these products:', ...lines, ...totals, 'Please share the next steps.'].join('\n'))
 }

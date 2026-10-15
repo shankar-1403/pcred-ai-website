@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import favicon from '../assets/favicon.svg'
 
 const NUMBER_PRICE = '₹699'
@@ -6,7 +7,8 @@ const UPLOAD_PRICE = '₹499'
 const YOUTUBE_VIDEO_ID = '-XZBgqNUNxU'
 const UDYAM_PATTERN = /^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/
 const MAX_CERTIFICATE_BYTES = 8 * 1024 * 1024
-const ACCEPTED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
+// The report reads the certificate PDF on the device (src/udyam/lib/read-certificate.js)
+const ACCEPTED_TYPES = ['application/pdf']
 
 const MODES = [
   { id: 'number', label: 'Udyam number', price: NUMBER_PRICE },
@@ -47,6 +49,7 @@ function formatUdyam(value) {
 }
 
 function Banner() {
+  const navigate = useNavigate()
   const [mode, setMode] = useState('number')
   const [udyam, setUdyam] = useState('')
   const [udyamError, setUdyamError] = useState('')
@@ -76,7 +79,8 @@ function Banner() {
       return
     }
     setUdyamError('')
-    setNotice('Udyam number format checks out.')
+    // The report page continues from here: saved report check, mobile OTP, then payment
+    navigate('/report', { state: { udyam } })
   }
 
   const onFileChange = (event) => {
@@ -87,11 +91,11 @@ function Banner() {
       return
     }
 
-    const allowed = ACCEPTED_TYPES.includes(next.type) || /\.(pdf|png|jpe?g|webp)$/i.test(next.name)
+    const allowed = ACCEPTED_TYPES.includes(next.type) || /\.pdf$/i.test(next.name)
     if (!allowed) {
       event.target.value = ''
       setCertificate(null)
-      setFileError('Upload a PDF, PNG, JPG, or WEBP certificate.')
+      setFileError('Upload the Udyam certificate as a PDF.')
       setNotice('')
       return
     }
@@ -114,7 +118,7 @@ function Banner() {
       return
     }
     setFileError('')
-    setNotice(`${certificate.name} is ready to upload.`)
+    navigate('/report', { state: { certificate } })
   }
 
   const onSubmit = (event) => {
@@ -144,7 +148,7 @@ function Banner() {
         />
       </div>
 
-      <div className="mx-auto grid w-full grid-cols-1 max-w-screen-xl items-center gap-12 px-6 pt-32 pb-24 sm:pt-36 lg:min-h-[100svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14 lg:pt-28 lg:pb-16">
+      <div className="mx-auto grid w-full grid-cols-1 max-w-screen-xl items-center gap-8 px-6 pt-24 pb-8 sm:pt-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-12 lg:pt-22 lg:pb-4">
         {/* Copy + form */}
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
           <p className="inline-flex items-center gap-2 rounded-full border border-[#00245A]/10 bg-white/80 py-1 pr-3.5 pl-1 shadow-[0_8px_24px_-16px_rgba(0,36,90,0.5)] backdrop-blur">
@@ -154,7 +158,7 @@ function Banner() {
             <span className="text-xs font-medium text-[#00245A]/80">Scheme discovery for Udyam businesses</span>
           </p>
 
-          <h1 className="mt-6 text-[2.9rem] leading-[0.95] font-semibold tracking-[-0.06em] sm:text-7xl lg:text-[4.5rem] xl:text-[5rem]">
+          <h1 className="mt-4 text-[2.9rem] leading-[0.95] font-semibold tracking-[-0.06em] sm:text-7xl lg:text-[3.5rem] xl:text-[3.75rem]">
             Scheme
             <span className="block">
               <span className="hero-gradient-text bg-[linear-gradient(100deg,#00B2FC,#003BD9_35%,#00B2FC_60%,#003BD9)] bg-[length:220%_100%] bg-clip-text text-transparent">
@@ -174,34 +178,24 @@ function Banner() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-md text-base leading-relaxed text-[#00245A]/70 sm:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-[#00245A]/70 sm:text-lg lg:text-base">
             {/* Phones get one line per part so the longest scheme type never runs off-screen */}
-            <span className="block sm:inline">Match a business to</span>{' '}
-            <span className="relative mt-1 inline-flex h-[1.6em] overflow-hidden align-bottom sm:mt-0">
-              <span
-                key={schemeIndex}
-                className="hero-word inline-flex items-center rounded-lg bg-[#00B2FC]/15 px-2 font-semibold whitespace-nowrap text-[#003BD9]"
-              >
-                {SCHEME_TYPES[schemeIndex]}
-              </span>
-            </span>
-            .{' '}
-            <span className="mt-1 block sm:mt-0 sm:inline">Add a Udyam number or the certificate.</span>
+            <span className="block sm:inline">Share your Udyam number or certificate. We read your registration details and prepare a report of the guarantees, subsidies and credit schemes that fit your enterprise.</span>
           </p>
 
-          <form onSubmit={onSubmit} noValidate className="mt-8 w-full max-w-xl text-left">
+          <form onSubmit={onSubmit} noValidate className="mt-5 w-full max-w-xl text-left">
             <div className="relative">
               <div
                 aria-hidden="true"
-                className="form-glow pointer-events-none absolute -inset-3 rounded-[2.25rem] bg-gradient-to-r from-[#00B2FC]/45 via-[#3D7BFF]/30 to-[#00B2FC]/45 blur-2xl"
+                className="form-glow pointer-events-none absolute -inset-3 rounded-[2.25rem] bg-gradient-to-r from-[#00B2FC]/60 via-[#3D7BFF]/40 to-[#00B2FC]/60 blur-2xl"
               />
               <span className="absolute -top-3 left-6 z-20 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] px-3 py-1 text-[11px] font-semibold tracking-wide text-white shadow-[0_8px_20px_-8px_rgba(0,59,217,0.8)]">
                 <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-white" />
                 Start here
               </span>
-              <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-[#00B2FC]/50 to-[#003BD9]/50 p-[2px] shadow-[0_30px_60px_-28px_rgba(0,36,90,0.6)]">
+              <div className="relative overflow-clip rounded-[1.75rem] bg-gradient-to-r from-[#00B2FC]/70 to-[#003BD9]/60 p-[3px] shadow-[0_30px_60px_-28px_rgba(0,36,90,0.6)]">
                 <div aria-hidden="true" className="form-ring absolute top-1/2 left-1/2 -mt-[75%] -ml-[75%] aspect-square w-[150%]" />
-                <div className="relative rounded-[calc(1.75rem-2px)] bg-white p-2 pt-4">
+                <div className="relative rounded-[calc(1.75rem-3px)] bg-white p-2.5 pt-4">
                   <div className="flex gap-1 rounded-2xl bg-[#EAF6FF] p-1" role="group" aria-label="Start the report with">
                     {MODES.map((item) => (
                       <button
@@ -217,7 +211,7 @@ function Banner() {
                       >
                         {item.label}
                         <span
-                          className={`hidden rounded-full px-1.5 py-0.5 font-mono text-[10px] sm:inline ${
+                          className={`hidden rounded-full px-2 py-0.5 font-mono text-xs font-bold sm:inline ${
                             mode === item.id ? 'bg-[#00B2FC]/15 text-[#003BD9]' : 'bg-white/70 text-[#00245A]/50'
                           }`}
                         >
@@ -229,52 +223,65 @@ function Banner() {
 
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                     {mode === 'number' ? (
-                      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-3">
-                        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-[#00B2FC]">
-                          <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                          <path d="m13.2 13.2 3.3 3.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        </svg>
-                        <label htmlFor="udyam_no" className="sr-only">Udyam number</label>
-                        <input
-                          id="udyam_no"
-                          name="udyam_no"
-                          value={udyam}
-                          onChange={(event) => {
-                            setUdyam(formatUdyam(event.target.value))
-                            if (udyamError) setUdyamError('')
-                          }}
-                          inputMode="text"
-                          autoCapitalize="characters"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          autoComplete="off"
-                          placeholder="UDYAM-MH-26-0048217"
-                          aria-invalid={udyamError ? 'true' : 'false'}
-                          className="min-w-0 flex-1 bg-transparent py-3.5 font-mono text-[15px] tracking-wide text-[#00245A] uppercase outline-none placeholder:text-sm placeholder:tracking-normal placeholder:text-[#00245A]/40 placeholder:normal-case"
-                        />
-                      </div>
+                      <label
+                        htmlFor="udyam_no"
+                        className={`flex min-w-0 flex-1 cursor-text items-center gap-3 rounded-2xl border-2 bg-[#F4F9FF] px-3 py-2 transition focus-within:border-[#00B2FC] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#00B2FC]/20 ${
+                          udyamError ? 'border-[#C2261C]/60' : 'border-[#00B2FC]/40 hover:border-[#00B2FC]/80'
+                        }`}
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#003BD9] shadow-[0_4px_12px_-6px_rgba(0,59,217,0.5)]">
+                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5">
+                            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                            <path d="m13.2 13.2 3.3 3.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[10px] font-semibold tracking-[0.14em] text-[#003BD9] uppercase">
+                            Udyam registration number
+                          </span>
+                          <input
+                            id="udyam_no"
+                            name="udyam_no"
+                            value={udyam}
+                            onChange={(event) => {
+                              setUdyam(formatUdyam(event.target.value))
+                              if (udyamError) setUdyamError('')
+                            }}
+                            inputMode="text"
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            autoComplete="off"
+                            placeholder="UDYAM-MH-26-0048217"
+                            aria-invalid={udyamError ? 'true' : 'false'}
+                            className="w-full bg-transparent pt-0.5 font-mono text-base font-semibold tracking-wide text-[#00245A] uppercase outline-none placeholder:font-medium placeholder:text-[#00245A]/45"
+                          />
+                        </span>
+                      </label>
                     ) : (
                       <label
                         htmlFor="udyam_certificate"
-                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-[#00B2FC]/70 px-3 py-2.5 transition hover:bg-[#F4F9FF] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#00B2FC]"
+                        className={`flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed bg-[#F4F9FF] px-3 py-2 transition hover:border-[#00B2FC] hover:bg-white has-[:focus-visible]:border-[#00B2FC] has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#00B2FC]/20 ${
+                          fileError ? 'border-[#C2261C]/60' : 'border-[#00B2FC]/50'
+                        }`}
                       >
                         <span className="sr-only">Udyam certificate</span>
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF6FF] text-[#003BD9]">
-                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#003BD9] shadow-[0_4px_12px_-6px_rgba(0,59,217,0.5)]">
+                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5">
                             <path d="M6 2.5h5.5L15 6v11.5H6z M11 2.5V6.5h4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                           </svg>
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className={`block truncate text-sm ${certificate ? 'font-semibold text-[#00245A]' : 'font-medium text-[#00245A]/70'}`}>
+                          <span className={`block truncate text-sm font-semibold ${certificate ? 'text-[#00245A]' : 'text-[#00245A]/80'}`}>
                             {certificate ? certificate.name : 'Choose the Udyam certificate'}
                           </span>
-                          <span className="block text-xs text-[#00245A]/45">PDF, PNG, JPG, or WEBP up to 8 MB</span>
+                          <span className="block text-xs text-[#00245A]/55">PDF up to 8 MB, read on your device</span>
                         </span>
                         <input
                           id="udyam_certificate"
                           name="udyam_certificate"
                           type="file"
-                          accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                          accept=".pdf,application/pdf"
                           onChange={onFileChange}
                           className="sr-only"
                         />
@@ -287,7 +294,7 @@ function Banner() {
                     >
                       <span aria-hidden="true" className="btn-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                       {mode === 'number' ? 'Verify' : 'Upload'}
-                      <span className="font-mono text-xs text-[#00B2FC]">
+                      <span className="font-mono text-base font-bold text-[#00B2FC]">
                         <span className="sr-only">for </span>
                         {active.price}
                       </span>
@@ -311,7 +318,7 @@ function Banner() {
         </div>
 
         {/* Video + steps */}
-        <div className="flex w-full max-w-2xl flex-col gap-3 justify-self-center lg:max-w-none">
+        <div className="flex w-full max-w-xl flex-col gap-2 justify-self-center lg:justify-self-end">
           <figure className="relative overflow-hidden rounded-[2rem] border border-white bg-white/70 p-2 shadow-[0_40px_80px_-40px_rgba(0,36,90,0.55)] backdrop-blur">
             <div className="flex items-center gap-3 px-3 pt-1 pb-2.5">
               <span aria-hidden="true" className="flex gap-1.5">
@@ -342,7 +349,7 @@ function Banner() {
             {STEPS.map((step, index) => (
               <li
                 key={step}
-                className="flex flex-col items-center gap-1.5 rounded-2xl border border-[#00245A]/6 bg-white/60 px-2 py-3 text-center backdrop-blur sm:items-start sm:px-4 sm:text-left"
+                className="flex flex-col items-center gap-1 rounded-2xl border border-[#00245A]/6 bg-white/60 px-2 py-2 text-center backdrop-blur sm:items-start sm:px-4 sm:text-left"
               >
                 <span className="font-mono text-[10px] font-semibold text-[#00B2FC]">{String(index + 1).padStart(2, '0')}</span>
                 <span className="text-xs leading-tight font-semibold text-[#00245A]/80">{step}</span>

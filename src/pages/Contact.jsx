@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import Logo from '../assets/favicon.svg'
-import { suits } from '../lib/suits'
+import { useSuits } from '../lib/suitsStore'
 import { suitIcon } from '../lib/suitIcons'
 import { WHATSAPP_NUMBER, generalEnquireHref, whatsappHref } from '../lib/whatsapp'
 import WhatsAppIcon from '../components/WhatsAppIcon'
@@ -12,7 +12,7 @@ const GENERAL_TOPIC = 'General enquiry'
 const displayNumber = `+${WHATSAPP_NUMBER.slice(0, 2)} ${WHATSAPP_NUMBER.slice(2, 4)} ${WHATSAPP_NUMBER.slice(4, 8)} ${WHATSAPP_NUMBER.slice(8)}`
 
 const CHECKLIST = [
-  'The product or suit you are interested in',
+  'The bundle or category you are interested in',
   'Your Udyam number, if you have one',
   'A good time for us to reply',
 ]
@@ -29,6 +29,7 @@ function buildMessage({ name, business, topic, message }) {
 }
 
 function Contact() {
+  const { suits } = useSuits()
   const [form, setForm] = useState({ name: '', business: '', topic: GENERAL_TOPIC, message: '' })
   const [error, setError] = useState('')
 
@@ -70,7 +71,7 @@ function Contact() {
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-[#00245A]/65 sm:text-lg">
-            Pick a product or suit, add a note, and the message opens in WhatsApp ready to send.
+            Pick a bundle or category, add a note, and the message opens in WhatsApp ready to send.
           </p>
         </div>
 
@@ -125,7 +126,7 @@ function Contact() {
               <p className="font-mono text-[10px] tracking-[0.22em] text-[#003BD9] uppercase">Browse first</p>
               <ul className="mt-4 space-y-2">
                 {suits.map((suit) => {
-                  const icon = suitIcon(suit.slug)
+                  const icon = suitIcon(suit.icon)
                   return (
                     <li key={suit.slug}>
                       <Link
@@ -213,7 +214,7 @@ function Contact() {
                     <option>{GENERAL_TOPIC}</option>
                     {suits.map((suit) => (
                       <optgroup key={suit.slug} label={suit.name}>
-                        <option value={suit.name}>{suit.name} (whole suit)</option>
+                        <option value={suit.name}>{suit.name} (whole category)</option>
                         {suit.products.map((product) => (
                           <option key={product.name}>{product.name}</option>
                         ))}

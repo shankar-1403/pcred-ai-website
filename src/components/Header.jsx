@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import Logo from '../assets/pcred_logo.webp'
-import { suits } from '../lib/suits'
+import { useSuits } from '../lib/suitsStore'
 import { suitIcon } from '../lib/suitIcons'
 import { generalEnquireHref } from '../lib/whatsapp'
 import { CartIcon } from './CartDrawer'
@@ -33,8 +33,8 @@ function Chevron({ open }) {
   )
 }
 
-function SuitIcon({ slug, size = 'h-11 w-11' }) {
-  const icon = suitIcon(slug)
+function SuitIcon({ icon: iconKey, size = 'h-11 w-11' }) {
+  const icon = suitIcon(iconKey)
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-[0_10px_20px_-10px_rgba(0,59,217,0.8)] ${size} ${icon.badge}`}
@@ -49,6 +49,7 @@ function SuitIcon({ slug, size = 'h-11 w-11' }) {
 function Header() {
   const headerRef = useRef(null)
   const { pathname } = useLocation()
+  const { suits } = useSuits()
   const cart = useCart()
   const [open, setOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
@@ -164,7 +165,7 @@ function Header() {
                 }}
                 className="relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/80 text-[#00245A] shadow-sm ring-1 ring-[#00245A]/10 transition hover:bg-[#EAF6FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]"
               >
-                <span className="sr-only">Open cart, {cart.count} {cart.count === 1 ? 'product' : 'products'}</span>
+                <span className="sr-only">Open cart, {cart.count} {cart.count === 1 ? 'bundle' : 'bundles'}</span>
                 <CartIcon />
                 {cart.count > 0 ? (
                   <span
@@ -241,10 +242,10 @@ function Header() {
                       onClick={() => goTo(false)}
                       className="flex items-center gap-3 rounded-xl p-2 hover:bg-white"
                     >
-                      <SuitIcon slug={suit.slug} size="h-9 w-9" />
+                      <SuitIcon icon={suit.icon} size="h-9 w-9" />
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-[#00245A]">{suit.name}</span>
-                        <span className="block text-xs text-[#00245A]/55">{suit.products.length} products</span>
+                        <span className="block text-xs text-[#00245A]/55">{suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}</span>
                       </span>
                     </Link>
                   </li>
@@ -287,17 +288,7 @@ function Header() {
                 />
                 <p className="font-mono text-[10px] tracking-[0.24em] text-[#00B2FC] uppercase">Categories</p>
                 <p className="mt-3 text-xl leading-tight font-semibold tracking-tight">Advisory suits for every stage</p>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-white/60">Each suit opens its own product list.</p>
-                <a
-                  href="/#categories"
-                  onClick={closeMenus}
-                  className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white"
-                >
-                  View all categories
-                  <svg className="h-4 w-4 transition group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-white/60">Each category opens its own bundles.</p>
               </div>
 
               <ul className="grid grid-cols-1 content-start gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -308,7 +299,7 @@ function Header() {
                       onClick={() => goTo(false)}
                       className="group flex h-full gap-4 rounded-[1.25rem] border border-transparent p-4 transition hover:border-[#00B2FC]/25 hover:bg-[#F4F9FF] focus-visible:outline-2 focus-visible:outline-[#00B2FC]"
                     >
-                      <SuitIcon slug={suit.slug} />
+                      <SuitIcon icon={suit.icon} />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-[#00245A]">
                           {suit.name}
@@ -323,7 +314,7 @@ function Header() {
                         </span>
                         <span className="mt-1 block text-[13px] leading-snug text-[#00245A]/60">{suit.summary}</span>
                         <span className="mt-3 inline-flex rounded-full bg-[#EAF6FF] px-2 py-0.5 font-mono text-[10px] text-[#003BD9]">
-                          {suit.products.length} products
+                          {suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}
                         </span>
                       </span>
                     </Link>

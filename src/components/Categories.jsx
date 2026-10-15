@@ -1,8 +1,7 @@
 import { Link } from 'react-router'
-import { suits } from '../lib/suits'
+import { useSuits } from '../lib/suitsStore'
 import { suitIcon } from '../lib/suitIcons'
 
-const productCount = suits.reduce((total, suit) => total + suit.products.length, 0)
 
 // Feeds the cursor position to the tile's spotlight layer
 function trackSpotlight(event) {
@@ -20,6 +19,8 @@ function ArrowIcon({ className }) {
 }
 
 function Categories() {
+  const { suits, loading } = useSuits()
+  const productCount = suits.reduce((total, suit) => total + suit.products.length, 0)
   return (
     <section id="categories" className="relative isolate scroll-mt-24 overflow-hidden bg-[#00245A] py-16 text-white sm:py-20">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
@@ -39,10 +40,10 @@ function Categories() {
             </p>
             <h2 className="mt-5 text-3xl leading-[1.05] font-semibold tracking-[-0.04em] sm:text-[2.75rem]">
               Pick a suit, then open{' '}
-              <span className="bg-gradient-to-r from-[#00B2FC] to-[#9BE3FF] bg-clip-text whitespace-nowrap text-transparent">its products</span>
+              <span className="bg-gradient-to-r from-[#00B2FC] to-[#9BE3FF] bg-clip-text whitespace-nowrap text-transparent">its bundles</span>
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-white/60">
-              Advisory suits, separate from the credit reports. Each one opens its own product list.
+              Advisory suits, separate from the credit reports. Each one opens its own bundles.
             </p>
           </div>
 
@@ -52,7 +53,7 @@ function Categories() {
               <dd className="mt-1 text-3xl font-semibold tracking-tight">{String(suits.length).padStart(2, '0')}</dd>
             </div>
             <div className="border-l border-white/10 pl-8">
-              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Products</dt>
+              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Bundles</dt>
               <dd className="mt-1 text-3xl font-semibold tracking-tight">{String(productCount).padStart(2, '0')}</dd>
             </div>
           </dl>
@@ -60,8 +61,13 @@ function Categories() {
 
         {/* Category grid: grows by rows as suits are added */}
         <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {loading
+            ? [0, 1].map((key) => (
+                <li key={`loading-${key}`} aria-hidden="true" className="h-64 animate-pulse rounded-3xl border border-white/10 bg-white/[0.05]" />
+              ))
+            : null}
           {suits.map((suit, index) => {
-            const icon = suitIcon(suit.slug)
+            const icon = suitIcon(suit.icon)
             return (
               <li key={suit.slug}>
                 <Link
@@ -98,9 +104,9 @@ function Categories() {
                   <span className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-white/55">{suit.summary}</span>
 
                   <span className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-                    <span className="font-mono text-[11px] tracking-wide text-white/60">{suit.products.length} products</span>
+                    <span className="font-mono text-[11px] tracking-wide text-white/60">{suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}</span>
                     <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 transition duration-300 group-hover:border-[#00B2FC] group-hover:bg-[#00B2FC] group-hover:text-[#00245A]">
-                      <span className="sr-only">View products</span>
+                      <span className="sr-only">View bundles</span>
                       <ArrowIcon className="h-4 w-4 -rotate-45 transition duration-300 group-hover:rotate-0" />
                     </span>
                   </span>

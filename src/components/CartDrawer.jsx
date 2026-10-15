@@ -1,12 +1,33 @@
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { checkoutHref, formatPrice, useCart } from '../lib/cart'
 import { suitIcon } from '../lib/suitIcons'
+import { cartPricing, useDiscounts } from '../lib/discounts'
+import { isFirebaseConfigured } from '../lib/firebase'
+
+// Loaded on demand so Firebase Auth and reCAPTCHA stay out of the main bundle
+const CheckoutModal = lazy(() => import('./CheckoutModal'))
+
+const checkoutButtonClass =
+  'group mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#00245A] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]'
+
+function CheckoutArrow() {
+  return (
+    <svg className="h-4 w-4 transition group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 function CartDrawer() {
   const { items, total, count, remove, clear, isOpen, close } = useCart()
+  const { tiers } = useDiscounts()
+  const pricing = cartPricing(total, tiers)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return undefined
+    // While checkout is open, Esc belongs to it (it closes the checkout, not the drawer)
+    if (!isOpen || checkoutOpen) return undefined
     const onKey = (event) => {
       if (event.key === 'Escape') close()
     }
@@ -17,7 +38,7 @@ function CartDrawer() {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKey)
     }
-  }, [isOpen, close])
+  }, [isOpen, close, checkoutOpen])
 
   return (
     <div className={`fixed inset-0 z-[60] ${isOpen ? '' : 'pointer-events-none'}`} aria-hidden={!isOpen}>
@@ -39,7 +60,7 @@ function CartDrawer() {
           <div>
             <h2 id="cart-title" className="text-lg font-semibold tracking-tight">Your cart</h2>
             <p className="text-xs text-[#00245A]/55">
-              {count} {count === 1 ? 'product' : 'products'}
+              {count} {count === 1 ? 'bundle' : 'bundles'}
             </p>
           </div>
           <button
@@ -60,20 +81,26 @@ function CartDrawer() {
               <CartIcon className="h-7 w-7" />
             </span>
             <p className="mt-5 text-lg font-semibold tracking-tight">Your cart is empty</p>
-            <p className="mt-1 text-sm text-[#00245A]/55">Add products from any suit to see them here.</p>
-            <a
-              href="/#categories"
+            <p className="mt-1 text-sm text-[#00245A]/55">Add bundles from any category to see them here.</p>
+            {pricing.nextPercent > 0 ? (
+              <p className="mt-5 rounded-xl border border-[#00B2FC]/35 bg-[#EAF6FF] px-4 py-2.5 text-sm text-[#00245A]">
+                Get <strong className="text-[#003BD9]">{pricing.nextPercent}% off</strong> on orders of{' '}
+                <strong>{formatPrice(pricing.nextMinAmount)}</strong> or more
+              </p>
+            ) : null}
+            <Link
+              to="/#categories"
               onClick={close}
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#00245A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003BD9]"
             >
               Browse categories
-            </a>
+            </Link>
           </div>
         ) : (
           <>
             <ul className="flex-1 divide-y divide-[#00245A]/8 overflow-y-auto px-6">
               {items.map((item) => {
-                const icon = suitIcon(item.suitSlug)
+                const icon = suitIcon(item.suitIcon)
                 return (
                   <li key={item.id} className="flex items-center gap-4 py-4">
                     <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${icon.badge}`}>
@@ -102,23 +129,81 @@ function CartDrawer() {
             </ul>
 
             <div className="border-t border-[#00245A]/8 bg-[#F4F9FF] px-6 py-5">
-              <div className="flex items-baseline justify-between">
+              {pricing.nextPercent > 0 ? (
+                <div className="mb-4 rounded-2xl border border-[#00B2FC]/35 bg-white p-3.5 shadow-[0_10px_24px_-18px_rgba(0,59,217,0.6)]">
+                  <p className="flex items-start gap-2.5 text-sm text-[#00245A]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#00B2FC] to-[#003BD9] text-xs font-bold text-white">
+                      %
+                    </span>
+                    <span>
+                      Add bundles worth <strong>{formatPrice(pricing.amountToNext)}</strong> more to get{' '}
+                      <strong className="text-[#003BD9]">{pricing.nextPercent}% off</strong>
+                      <span className="mt-0.5 block text-xs text-[#00245A]/55">
+                        {pricing.nextPercent}% off on orders of {formatPrice(pricing.nextMinAmount)} or more
+                      </span>
+                    </span>
+                  </p>
+                  <div
+                    role="progressbar"
+                    aria-label={`Progress towards ${pricing.nextPercent}% off`}
+                    aria-valuemin={0}
+                    aria-valuemax={pricing.nextMinAmount}
+                    aria-valuenow={pricing.subtotal}
+                    className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EAF6FF]"
+                  >
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] transition-[width] duration-500"
+                      style={{ width: `${Math.min(100, (pricing.subtotal / pricing.nextMinAmount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {pricing.percent > 0 ? (
+                <dl className="mb-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-[#00245A]/60">Subtotal</dt>
+                    <dd>{formatPrice(pricing.subtotal)}</dd>
+                  </div>
+                  <div className="flex justify-between font-semibold text-[#128C4A]">
+                    <dt>Discount ({pricing.percent}%)</dt>
+                    <dd>−{formatPrice(pricing.discount)}</dd>
+                  </div>
+                </dl>
+              ) : null}
+
+              <div className="flex items-baseline justify-between border-t border-[#00245A]/8 pt-3">
                 <span className="text-sm text-[#00245A]/60">Total</span>
-                <span className="text-2xl font-semibold tracking-tight">{formatPrice(total)}</span>
+                <span className="text-right">
+                  {pricing.percent > 0 ? (
+                    <span className="mr-2 text-sm text-[#00245A]/40 line-through">{formatPrice(pricing.subtotal)}</span>
+                  ) : null}
+                  <span className="text-2xl font-semibold tracking-tight">{formatPrice(pricing.total)}</span>
+                </span>
               </div>
-              <a
-                href={checkoutHref(items, total)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#00245A] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]"
-              >
-                Checkout
-                <svg className="h-4 w-4 transition group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
+              {isFirebaseConfigured ? (
+                <button
+                  type="button"
+                  onClick={() => setCheckoutOpen(true)}
+                  className={`${checkoutButtonClass} cursor-pointer`}
+                >
+                  Checkout
+                  <CheckoutArrow />
+                </button>
+              ) : (
+                // Without Firebase there is nowhere to store an enquiry, so fall back to WhatsApp
+                <a
+                  href={checkoutHref(items, pricing.subtotal, pricing.percent > 0 ? { percent: pricing.percent, amount: pricing.discount } : null)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={checkoutButtonClass}
+                >
+                  Checkout
+                  <CheckoutArrow />
+                </a>
+              )}
               <div className="mt-3 flex items-center justify-between gap-4 text-xs text-[#00245A]/50">
-                <span>Your order is shared with us on WhatsApp.</span>
+                <span>{isFirebaseConfigured ? 'We verify your mobile number, then get in touch.' : 'Your order is shared with us on WhatsApp.'}</span>
                 <button type="button" onClick={clear} className="shrink-0 cursor-pointer font-semibold whitespace-nowrap text-[#003BD9] hover:text-[#00245A]">
                   Clear cart
                 </button>
@@ -127,6 +212,21 @@ function CartDrawer() {
           </>
         )}
       </aside>
+
+      {checkoutOpen ? (
+        <Suspense fallback={null}>
+          <CheckoutModal
+            items={items}
+            pricing={pricing}
+            onPlaced={clear}
+            onClose={() => {
+              setCheckoutOpen(false)
+              // After a placed enquiry the cart is empty, so close the drawer too
+              if (items.length === 0) close()
+            }}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

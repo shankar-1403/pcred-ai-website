@@ -33,7 +33,7 @@ function ContactCta() {
                 <span className="block bg-gradient-to-r from-[#00B2FC] to-[#003BD9] bg-clip-text pb-[0.1em] text-transparent">Message us.</span>
               </h2>
               <p className="mt-5 max-w-md text-base leading-relaxed text-[#00245A]/65 sm:text-lg">
-                Tell us which product you need. We’ll share the details on WhatsApp.
+                Tell us which bundle you need. We’ll share the details on WhatsApp.
               </p>
 
               <a

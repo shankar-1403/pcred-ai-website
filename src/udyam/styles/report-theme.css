@@ -1,0 +1,253 @@
+/* Website theme for the Udyam Scheme Report (/report). Loaded after report.css and overrides it,
+   so the page uses the site's font, colours, rounded cards and pill buttons. Scoped to .udyam-app. */
+
+.udyam-app{
+  --paper:#F4F9FF; --surface:#FFFFFF; --surface-2:#F4F9FF; --surface-3:#EAF6FF;
+  --navy:#00245A; --ink:#00245A; --ink-2:rgba(0,36,90,.68); --ink-3:rgba(0,36,90,.5);
+  --line:rgba(0,36,90,.08); --line-2:rgba(0,36,90,.14);
+  --accent:#003BD9; --accent-hover:#00245A; --accent-soft:#EAF6FF;
+  --sel:#00245A; --sel-ink:#FFFFFF;
+  --grad:linear-gradient(135deg,#00B2FC 0%,#003BD9 100%);
+  --cover:#00245A; --cover-2:#003BD9;
+  --ok:#128C4A; --ok-soft:#E6FAF0; --warn:#9A6400; --warn-soft:#FFF4DB;
+  --danger:#C2261C; --danger-soft:#FDECEA; --focus:#00B2FC;
+  --shadow-sm:0 12px 30px -24px rgba(0,36,90,.45);
+  --shadow:0 34px 70px -44px rgba(0,36,90,.55);
+  --r:24px; --r-sm:14px;
+  --f-display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  position:relative;isolation:isolate;overflow:clip;min-height:100vh;padding-top:96px;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F4F9FF 45%,#EAF6FF 100%);
+  font-size:15px;
+}
+/* Soft light behind the hero, like the home banner */
+.udyam-app::before{content:"";position:absolute;z-index:-1;top:-12rem;right:-14rem;width:46rem;height:46rem;border-radius:50%;background:radial-gradient(circle,rgba(0,178,252,.22),transparent 65%);pointer-events:none}
+.udyam-app .app{max-width:1280px;padding-inline:24px;padding-block:0 56px}
+.udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4{letter-spacing:-.02em}
+
+/* ----------------------------------------------------------------- hero */
+.udyam-app .report-intro{max-width:46rem;margin:8px 0 20px}
+.udyam-app .report-intro__eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0;border:1px solid var(--line-2);background:rgba(255,255,255,.8);border-radius:999px;padding:4px 14px 4px 4px;font:500 12px/1.4 var(--f-body);color:var(--ink-2);box-shadow:0 8px 24px -16px rgba(0,36,90,.5)}
+.udyam-app .report-intro__eyebrow span{border-radius:999px;background:#00245A;color:#00B2FC;padding:2px 8px;font:600 10px/1.5 var(--f-mono);letter-spacing:.16em;text-transform:uppercase}
+.udyam-app .report-intro__title{margin-top:14px;font-size:clamp(28px,3.4vw,42px);font-weight:600;line-height:1.04;letter-spacing:-.05em}
+.udyam-app .report-intro__title em{font-style:normal;background:linear-gradient(100deg,#00B2FC,#003BD9 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.udyam-app .report-intro__sub{margin:10px 0 0;max-width:38rem;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.udyam-app .app--report{padding-top:12px}
+
+/* ------------------------------------------------------- progress stepper */
+.udyam-app .stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 20px;padding:6px;list-style:none;border:1px solid #fff;border-radius:22px;background:rgba(255,255,255,.8);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
+.udyam-app .stepper__step{position:relative;display:flex;align-items:center;gap:10px;min-width:0;border-radius:16px;padding:9px 12px}
+.udyam-app .stepper__dot{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#EAF6FF;color:var(--ink-3);font:600 12px/1 var(--f-mono)}
+.udyam-app .stepper__text{display:grid;min-width:0}
+.udyam-app .stepper__text strong{font-size:13.5px;font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.udyam-app .stepper__text small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.udyam-app .stepper__step.is-current{background:#00245A}
+.udyam-app .stepper__step.is-current .stepper__dot{background:var(--grad);color:#fff;box-shadow:0 8px 18px -8px rgba(0,178,252,.9)}
+.udyam-app .stepper__step.is-current strong{color:#fff}
+.udyam-app .stepper__step.is-current small{color:rgba(255,255,255,.65)}
+.udyam-app .stepper__step.is-done .stepper__dot{background:var(--ok-soft);color:var(--ok);font-family:var(--f-body);font-size:13px}
+.udyam-app .stepper__step.is-done strong{color:var(--navy)}
+@media (max-width:760px){
+  .udyam-app .stepper{grid-template-columns:auto auto auto auto;justify-content:space-between;gap:4px;padding:5px}
+  .udyam-app .stepper__step{justify-content:center;padding:8px}
+  .udyam-app .stepper__text{display:none}
+  .udyam-app .stepper__step.is-current .stepper__text{display:grid}
+}
+
+/* ------------------------------------------------------------ page layout */
+/* One grid; each stage places the same blocks differently. The engine-owned cards are never
+   moved in the DOM (that would drop their event wiring), only placed by grid area. */
+.udyam-app .flow{display:grid;grid-template-columns:minmax(320px,390px) minmax(0,1fr);gap:20px;align-items:start}
+.udyam-app .flow__side{display:contents}
+.udyam-app .flow>[hidden],.udyam-app .flow__side>[hidden],.udyam-app .flow__main>[hidden]{display:none!important}
+.udyam-app .flow__verify{grid-area:verify;min-width:0}
+.udyam-app .flow__details{grid-area:details;min-width:0}
+.udyam-app .flow__questions{grid-area:questions;min-width:0}
+.udyam-app .flow__main{grid-area:main;display:flex;flex-direction:column;gap:20px;min-width:0}
+/* Start and mobile check: start card on the left, business details beside it */
+.udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"verify details"}
+.udyam-app .app--start .flow__main,.udyam-app .app--verify .flow__main{display:none}
+/* Payment: the pay panel is the main column */
+.udyam-app .app--pay .flow{grid-template-areas:"verify main" "details main" ". main";grid-template-rows:auto auto 1fr}
+/* Report: controls that change it on the left, the report on the right */
+.udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
+@media (max-width:1000px){
+  .udyam-app .flow{grid-template-columns:minmax(0,1fr)}
+  .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"verify" "details"}
+  .udyam-app .app--pay .flow{grid-template-areas:"verify" "main" "details";grid-template-rows:none}
+  .udyam-app .app--report .flow{grid-template-areas:"questions" "main" "details" "verify";grid-template-rows:none}
+}
+/* Business details beside the start card: more room, so three fields per row */
+@media (min-width:1001px){
+  .udyam-app .app--start .fields,.udyam-app .app--verify .fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .udyam-app .app--start .field[data-f="name"],.udyam-app .app--verify .field[data-f="name"]{grid-column:span 2}
+  .udyam-app .app--start .field[data-f="urn"],.udyam-app .app--verify .field[data-f="urn"]{grid-column:span 1}
+}
+/* Messages about fetching and paying are done with once the report is open */
+.udyam-app .app--report .uv__status,.udyam-app .app--report .uv__note{display:none}
+.udyam-app .card__icon{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;background:#EAF6FF;color:#003BD9}
+.udyam-app .card__icon svg{width:18px;height:18px}
+
+/* ------------------------------------------- top section: promise + sample */
+.udyam-app .wyg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center;margin:8px 0 20px;border:1px solid #fff;border-radius:30px;padding:24px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);backdrop-filter:blur(8px)}
+@media (max-width:1000px){.udyam-app .wyg{grid-template-columns:minmax(0,1fr);padding:18px;border-radius:26px}}
+.udyam-app .wyg__headline{margin-top:12px;font-size:clamp(26px,3vw,38px);font-weight:600;line-height:1.05;letter-spacing:-.045em}
+.udyam-app .wyg__headline em{font-style:normal;background:linear-gradient(100deg,#00B2FC,#003BD9 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.udyam-app .wyg__lead{margin:10px 0 0;font-size:14.5px;color:var(--ink-2)}
+.udyam-app .wyg__features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin:14px 0 0;padding:0;list-style:none}
+@media (max-width:560px){.udyam-app .wyg__features{grid-template-columns:minmax(0,1fr)}}
+/* On phones the sample picture would push the start card far down; the list says the same */
+@media (max-width:640px){.udyam-app .wyg__sample{display:none}}
+.udyam-app .wyg__features li{display:flex;gap:10px}
+.udyam-app .wyg__icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:#EAF6FF;color:#003BD9}
+.udyam-app .wyg__icon svg{width:17px;height:17px}
+.udyam-app .wyg__features strong{display:block;font-size:13.5px;font-weight:600;color:var(--navy)}
+.udyam-app .wyg__features small{display:block;margin-top:1px;font-size:12px;line-height:1.45;color:var(--ink-3)}
+.udyam-app .wyg__foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:18px}
+.udyam-app .wyg__prices{display:flex;gap:8px;margin:0}
+.udyam-app .wyg__prices div{border:1px solid var(--line);border-radius:14px;background:#F8FBFF;padding:7px 12px}
+.udyam-app .wyg__prices dt{font-size:11px;color:var(--ink-3)}
+.udyam-app .wyg__prices dd{margin:1px 0 0;font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--navy)}
+.udyam-app .wyg__note{flex:1 1 200px;margin:0;font-size:12px;line-height:1.5;color:var(--ink-3)}
+.udyam-app .wyg__sample{position:relative;overflow:hidden;border-radius:22px;background:#F4F9FF;box-shadow:inset 0 0 0 1px var(--line)}
+.udyam-app .wyg__cover{position:relative;overflow:hidden;padding:18px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#003BD9 0%,#00245A 60%)}
+.udyam-app .wyg__cover::after{content:"";position:absolute;right:-4rem;bottom:-6rem;width:14rem;height:14rem;border-radius:50%;background:radial-gradient(circle,rgba(0,178,252,.4),transparent 65%)}
+.udyam-app .wyg__eyebrow{margin:0;font:600 10px/1.4 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:#7FD3FF}
+.udyam-app .wyg__name{margin:6px 0 0;font-size:19px;font-weight:600;letter-spacing:-.03em}
+.udyam-app .wyg__meta{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}
+.udyam-app .wyg__meta span{border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 9px;font-size:10.5px;color:rgba(255,255,255,.8)}
+.udyam-app .wyg__meta span:first-child{font-family:var(--f-mono)}
+.udyam-app .wyg__tally{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.udyam-app .wyg__tally span{border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.08);padding:7px 10px;font-size:10.5px;color:rgba(255,255,255,.75)}
+.udyam-app .wyg__tally b{display:block;font-size:19px;font-weight:600;color:#fff}
+.udyam-app .wyg__rows{display:grid;gap:6px;margin:0;padding:12px;list-style:none}
+.udyam-app .wyg__rows li{display:grid;gap:5px;border-radius:14px;background:#fff;padding:9px 12px;box-shadow:0 8px 20px -16px rgba(0,36,90,.5)}
+.udyam-app .wyg__rows li:last-child{opacity:.55}
+.udyam-app .wyg__chip{justify-self:start;border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:600}
+.udyam-app .wyg__chip--yes{background:var(--ok-soft);color:var(--ok)}
+.udyam-app .wyg__chip--check{background:var(--warn-soft);color:var(--warn)}
+.udyam-app .wyg__row-name{font-size:13px;font-weight:600;color:var(--navy)}
+.udyam-app .wyg__lines{display:grid;gap:4px}
+.udyam-app .wyg__lines i{display:block;height:4px;border-radius:4px;background:var(--line)}
+.udyam-app .wyg__lines i:last-child{width:60%}
+
+.udyam-app .card{border:1px solid #fff;border-radius:26px;padding:18px;background:rgba(255,255,255,.88);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
+.udyam-app .card__head{gap:12px;margin-bottom:12px}
+.udyam-app .card__num{width:32px;height:32px;border-radius:11px;font:600 13px/32px var(--f-mono);box-shadow:0 10px 20px -10px rgba(0,59,217,.8)}
+.udyam-app .card h2{font-size:17px;font-weight:600}
+.udyam-app .card__sub{font-size:13.5px}
+.udyam-app .card__sub--tight{margin:2px 0 0}
+
+/* --------------------------------------------------------------- buttons */
+.udyam-app .btn{border-radius:999px;padding:12px 20px;background:#00245A;font:600 14px/1 var(--f-body);letter-spacing:0;box-shadow:0 14px 28px -16px rgba(0,36,90,.9)}
+.udyam-app .btn:hover{background:#003BD9;filter:none}
+.udyam-app .btn--sm{padding:9px 15px;font-size:13px}
+.udyam-app .btn--ghost{background:transparent;color:var(--navy);border:1px solid var(--line-2);box-shadow:none}
+.udyam-app .btn--ghost:hover{background:#EAF6FF;color:var(--navy);border-color:transparent}
+.udyam-app .btn--light{background:#fff;color:#00245A}
+.udyam-app .btn--light:hover{background:#EAF6FF;color:#00245A}
+
+/* ---------------------------------------------------- start / method tiles */
+.udyam-app .uv-opts{gap:8px;margin-bottom:14px}
+.udyam-app .uv-opt{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:18px;padding:10px 12px;background:#fff;transition:border-color .15s,background .15s,box-shadow .15s}
+.udyam-app .uv-opt:hover{border-color:rgba(0,178,252,.5);background:#fff}
+.udyam-app .uv-opt[aria-pressed="true"]{border-color:#00B2FC;background:#F4F9FF;box-shadow:0 0 0 4px rgba(0,178,252,.15)}
+.udyam-app .uv-opt__icon{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:12px;background:#EAF6FF;color:#003BD9}
+.udyam-app .uv-opt[aria-pressed="true"] .uv-opt__icon{background:var(--grad);color:#fff}
+.udyam-app .uv-opt__icon svg{width:22px;height:22px}
+.udyam-app .uv-opt__text{display:grid;gap:2px;min-width:0;flex:1}
+.udyam-app .uv-opt strong{font-size:14.5px;font-weight:600}
+.udyam-app .uv-opt__text span{font-size:12.5px;line-height:1.45;color:var(--ink-3)}
+.udyam-app .uv-opt__price{flex:none;border-radius:999px;background:#EAF6FF;padding:5px 10px;font:600 13px/1 var(--f-body);color:#003BD9}
+.udyam-app .uv-opt[aria-pressed="true"] .uv-opt__price{background:#00245A;color:#fff}
+.udyam-app .uv-steps{gap:6px;margin-bottom:12px}
+.udyam-app .uv-steps li{border-radius:999px;padding:7px 11px;font:600 11px/1 var(--f-body);letter-spacing:.02em;text-transform:none;background:#F4F9FF}
+.udyam-app .uv-steps li.is-on{background:#00245A;color:#fff}
+.udyam-app .uv-steps li.is-done{background:var(--ok-soft);color:var(--ok)}
+.udyam-app .uv-steps li.is-done::before{content:"✓ "}
+
+/* ----------------------------------------------------------------- inputs */
+.udyam-app .uv__label{font:600 13px/1.3 var(--f-body)}
+.udyam-app .uv__input{border-radius:14px;border:2px solid #CDE6FB;background:#F4F9FF;padding:10px 12px;font-size:15px}
+.udyam-app .uv__input:hover{border-color:rgba(0,178,252,.6)}
+.udyam-app .uv__input:focus{border-color:#00B2FC;background:#fff;box-shadow:0 0 0 4px rgba(0,178,252,.18)}
+.udyam-app .uv__file{padding:10px 12px;cursor:pointer}
+.udyam-app .uv__file::file-selector-button{margin-right:12px;border:0;border-radius:999px;background:#00245A;color:#fff;padding:8px 14px;font:600 13px/1 var(--f-body);cursor:pointer}
+.udyam-app .uv__msg,.udyam-app .uv-read,.udyam-app .banner{border-radius:16px}
+.udyam-app .uv-read{border:1px solid var(--line);background:#F8FBFF;padding:12px 14px}
+.udyam-app .uv-own .chip{border-radius:16px;padding:12px 14px}
+.udyam-app .field>label{font:600 12.5px/1.25 var(--f-body)}
+.udyam-app .field input,.udyam-app .field select{border-radius:11px;border:1.5px solid #CDE6FB;background:#F8FBFF;padding:7px 10px;font:500 13.5px/1.3 var(--f-body)}
+.udyam-app .field input:hover,.udyam-app .field select:hover{border-color:rgba(0,178,252,.6)}
+.udyam-app .field input:focus,.udyam-app .field select:focus{border-color:#00B2FC;background:#fff;box-shadow:0 0 0 4px rgba(0,178,252,.18)}
+.udyam-app .seg{border-radius:999px;background:#EAF6FF;padding:4px}
+.udyam-app .seg button{border-radius:999px;font:600 13.5px/1 var(--f-body)}
+.udyam-app .chip{border-radius:999px;border:1.5px solid var(--line-2);padding:8px 14px;font:600 13px/1.15 var(--f-body)}
+.udyam-app .chip:hover{border-color:#00B2FC}
+.udyam-app .q__label{font:600 14px/1.4 var(--f-body)}
+
+/* ----------------------------------------------------------------- report */
+.udyam-app .report{border:1px solid #fff;border-radius:32px;box-shadow:var(--shadow)}
+.udyam-app .cover{padding:clamp(20px,2.6vw,30px);background:radial-gradient(120% 140% at 100% 0%,#003BD9 0%,#00245A 55%,#001840 100%)}
+.udyam-app .cover::before{content:"";position:absolute;right:-6rem;bottom:-9rem;width:26rem;height:26rem;border-radius:50%;background:radial-gradient(circle,rgba(0,178,252,.35),transparent 65%);pointer-events:none}
+.udyam-app .eyebrow{font:600 11px/1.4 var(--f-mono);letter-spacing:.2em;color:#7FD3FF}
+.udyam-app .rname{letter-spacing:-.04em}
+.udyam-app .urn,.udyam-app .tag{border-radius:999px;padding:7px 11px}
+.udyam-app .tally div{border-radius:20px;background:rgba(255,255,255,.08)}
+.udyam-app .tally b{font-weight:600;letter-spacing:-.03em}
+.udyam-app .start,.udyam-app .policy,.udyam-app .more__grid{border-radius:20px}
+.udyam-app .group__head h3,.udyam-app .fold>summary h3{font-family:var(--f-mono);letter-spacing:.18em}
+.udyam-app .scheme__name{font-size:19px;letter-spacing:-.02em}
+.udyam-app .prog,.udyam-app .conf{border-radius:999px;padding:5px 10px}
+
+/* ------------------------------------------------- locked preview / details */
+.udyam-app .ud{border:1px solid #fff;border-radius:32px;box-shadow:var(--shadow)}
+.udyam-app .ud__urn,.udyam-app .ud__tag{border-radius:999px;padding:6px 11px}
+.udyam-app .ud-card,.udyam-app .ud-lock__sheet{border-radius:20px}
+.udyam-app .ud-table-wrap{border-radius:14px}
+.udyam-app .ud-lock__pay .btn{justify-self:start}
+
+/* Details we read: two columns, label above each input */
+.udyam-app .fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
+.udyam-app .field>label{font-size:12px}
+.udyam-app #card-details .card__sub{margin-bottom:10px;font-size:12.5px}
+.udyam-app .field{grid-template-columns:minmax(0,1fr);gap:4px;align-items:start}
+.udyam-app .field .src,.udyam-app .nic-list{grid-column:1}
+.udyam-app .field[data-f="name"],.udyam-app .field[data-f="urn"],.udyam-app .field[data-f="nic"]{grid-column:1/-1}
+.udyam-app .field .src:empty{display:none}
+.udyam-app .field .src{font-size:11px}
+@media (max-width:360px){.udyam-app .fields{grid-template-columns:minmax(0,1fr)}}
+.udyam-app .q{gap:8px;padding-block:11px}
+.udyam-app .chips{gap:6px}
+.udyam-app .chip{padding:7px 12px;font-size:12.5px}
+
+/* The upload tile already says the PDF stays on this device */
+.udyam-app #certificate-file + .uv__help{display:none}
+.udyam-app .uv__note{margin-top:10px;font-size:11.5px}
+
+/* Certificate read: one line in card 1, the details themselves fill card 2 */
+.udyam-app .uv-readline{display:grid;gap:2px;margin:2px 0 0;border:1px solid rgba(18,140,74,.2);border-radius:14px;background:var(--ok-soft);padding:10px 12px}
+.udyam-app .uv-readline strong{font-size:13.5px;font-weight:600;color:var(--navy);overflow-wrap:anywhere}
+.udyam-app .uv-readline span{font:500 12px/1.4 var(--f-body);color:var(--ok)}
+
+.udyam-app .report-foot{margin:28px 0 0;max-width:720px;font-size:12.5px;line-height:1.6;color:var(--ink-3)}
+@media (max-width:480px){.udyam-app .app{padding-inline:16px}.udyam-app .card{padding:18px;border-radius:24px}.udyam-app .uv-opt{gap:12px;padding:12px}}
+
+/* ---------------------------------------------- start card: the focal point */
+.udyam-app #card-udyam{position:relative;border:2px solid transparent;background:linear-gradient(180deg,#FFFFFF,#F7FBFF) padding-box,linear-gradient(135deg,#00B2FC,#003BD9) border-box;box-shadow:0 0 0 6px rgba(0,178,252,.1),0 34px 70px -34px rgba(0,59,217,.6);padding-top:24px}
+.udyam-app #card-udyam::before{content:"Start here";position:absolute;top:-13px;left:22px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:linear-gradient(90deg,#00B2FC,#003BD9);padding:5px 12px 5px 22px;font:600 11px/1.2 var(--f-body);letter-spacing:.02em;color:#fff;box-shadow:0 10px 20px -10px rgba(0,59,217,.9)}
+.udyam-app #card-udyam::after{content:"";position:absolute;top:-4px;left:32px;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35);animation:start-pulse 1.8s ease-in-out infinite}
+@keyframes start-pulse{50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
+@media (prefers-reduced-motion:reduce){.udyam-app #card-udyam::after{animation:none}}
+.udyam-app #card-udyam h2{font-size:19px}
+.udyam-app #card-udyam .uv-opt{border:1.5px solid #D7ECFF;background:#F8FBFF;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+.udyam-app #card-udyam .uv-opt:hover{transform:translateY(-1px);border-color:#00B2FC;background:#fff;box-shadow:0 14px 28px -20px rgba(0,59,217,.7)}
+.udyam-app #card-udyam .uv-opt[aria-pressed="true"]{border-color:#00B2FC;background:#fff;box-shadow:0 0 0 4px rgba(0,178,252,.18),0 14px 28px -20px rgba(0,59,217,.7)}
+.udyam-app #card-udyam .uv-opt__icon{background:#fff;box-shadow:inset 0 0 0 1px #D7ECFF}
+.udyam-app #card-udyam .uv-opt:hover .uv-opt__price{background:#00245A;color:#fff}
+.udyam-app #card-udyam .uv-opt::after{content:"→";flex:none;margin-left:-4px;font-weight:600;color:#003BD9;opacity:0;transform:translateX(-4px);transition:opacity .15s,transform .15s}
+.udyam-app #card-udyam .uv-opt:hover::after,.udyam-app #card-udyam .uv-opt[aria-pressed="true"]::after{opacity:1;transform:none}
+/* With the report open it is just the "start a new report" card again */
+.udyam-app .app--report #card-udyam{border:1px solid #fff;background:rgba(255,255,255,.88);box-shadow:var(--shadow-sm);padding-top:18px}
+.udyam-app .app--report #card-udyam::before,.udyam-app .app--report #card-udyam::after{display:none}
+.udyam-app .app--report #card-udyam h2{font-size:17px}

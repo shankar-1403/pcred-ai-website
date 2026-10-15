@@ -1,18 +1,22 @@
 import { Link } from 'react-router'
 import Logo from '../assets/pcred_logo.webp'
-import { suits } from '../lib/suits'
+import { useSuits } from '../lib/suitsStore'
 import { WHATSAPP_NUMBER, generalEnquireHref } from '../lib/whatsapp'
 
 const explore = [
   { to: '/', label: 'Home' },
-  { href: '/#categories', label: 'Categories' },
+  { to: '/#categories', label: 'Categories' },
   { to: '/contact', label: 'Talk to us' },
 ]
+
+// More than this many categories collapses into a "View all" link
+const FOOTER_CATEGORY_LIMIT = 6
 
 // 912235120060 -> +91 22 3512 0060
 const displayNumber = `+${WHATSAPP_NUMBER.slice(0, 2)} ${WHATSAPP_NUMBER.slice(2, 4)} ${WHATSAPP_NUMBER.slice(4, 8)} ${WHATSAPP_NUMBER.slice(8)}`
 
 function Footer() {
+  const { suits, loading } = useSuits()
   return (
     <footer className="relative isolate overflow-hidden bg-[#00245A] text-white">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
@@ -38,30 +42,40 @@ function Footer() {
             <ul className="mt-5 space-y-3 text-sm">
               {explore.map((item) => (
                 <li key={item.label}>
-                  {item.to ? (
-                    <Link to={item.to} onClick={() => window.scrollTo(0, 0)} className="text-white/70 transition hover:text-white">
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <a href={item.href} className="text-white/70 transition hover:text-white">
-                      {item.label}
-                    </a>
-                  )}
+                  <Link to={item.to} className="text-white/70 transition hover:text-white">
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Suits</p>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Categories</p>
             <ul className="mt-5 space-y-3 text-sm">
-              {suits.map((suit) => (
-                <li key={suit.slug}>
-                  <Link to={`/suits/${suit.slug}`} className="text-white/70 transition hover:text-white">
-                    {suit.name}
+              {loading ? (
+                <li aria-hidden="true" className="h-4 w-32 animate-pulse rounded bg-white/10" />
+              ) : suits.length === 0 ? (
+                <li className="text-white/45">Coming soon</li>
+              ) : (
+                suits.slice(0, FOOTER_CATEGORY_LIMIT).map((suit) => (
+                  <li key={suit.slug}>
+                    <Link to={`/suits/${suit.slug}`} className="text-white/70 transition hover:text-white">
+                      {suit.name}
+                    </Link>
+                  </li>
+                ))
+              )}
+              {suits.length > FOOTER_CATEGORY_LIMIT ? (
+                <li>
+                  <Link to="/#categories" className="inline-flex items-center gap-1.5 font-semibold text-[#00B2FC] transition hover:text-white">
+                    View all {suits.length}
+                    <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none">
+                      <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </Link>
                 </li>
-              ))}
+              ) : null}
             </ul>
           </div>
 

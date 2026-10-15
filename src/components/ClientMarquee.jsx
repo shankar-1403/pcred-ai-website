@@ -1,35 +1,31 @@
+// PLACEHOLDER: made-up company names for the layout. Replace with real clients before launch.
 const CLIENTS = [
-  'Arun Malhotra',
-  'Priya Shah',
-  'Radhika Iyer',
-  'Sandeep Gupta',
-  'Sneha Verma',
-  'Kunal Thakkar',
-  'Anil Oberoi',
-  'Sanjana Sharma',
-  'Anand Kumar',
-  'Meera Patel',
+  { name: 'Shree Ganesh Textiles', sector: 'Textiles' },
+  { name: 'Patel Agro Foods', sector: 'Food processing' },
+  { name: 'Mehta Precision Tools', sector: 'Engineering' },
+  { name: 'Sai Packaging Co.', sector: 'Packaging' },
+  { name: 'Kaveri Spice Works', sector: 'Spices' },
+  { name: 'Nirmal Polymers', sector: 'Plastics' },
+  { name: 'Aarav Electricals', sector: 'Electricals' },
+  { name: 'Sunrise Ceramics', sector: 'Ceramics' },
+  { name: 'Vardhan Auto Components', sector: 'Auto parts' },
+  { name: 'Lotus Apparel House', sector: 'Garments' },
+  { name: 'Bharat Steel Fabricators', sector: 'Steel' },
+  { name: 'GreenLeaf Organics', sector: 'Agriculture' },
 ]
 
-const AVATAR_TONES = [
+const BADGE_TONES = [
   'from-[#00B2FC] to-[#003BD9]',
   'from-[#00245A] to-[#003BD9]',
   'from-[#5CD0FF] to-[#00B2FC]',
 ]
 
 // Second row starts halfway through the list so the two rows don't line up
+const half = Math.ceil(CLIENTS.length / 2)
 const ROWS = [
   { clients: CLIENTS, className: 'client-marquee' },
-  { clients: [...CLIENTS.slice(5), ...CLIENTS.slice(0, 5)], className: 'client-marquee-reverse' },
+  { clients: [...CLIENTS.slice(half), ...CLIENTS.slice(0, half)], className: 'client-marquee-reverse' },
 ]
-
-function initials(name) {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-}
 
 function ClientMarquee() {
   return (
@@ -43,8 +39,8 @@ function ClientMarquee() {
       </div>
 
       <ul className="sr-only">
-        {CLIENTS.map((name) => (
-          <li key={name}>{name}</li>
+        {CLIENTS.map((client) => (
+          <li key={client.name}>{client.name}</li>
         ))}
       </ul>
 
@@ -56,17 +52,30 @@ function ClientMarquee() {
           <div key={row.className} className={`${row.className} flex w-max`}>
             {[0, 1].map((copy) => (
               <ul key={copy} className="flex">
-                {row.clients.map((name) => (
-                  <li key={`${copy}-${name}`} className="px-1.5">
-                    <span className="group inline-flex items-center gap-3 rounded-full border border-white bg-white/80 py-1.5 pr-5 pl-1.5 shadow-[0_10px_24px_-18px_rgba(0,36,90,0.6)] backdrop-blur transition hover:bg-white">
+                {row.clients.map((client) => (
+                  <li key={`${copy}-${client.name}`} className="px-1.5">
+                    <span className="inline-flex items-center gap-3 rounded-2xl border border-white bg-white/85 py-2 pr-4 pl-2 shadow-[0_10px_24px_-18px_rgba(0,36,90,0.6)] backdrop-blur transition hover:bg-white">
                       <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-semibold tracking-wide text-white ${
-                          AVATAR_TONES[CLIENTS.indexOf(name) % AVATAR_TONES.length]
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${
+                          BADGE_TONES[CLIENTS.indexOf(client) % BADGE_TONES.length]
                         }`}
                       >
-                        {initials(name)}
+                        <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                          <path
+                            d="M4 21V5.5L11 3v18M11 8l9 3v10M3 21h18M7 7.5h1M7 11h1M7 14.5h1M14.5 13h2M14.5 16.5h2"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       </span>
-                      <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-[#00245A]">{name}</span>
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-sm font-bold tracking-tight whitespace-nowrap text-[#00245A]">{client.name}</span>
+                        <span className="font-mono text-[10px] tracking-wide whitespace-nowrap text-[#003BD9]/70 uppercase">
+                          {client.sector}
+                        </span>
+                      </span>
                     </span>
                   </li>
                 ))}
