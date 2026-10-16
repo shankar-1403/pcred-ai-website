@@ -5,7 +5,6 @@ import { WHATSAPP_NUMBER, generalEnquireHref } from '../lib/whatsapp'
 
 const explore = [
   { to: '/', label: 'Home' },
-  { to: '/#categories', label: 'Categories' },
   { to: '/contact', label: 'Talk to us' },
 ]
 

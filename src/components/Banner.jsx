@@ -4,7 +4,7 @@ import favicon from '../assets/favicon.svg'
 
 const NUMBER_PRICE = '₹699'
 const UPLOAD_PRICE = '₹499'
-const YOUTUBE_VIDEO_ID = '-XZBgqNUNxU'
+const YOUTUBE_VIDEO_ID = 'SRf3nprZkQ8?si=C7znsfTy0IHxzj01'
 const UDYAM_PATTERN = /^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/
 const MAX_CERTIFICATE_BYTES = 8 * 1024 * 1024
 // The report reads the certificate PDF on the device (src/udyam/lib/read-certificate.js)
