@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import favicon from '../assets/favicon.svg'
+import YouTubeVideo from './YouTubeVideo'
 
 const NUMBER_PRICE = '₹699'
 const UPLOAD_PRICE = '₹499'
@@ -335,14 +336,7 @@ function Banner() {
               </span>
             </div>
             <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-[#00245A]">
-              <iframe
-                className="absolute inset-0 h-full w-full"
-                src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0`}
-                title="PCRED Foundation Day 2025"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
+              <YouTubeVideo videoId={YOUTUBE_VIDEO_ID} title="PCRED Foundation Day 2025" />
             </div>
           </figure>
           <ol className="grid grid-cols-3 gap-2" aria-label="How it works">
