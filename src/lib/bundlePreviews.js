@@ -55,19 +55,28 @@ export async function compressPreview(file) {
   throw new Error('This image is too detailed to store. Try a simpler or smaller image.')
 }
 
-// Live map of { [productId]: dataUrl } for one category
+// Images already downloaded this visit, so returning to a category shows them at once
+const cache = new Map()
+
+// Live map of { [productId]: dataUrl } for one category, and whether it is still loading
 export function useBundlePreviews(suitSlug) {
   const [state, setState] = useState({ slug: '', previews: {} })
 
   useEffect(() => {
     if (!db || !suitSlug) return undefined
+    const done = (previews) => {
+      cache.set(suitSlug, previews)
+      setState({ slug: suitSlug, previews })
+    }
     return onValue(
       ref(db, `bundlePreviews/${suitSlug}`),
-      (snapshot) => setState({ slug: suitSlug, previews: snapshot.val() ?? {} }),
-      () => setState({ slug: suitSlug, previews: {} }),
+      (snapshot) => done(snapshot.val() ?? {}),
+      () => done({}),
     )
   }, [suitSlug])
 
   // Never show the previous category's images while the new ones load
-  return state.slug === suitSlug ? state.previews : {}
+  if (state.slug === suitSlug) return { previews: state.previews, loading: false }
+  if (cache.has(suitSlug)) return { previews: cache.get(suitSlug), loading: false }
+  return { previews: {}, loading: Boolean(db && suitSlug) }
 }

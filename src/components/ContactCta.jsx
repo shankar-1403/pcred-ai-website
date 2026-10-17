@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
-import Logo from '../assets/favicon.svg'
 import { generalEnquireHref } from '../lib/whatsapp'
 import WhatsAppIcon from './WhatsAppIcon'
+import ChatDemo from './ChatDemo'
 
 function ContactCta() {
   return (
@@ -64,44 +64,21 @@ function ContactCta() {
 
             {/* Chat preview */}
             <div aria-hidden="true" className="relative mx-auto w-full max-w-sm">
-              <div className="banner-sheet overflow-hidden rounded-[1.75rem] border border-[#00245A]/8 bg-white shadow-[0_30px_60px_-30px_rgba(0,36,90,0.5)]">
-                <div className="flex items-center gap-3 bg-[#00245A] px-4 py-3 text-white">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-                    <img src={Logo} alt="" className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold">PCRED</span>
-                    <span className="flex items-center gap-1.5 text-[11px] text-white/60">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#25D366]" />
-                      WhatsApp
-                    </span>
-                  </span>
-                  <WhatsAppIcon className="h-5 w-5 text-[#25D366]" />
-                </div>
-
-                <div className="space-y-3 bg-[#F4F9FF] bg-[radial-gradient(rgba(0,59,217,0.08)_1px,transparent_1px)] bg-[size:14px_14px] px-4 py-5">
-                  <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#D9FDD3] px-3.5 py-2.5 text-[13px] leading-snug text-[#00245A] shadow-sm">
-                    Hello, I would like to enquire about your credit report products. Please share the details.
-                    <span className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#00245A]/45">
-                      Sent
-                      <svg viewBox="0 0 16 16" className="h-3 w-3 text-[#00B2FC]">
-                        <path d="m1.5 8.5 3 3 6-7M7 11.5l6-7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  </div>
-                  <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-3.5 py-3 shadow-sm">
-                    <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-[#00245A]/40" />
-                    <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-[#00245A]/40 [animation-delay:0.2s]" />
-                    <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-[#00245A]/40 [animation-delay:0.4s]" />
-                  </div>
-                </div>
-              </div>
+              <ChatDemo />
 
               <span className="banner-sheet-alt absolute -top-10 left-2 rounded-2xl border border-white bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-[#00245A] shadow-[0_12px_24px_-12px_rgba(0,36,90,0.5)] backdrop-blur sm:-left-6">
-                Scheme Discovery
+                Know Your Business
+              </span>
+              <span className="banner-sheet-alt absolute -bottom-4 left-2 inline-flex items-center gap-1.5 sm:-top-10 sm:bottom-auto sm:left-auto rounded-2xl border border-white bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-[#00245A] shadow-[0_12px_24px_-12px_rgba(0,36,90,0.5)] backdrop-blur sm:-right-6">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-[#25D366]/15 text-[#128C4A]">
+                  <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor">
+                    <path d="M9.2 1.5 3.5 9h3.8L6.8 14.5 12.5 7H8.7l.5-5.5Z" />
+                  </svg>
+                </span>
+                Report ready in minutes
               </span>
               <span className="banner-sheet absolute -right-3 -bottom-4 rounded-2xl bg-gradient-to-r from-[#00B2FC] to-[#003BD9] px-3 py-1.5 text-[11px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(0,59,217,0.7)] sm:-right-6">
-                Advisory suits
+                Advisory suites
               </span>
             </div>
           </div>

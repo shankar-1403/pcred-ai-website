@@ -2,7 +2,7 @@
 
 ## Categories CMS (Firebase Realtime Database)
 
-Suits (categories) and their products are stored in the Firebase Realtime Database under `suits/`
+Suites (categories) and their products are stored in the Firebase Realtime Database under `suits/`
 and edited at **`/admin`**. The site subscribes live, so saved changes appear without a redeploy.
 Until Firebase is configured, the site shows the built-in starter data from `src/lib/suits.js`.
 
@@ -19,7 +19,7 @@ Until Firebase is configured, the site shows the built-in starter data from `src
    ```
    firebase deploy --only database
    ```
-7. Open `/admin`, sign in, and press **Import starter data** to copy the current suits and products into the database.
+7. Open `/admin`, sign in, and press **Import starter data** to copy the current suites and products into the database.
 
 For the production build, set the same `VITE_FIREBASE_*` values in the environment before `npm run build`.
 

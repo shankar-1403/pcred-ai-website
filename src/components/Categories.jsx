@@ -39,17 +39,17 @@ function Categories() {
               Categories
             </p>
             <h2 className="mt-5 text-3xl leading-[1.05] font-semibold tracking-[-0.04em] sm:text-[2.75rem]">
-              Pick a suit, then open{' '}
+              Pick a suite, then open{' '}
               <span className="bg-gradient-to-r from-[#00B2FC] to-[#9BE3FF] bg-clip-text whitespace-nowrap text-transparent">its bundles</span>
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-white/60">
-              Advisory suits, separate from the credit reports. Each one opens its own bundles.
+              Advisory suites, separate from the credit reports. Each one opens its own bundles.
             </p>
           </div>
 
           <dl className="flex shrink-0 gap-8 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4">
             <div>
-              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Suits</dt>
+              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Suites</dt>
               <dd className="mt-1 text-3xl font-semibold tracking-tight">{String(suits.length).padStart(2, '0')}</dd>
             </div>
             <div className="border-l border-white/10 pl-8">
@@ -123,7 +123,7 @@ function Categories() {
             >
               <span>
                 <span className="font-mono text-[10px] tracking-[0.22em] text-white/45 uppercase">Need a hand?</span>
-                <span className="mt-3 block text-xl font-semibold tracking-tight">Not sure which suit fits?</span>
+                <span className="mt-3 block text-xl font-semibold tracking-tight">Not sure which suite fits?</span>
                 <span className="mt-2 block text-sm leading-relaxed text-white/55">
                   Tell us about the business and we’ll take it from there.
                 </span>

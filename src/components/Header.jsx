@@ -104,14 +104,14 @@ function Header() {
 
   return (
     <>
-      <header ref={headerRef} className="fixed inset-x-0 top-0 z-50 px-3 sm:px-5" onMouseLeave={() => setMegaOpen(false)}>
+      <header ref={headerRef} className="fixed inset-x-0 top-0 z-50" onMouseLeave={() => setMegaOpen(false)}>
         <div
-          className={`relative mx-auto w-full transition-all duration-500 ease-out ${
+          className={`relative mx-auto w-full px-3 transition-all duration-500 ease-out ${
             compact ? 'max-w-4xl pt-3' : 'max-w-screen-xl pt-5'
           }`}
         >
           <div
-            className={`flex items-center justify-between gap-3 rounded-[1.4rem] border py-2 pr-2 pl-3 transition-all duration-500 ease-out ${
+            className={`flex items-center justify-between gap-3 rounded-[1.4rem] border py-2 pr-3 pl-3 transition-all duration-500 ease-out ${
               solid
                 ? 'border-white/80 bg-white/85 shadow-[0_20px_50px_-24px_rgba(0,36,90,0.5)] ring-1 ring-[#00245A]/5 backdrop-blur-xl'
                 : 'border-transparent bg-transparent'
@@ -274,11 +274,11 @@ function Header() {
         {/* Categories mega menu */}
         <div
           id="categories-menu"
-          className={`absolute inset-x-3 top-full hidden pt-3 transition duration-300 ease-out sm:inset-x-5 md:block ${
+          className={`absolute inset-x-0 top-full hidden px-3 pt-3 transition duration-300 ease-out md:block ${
             megaOpen ? 'visible translate-y-0 opacity-100' : 'pointer-events-none invisible -translate-y-2 opacity-0'
           }`}
         >
-          <div className="mx-auto max-w-screen-xl overflow-hidden rounded-[1.75rem] border border-white bg-white/95 p-3 shadow-[0_40px_80px_-40px_rgba(0,36,90,0.6)] ring-1 ring-[#00245A]/5 backdrop-blur-xl">
+          <div className="mx-auto max-w-[78.5rem] overflow-hidden rounded-[1.75rem] border border-white bg-white/95 p-3 shadow-[0_40px_80px_-40px_rgba(0,36,90,0.6)] ring-1 ring-[#00245A]/5 backdrop-blur-xl">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]">
               <div className="relative isolate hidden overflow-hidden rounded-[1.4rem] bg-[#00245A] p-6 text-white lg:flex lg:flex-col">
                 <span aria-hidden="true" className="absolute -top-16 -right-16 -z-10 h-48 w-48 rounded-full bg-[#00B2FC]/40 blur-3xl" />
@@ -287,7 +287,7 @@ function Header() {
                   className="absolute inset-0 -z-10 bg-[radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
                 />
                 <p className="font-mono text-[10px] tracking-[0.24em] text-[#00B2FC] uppercase">Categories</p>
-                <p className="mt-3 text-xl leading-tight font-semibold tracking-tight">Advisory suits for every stage</p>
+                <p className="mt-3 text-xl leading-tight font-semibold tracking-tight">Advisory suites for every stage</p>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-white/60">Each category opens its own bundles.</p>
               </div>
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { productEnquireHref } from '../lib/whatsapp'
 import { findSuit, useSuits } from '../lib/suitsStore'
@@ -35,7 +35,7 @@ function AddToCart({ suit, product }) {
     <button
       type="button"
       aria-pressed={added}
-      onClick={() => cart.toggle({ id, name: product.name, price: product.price, suitSlug: suit.slug, suitIcon: suit.icon, suitName: suit.name })}
+      onClick={() => cart.toggle({ id, name: product.name, price: product.price, suitSlug: suit.slug, suitIcon: suit.icon, suitName: suit.name, documents: product.documents })}
       className={`group/cart inline-flex min-w-32 cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
         added
           ? 'bg-[#E6FAF0] text-[#128C4A] ring-1 ring-[#25D366]/40 hover:bg-[#FDECEA] hover:text-[#C2261C] hover:ring-[#C2261C]/30'
@@ -64,21 +64,36 @@ function AddToCart({ suit, product }) {
 const pageBackground =
   'relative isolate overflow-hidden bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F9FF_40%,#EAF6FF_100%)] pt-28 text-[#00245A]'
 
-// The bundle's picture: the preview image uploaded in the CMS, shown whole. Until there is one,
-// a drawn report cover with the bundle's name stands in.
-function BundlePreview({ image, name, count }) {
-  if (image) {
-    return (
-      <div className="relative aspect-[2/1] overflow-hidden rounded-xl bg-[linear-gradient(135deg,#F4F9FF_0%,#E3F1FF_100%)] ring-1 ring-[#00245A]/6">
-        <img
-          src={image}
-          alt={`${name} preview`}
-          loading="lazy"
-          className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-[1.03]"
-        />
-      </div>
-    )
-  }
+// Neutral shimmer while the category's images are still on their way
+function PreviewSkeleton() {
+  return (
+    <div aria-hidden="true" className="relative aspect-[2/1] overflow-hidden rounded-xl bg-[#EEF5FD] ring-1 ring-[#00245A]/6">
+      <div className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,transparent_25%,rgba(255,255,255,0.75)_50%,transparent_75%)] motion-reduce:animate-none" />
+    </div>
+  )
+}
+
+// Fades in once decoded, so the frame never flashes half-drawn
+function PreviewImage({ image, name }) {
+  const [shown, setShown] = useState(false)
+  return (
+    <div className="relative aspect-[2/1] overflow-hidden rounded-xl bg-[#EEF5FD] ring-1 ring-[#00245A]/6">
+      <img
+        src={image}
+        alt={`${name} preview`}
+        decoding="async"
+        onLoad={() => setShown(true)}
+        className={`h-full w-full object-cover object-top transition duration-500 group-hover:scale-[1.03] ${shown ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </div>
+  )
+}
+
+// The bundle's picture: the preview image uploaded in the CMS. While the images load a shimmer
+// shows; only a bundle with no image gets the drawn report cover with its name.
+function BundlePreview({ image, loading, name, count }) {
+  if (image) return <PreviewImage key={image.length} image={image} name={name} />
+  if (loading) return <PreviewSkeleton />
   return (
     <div
       aria-hidden="true"
@@ -155,7 +170,7 @@ function Suit() {
   const { slug } = useParams()
   const { suits, loading } = useSuits()
   const suit = findSuit(suits, slug)
-  const previews = useBundlePreviews(slug)
+  const { previews, loading: previewsLoading } = useBundlePreviews(slug)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -166,7 +181,7 @@ function Suit() {
       <main className={pageBackground}>
         <Backdrop />
         <div aria-busy="true" className="mx-auto w-full max-w-screen-xl px-6 pt-8 pb-24 sm:pt-12">
-          <span className="sr-only">Loading suit</span>
+          <span className="sr-only">Loading suite</span>
           <div className="h-4 w-48 animate-pulse rounded-full bg-[#00245A]/8" />
           <div className="mt-8 h-14 w-14 animate-pulse rounded-2xl bg-[#00245A]/8" />
           <div className="mt-6 h-12 w-full max-w-md animate-pulse rounded-2xl bg-[#00245A]/8" />
@@ -185,7 +200,7 @@ function Suit() {
         <Backdrop />
         <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center px-6 py-24 text-center">
           <p className="font-mono text-[11px] tracking-[0.24em] text-[#003BD9] uppercase">Not found</p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-5xl">That suit is not listed</h1>
+          <h1 className="mt-4 text-3xl font-semibold tracking-[-0.03em] sm:text-5xl">That suite is not listed</h1>
           <Link
             to="/#categories"
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#00245A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#003BD9]"
@@ -242,7 +257,7 @@ function Suit() {
                 aria-hidden="true"
                 className="absolute inset-x-8 top-0 h-px origin-left scale-x-0 bg-gradient-to-r from-[#00B2FC] to-transparent transition-transform duration-500 group-hover:scale-x-100"
               />
-              <BundlePreview image={previews[product.id]} name={product.name} count={product.documents.length} />
+              <BundlePreview image={previews[product.id]} loading={previewsLoading} name={product.name} count={product.documents.length} />
               <div className="mt-4 flex items-start justify-between gap-3">
                 <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{product.name}</h2>
                 <span
@@ -287,7 +302,7 @@ function Suit() {
           <div className="mx-auto w-full max-w-screen-xl px-6 py-14">
             <div className="flex items-end justify-between gap-4">
               <h2 id="other-suits" className="text-2xl font-semibold tracking-tight">
-                Other suits
+                Other suites
               </h2>
               <Link to="/#categories" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#003BD9] hover:text-[#00245A]">
                 All categories

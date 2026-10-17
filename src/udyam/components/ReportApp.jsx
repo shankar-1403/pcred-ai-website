@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router';
 import UdyamVerification from './UdyamVerification';
 import UdyamDetails from './UdyamDetails';
 import LockedPreview, { unlockPaidOrder } from './LockedPreview';
-import WhatYouGet from './WhatYouGet';
 import { DETAILS_CARD_HTML, QUESTIONS_CARD_HTML } from './legacy-markup';
 
 const PREVIEW_KEY = 'pcred_udyam_preview';
@@ -16,13 +15,6 @@ const STAGES = [
     ['Your report', 'Schemes matched to you'],
 ];
 
-const Intro = memo(function Intro() {
-    return (<header className="report-intro">
-      <p className="report-intro__eyebrow"><span>New</span>Scheme Discovery Report</p>
-      <h1 className="report-intro__title">Find the government schemes <em>your business qualifies for</em></h1>
-      <p className="report-intro__sub">Share your Udyam details once. We match central, state, sector and export schemes to your business and explain each one.</p>
-    </header>);
-});
 
 function Stepper({ current }) {
     return (<ol className="stepper" aria-label="Progress">
@@ -208,10 +200,10 @@ export default function ReportApp() {
     const current = { start: 0, verify: 1, pay: 2, report: 3 }[stage];
     // The details card sits beside the start card from the beginning; at payment only when filled
     const showDetailsCard = stage !== 'pay' || hasDetails;
-    const starting = stage === 'start' || stage === 'verify';
 
     return (<div className={`app app--${stage}`}>
-      {starting ? <WhatYouGet /> : stage === 'pay' ? <Intro /> : null}
+      {/* The page opens straight on the steps; the heading is for screen readers */}
+      <h1 className="sr">Udyam Scheme Discovery Report</h1>
       <Stepper current={current}/>
       <div className="flow">
         <aside className="flow__side" aria-label="Your details">

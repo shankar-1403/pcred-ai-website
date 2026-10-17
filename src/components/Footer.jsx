@@ -31,7 +31,7 @@ function Footer() {
               <img src={Logo} alt="PCRED" className="h-8" />
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/60">
-              Credit reports, scheme discovery, and advisory suits for businesses.
+              Credit reports, scheme discovery, and advisory suites for businesses.
             </p>
             
           </div>

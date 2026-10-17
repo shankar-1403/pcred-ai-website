@@ -1,5 +1,5 @@
 import Banner from '../components/Banner'
-import ClientMarquee from '../components/ClientMarquee'
+import SchemeStats from '../components/SchemeStats'
 import Categories from '../components/Categories'
 import ContactCta from '../components/ContactCta'
 
@@ -7,7 +7,7 @@ function Home() {
   return (
     <main>
       <Banner />
-      <ClientMarquee />
+      <SchemeStats />
       <Categories />
       <ContactCta />
     </main>

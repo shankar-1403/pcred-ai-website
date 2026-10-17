@@ -4,6 +4,14 @@ import { checkoutHref, formatPrice, useCart } from '../lib/cart'
 import { suitIcon } from '../lib/suitIcons'
 import { cartPricing, useDiscounts } from '../lib/discounts'
 import { isFirebaseConfigured } from '../lib/firebase'
+import { findSuit, useSuits } from '../lib/suitsStore'
+
+// Products inside a bundle: the live list from the CMS, or what was saved when it was added
+function bundleProducts(suits, item) {
+  const product = findSuit(suits, item.suitSlug)?.products.find((p) => p.name === item.name)
+  if (product) return product.documents
+  return Array.isArray(item.documents) ? item.documents : []
+}
 
 // Loaded on demand so Firebase Auth and reCAPTCHA stay out of the main bundle
 const CheckoutModal = lazy(() => import('./CheckoutModal'))
@@ -21,6 +29,7 @@ function CheckoutArrow() {
 
 function CartDrawer() {
   const { items, total, count, remove, clear, isOpen, close } = useCart()
+  const { suits } = useSuits()
   const { tiers } = useDiscounts()
   const pricing = cartPricing(total, tiers)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
@@ -101,28 +110,48 @@ function CartDrawer() {
             <ul className="flex-1 divide-y divide-[#00245A]/8 overflow-y-auto px-6">
               {items.map((item) => {
                 const icon = suitIcon(item.suitIcon)
+                const products = bundleProducts(suits, item)
                 return (
-                  <li key={item.id} className="flex items-center gap-4 py-4">
-                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${icon.badge}`}>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-                        <path d={icon.path} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{item.name}</span>
-                      <span className="block truncate text-xs text-[#00245A]/50">{item.suitName}</span>
-                    </span>
-                    <span className="text-sm font-semibold">{formatPrice(item.price)}</span>
-                    <button
-                      type="button"
-                      onClick={() => remove(item.id)}
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-[#00245A]/40 transition hover:bg-[#FDECEA] hover:text-[#C2261C]"
-                    >
+                  <li key={item.id} className="py-4">
+                    {/* Top row: icon, name, price and remove, centred on one line */}
+                    <div className="flex items-center gap-4">
+                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${icon.badge}`}>
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+                          <path d={icon.path} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{item.name}</span>
+                        <span className="block truncate text-xs text-[#00245A]/50">{item.suitName}</span>
+                      </span>
+                      <span className="text-sm font-semibold">{formatPrice(item.price)}</span>
+                      <button
+                        type="button"
+                        onClick={() => remove(item.id)}
+                        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-[#00245A]/40 transition hover:bg-[#FDECEA] hover:text-[#C2261C]"
+                      >
                       <span className="sr-only">Remove {item.name}</span>
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                    </button>
+                      </button>
+                    </div>
+                    {/* Products below, lined up with the name in an even two-column grid */}
+                    {products.length ? (
+                      <ul className="mt-2.5 ml-15 grid grid-cols-2 gap-1.5" aria-label={`Products in ${item.name}`}>
+                        {products.map((product, index) => (
+                          <li
+                            key={`${index}-${product}`}
+                            className="flex min-w-0 items-center gap-1.5 rounded-lg border border-[#00245A]/8 bg-[#F4F9FF] px-2 py-1.5 text-[11.5px] font-medium text-[#00245A]/75"
+                          >
+                            <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-[#00B2FC]" fill="none">
+                              <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <span className="truncate" title={product}>{product}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 )
               })}

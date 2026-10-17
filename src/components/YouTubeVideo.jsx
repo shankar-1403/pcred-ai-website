@@ -43,7 +43,7 @@ const clock = (seconds) => {
 
 const iconClass = 'h-4 w-4'
 const icons = {
-  play: <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor" />,
+  play: <path d="M6 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L7.5 4.64A1 1 0 0 0 6 5.5Z" fill="currentColor" />,
   pause: <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" />,
   replay: <path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />,
   sound: <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />,
@@ -65,6 +65,7 @@ function YouTubeVideo({ videoId: rawId, title }) {
   const [muted, setMuted] = useState(false)
   // The video's own name from YouTube; the title prop is only a fallback
   const [name, setName] = useState('')
+  const [channel, setChannel] = useState('')
   const [showName, setShowName] = useState(true)
   const frame = useRef(null)
   const holder = useRef(null)
@@ -81,6 +82,7 @@ function YouTubeVideo({ videoId: rawId, title }) {
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (typeof data?.title === 'string' && data.title.trim()) setName(data.title.trim())
+        if (typeof data?.author_name === 'string' && data.author_name.trim()) setChannel(data.author_name.trim())
       })
       .catch(() => {})
     return () => controller.abort()
@@ -202,13 +204,13 @@ function YouTubeVideo({ videoId: rawId, title }) {
               type="button"
               onClick={state === 'ended' ? replay : start}
               disabled={state === 'loading'}
-              className="group/play flex cursor-pointer flex-col items-center gap-3 text-white focus-visible:outline-none disabled:cursor-progress"
+              className="group/play flex cursor-pointer flex-col items-center gap-2 text-white focus-visible:outline-none disabled:cursor-progress"
             >
-              <span className="grid h-16 w-16 place-items-center rounded-full bg-white text-[#003BD9] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)] ring-8 ring-white/25 transition group-hover/play:scale-105 group-focus-visible/play:ring-[#00B2FC]">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-white text-[#003BD9] shadow-[0_12px_28px_-10px_rgba(0,0,0,0.6)] ring-4 ring-white/25 transition group-hover/play:scale-105 group-focus-visible/play:ring-[#00B2FC]">
                 {state === 'loading' ? (
-                  <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#003BD9]/25 border-t-[#003BD9]" />
+                  <span className="h-4.5 w-4.5 animate-spin rounded-full border-2 border-[#003BD9]/25 border-t-[#003BD9]" />
                 ) : (
-                  <Icon name={state === 'ended' ? 'replay' : 'play'} className={state === 'ended' ? 'h-7 w-7' : 'ml-1 h-7 w-7'} />
+                  <Icon name={state === 'ended' ? 'replay' : 'play'} className="h-5 w-5" />
                 )}
               </span>
               <span className="rounded-full bg-[#00245A]/70 px-3 py-1 text-xs font-semibold backdrop-blur">
@@ -227,10 +229,28 @@ function YouTubeVideo({ videoId: rawId, title }) {
             state === 'playing' && !showName ? 'opacity-0 group-hover/video:opacity-100' : 'opacity-100'
           }`}
         >
-          <span aria-hidden="true" className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#FF0033] text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.6)]">
-            <Icon name="play" className="ml-0.5 h-3.5 w-3.5" />
+          <a
+            href={`https://www.youtube.com/watch?v=${videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pointer-events-auto shrink-0 rounded-md transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-white"
+            aria-label="Watch on YouTube"
+          >
+            {/* The YouTube logo mark */}
+            <svg aria-hidden="true" viewBox="0 0 28 20" className="h-6 w-auto drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+              <path
+                fill="#FF0000"
+                d="M27.4 3.1A3.5 3.5 0 0 0 24.9.6C22.7 0 14 0 14 0S5.3 0 3.1.6A3.5 3.5 0 0 0 .6 3.1C0 5.3 0 10 0 10s0 4.7.6 6.9a3.5 3.5 0 0 0 2.5 2.5C5.3 20 14 20 14 20s8.7 0 10.9-.6a3.5 3.5 0 0 0 2.5-2.5C28 14.7 28 10 28 10s0-4.7-.6-6.9Z"
+              />
+              <path fill="#FFFFFF" d="M11.2 14.3 18.5 10l-7.3-4.3v8.6Z" />
+            </svg>
+          </a>
+          <span className="grid min-w-0">
+            <span className="truncate text-sm leading-tight font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{name || title}</span>
+            {channel ? (
+              <span className="mt-0.5 truncate text-xs font-medium text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{channel}</span>
+            ) : null}
           </span>
-          <p className="min-w-0 truncate text-sm font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{name || title}</p>
         </div>
       ) : null}
 

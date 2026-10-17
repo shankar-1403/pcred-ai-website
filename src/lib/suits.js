@@ -4,10 +4,10 @@
 // "Import starter data" button to fill an empty database.
 export const starterSuits = [
   {
-    slug: 'msme-advisory-suit',
+    slug: 'msme-advisory-suite',
     icon: 'building',
     order: 1,
-    name: 'MSME Advisory Suit',
+    name: 'MSME Advisory Suite',
     summary: 'Scheme, credit, and compliance products for an existing small business.',
     products: [
       {
@@ -37,10 +37,10 @@ export const starterSuits = [
     ],
   },
   {
-    slug: 'startup-suit',
+    slug: 'startup-suite',
     icon: 'rocket',
     order: 2,
-    name: 'Startup Suit',
+    name: 'Startup Suite',
     summary: 'Scheme, guarantee, and structuring products for a new company.',
     products: [
       {

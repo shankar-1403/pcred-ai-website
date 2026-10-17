@@ -25,17 +25,8 @@
 .udyam-app .app{max-width:1280px;padding-inline:24px;padding-block:0 56px}
 .udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4{letter-spacing:-.02em}
 
-/* ----------------------------------------------------------------- hero */
-.udyam-app .report-intro{max-width:46rem;margin:8px 0 20px}
-.udyam-app .report-intro__eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0;border:1px solid var(--line-2);background:rgba(255,255,255,.8);border-radius:999px;padding:4px 14px 4px 4px;font:500 12px/1.4 var(--f-body);color:var(--ink-2);box-shadow:0 8px 24px -16px rgba(0,36,90,.5)}
-.udyam-app .report-intro__eyebrow span{border-radius:999px;background:#00245A;color:#00B2FC;padding:2px 8px;font:600 10px/1.5 var(--f-mono);letter-spacing:.16em;text-transform:uppercase}
-.udyam-app .report-intro__title{margin-top:14px;font-size:clamp(28px,3.4vw,42px);font-weight:600;line-height:1.04;letter-spacing:-.05em}
-.udyam-app .report-intro__title em{font-style:normal;background:linear-gradient(100deg,#00B2FC,#003BD9 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.udyam-app .report-intro__sub{margin:10px 0 0;max-width:38rem;font-size:15px;line-height:1.6;color:var(--ink-2)}
-.udyam-app .app--report{padding-top:12px}
-
 /* ------------------------------------------------------- progress stepper */
-.udyam-app .stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 20px;padding:6px;list-style:none;border:1px solid #fff;border-radius:22px;background:rgba(255,255,255,.8);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
+.udyam-app .stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:14px 0 20px;padding:6px;list-style:none;border:1px solid #fff;border-radius:22px;background:rgba(255,255,255,.8);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
 .udyam-app .stepper__step{position:relative;display:flex;align-items:center;gap:10px;min-width:0;border-radius:16px;padding:9px 12px}
 .udyam-app .stepper__dot{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#EAF6FF;color:var(--ink-3);font:600 12px/1 var(--f-mono)}
 .udyam-app .stepper__text{display:grid;min-width:0}
@@ -87,49 +78,6 @@
 .udyam-app .app--report .uv__status,.udyam-app .app--report .uv__note{display:none}
 .udyam-app .card__icon{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;background:#EAF6FF;color:#003BD9}
 .udyam-app .card__icon svg{width:18px;height:18px}
-
-/* ------------------------------------------- top section: promise + sample */
-.udyam-app .wyg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center;margin:8px 0 20px;border:1px solid #fff;border-radius:30px;padding:24px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);backdrop-filter:blur(8px)}
-@media (max-width:1000px){.udyam-app .wyg{grid-template-columns:minmax(0,1fr);padding:18px;border-radius:26px}}
-.udyam-app .wyg__headline{margin-top:12px;font-size:clamp(26px,3vw,38px);font-weight:600;line-height:1.05;letter-spacing:-.045em}
-.udyam-app .wyg__headline em{font-style:normal;background:linear-gradient(100deg,#00B2FC,#003BD9 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.udyam-app .wyg__lead{margin:10px 0 0;font-size:14.5px;color:var(--ink-2)}
-.udyam-app .wyg__features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin:14px 0 0;padding:0;list-style:none}
-@media (max-width:560px){.udyam-app .wyg__features{grid-template-columns:minmax(0,1fr)}}
-/* On phones the sample picture would push the start card far down; the list says the same */
-@media (max-width:640px){.udyam-app .wyg__sample{display:none}}
-.udyam-app .wyg__features li{display:flex;gap:10px}
-.udyam-app .wyg__icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:#EAF6FF;color:#003BD9}
-.udyam-app .wyg__icon svg{width:17px;height:17px}
-.udyam-app .wyg__features strong{display:block;font-size:13.5px;font-weight:600;color:var(--navy)}
-.udyam-app .wyg__features small{display:block;margin-top:1px;font-size:12px;line-height:1.45;color:var(--ink-3)}
-.udyam-app .wyg__foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:18px}
-.udyam-app .wyg__prices{display:flex;gap:8px;margin:0}
-.udyam-app .wyg__prices div{border:1px solid var(--line);border-radius:14px;background:#F8FBFF;padding:7px 12px}
-.udyam-app .wyg__prices dt{font-size:11px;color:var(--ink-3)}
-.udyam-app .wyg__prices dd{margin:1px 0 0;font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--navy)}
-.udyam-app .wyg__note{flex:1 1 200px;margin:0;font-size:12px;line-height:1.5;color:var(--ink-3)}
-.udyam-app .wyg__sample{position:relative;overflow:hidden;border-radius:22px;background:#F4F9FF;box-shadow:inset 0 0 0 1px var(--line)}
-.udyam-app .wyg__cover{position:relative;overflow:hidden;padding:18px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#003BD9 0%,#00245A 60%)}
-.udyam-app .wyg__cover::after{content:"";position:absolute;right:-4rem;bottom:-6rem;width:14rem;height:14rem;border-radius:50%;background:radial-gradient(circle,rgba(0,178,252,.4),transparent 65%)}
-.udyam-app .wyg__eyebrow{margin:0;font:600 10px/1.4 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:#7FD3FF}
-.udyam-app .wyg__name{margin:6px 0 0;font-size:19px;font-weight:600;letter-spacing:-.03em}
-.udyam-app .wyg__meta{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}
-.udyam-app .wyg__meta span{border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 9px;font-size:10.5px;color:rgba(255,255,255,.8)}
-.udyam-app .wyg__meta span:first-child{font-family:var(--f-mono)}
-.udyam-app .wyg__tally{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
-.udyam-app .wyg__tally span{border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.08);padding:7px 10px;font-size:10.5px;color:rgba(255,255,255,.75)}
-.udyam-app .wyg__tally b{display:block;font-size:19px;font-weight:600;color:#fff}
-.udyam-app .wyg__rows{display:grid;gap:6px;margin:0;padding:12px;list-style:none}
-.udyam-app .wyg__rows li{display:grid;gap:5px;border-radius:14px;background:#fff;padding:9px 12px;box-shadow:0 8px 20px -16px rgba(0,36,90,.5)}
-.udyam-app .wyg__rows li:last-child{opacity:.55}
-.udyam-app .wyg__chip{justify-self:start;border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:600}
-.udyam-app .wyg__chip--yes{background:var(--ok-soft);color:var(--ok)}
-.udyam-app .wyg__chip--check{background:var(--warn-soft);color:var(--warn)}
-.udyam-app .wyg__row-name{font-size:13px;font-weight:600;color:var(--navy)}
-.udyam-app .wyg__lines{display:grid;gap:4px}
-.udyam-app .wyg__lines i{display:block;height:4px;border-radius:4px;background:var(--line)}
-.udyam-app .wyg__lines i:last-child{width:60%}
 
 .udyam-app .card{border:1px solid #fff;border-radius:26px;padding:18px;background:rgba(255,255,255,.88);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
 .udyam-app .card__head{gap:12px;margin-bottom:12px}
@@ -231,7 +179,7 @@
 .udyam-app .uv-readline span{font:500 12px/1.4 var(--f-body);color:var(--ok)}
 
 .udyam-app .report-foot{margin:28px 0 0;max-width:720px;font-size:12.5px;line-height:1.6;color:var(--ink-3)}
-@media (max-width:480px){.udyam-app .app{padding-inline:16px}.udyam-app .card{padding:18px;border-radius:24px}.udyam-app .uv-opt{gap:12px;padding:12px}}
+@media (max-width:480px){.udyam-app .app{padding-inline:24px}.udyam-app .card{padding:18px;border-radius:24px}.udyam-app .uv-opt{gap:12px;padding:12px}}
 
 /* ---------------------------------------------- start card: the focal point */
 .udyam-app #card-udyam{position:relative;border:2px solid transparent;background:linear-gradient(180deg,#FFFFFF,#F7FBFF) padding-box,linear-gradient(135deg,#00B2FC,#003BD9) border-box;box-shadow:0 0 0 6px rgba(0,178,252,.1),0 34px 70px -34px rgba(0,59,217,.6);padding-top:24px}
