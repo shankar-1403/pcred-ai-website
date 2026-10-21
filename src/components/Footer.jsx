@@ -112,13 +112,6 @@ function Footer() {
           </button>
         </div>
       </div>
-
-      <p
-        aria-hidden="true"
-        className="pointer-events-none -mb-[0.22em] bg-gradient-to-b from-white/[0.12] to-transparent bg-clip-text text-center text-[26vw] leading-none font-semibold tracking-[-0.06em] text-transparent select-none"
-      >
-        PCRED
-      </p>
     </footer>
   )
 }

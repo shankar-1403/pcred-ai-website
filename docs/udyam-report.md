@@ -57,3 +57,11 @@ straight from `functions/udyam/src/udyam`. Prices: `functions/udyam/src/payments
 (`firebase emulators:start --only functions,database`, which needs Java 21 for the database emulator).
 Put dummy or real values in `functions/.secret.local` (git-ignored). The emulator returns the OTP in the
 response, so no SMS is sent.
+
+## Mobile OTP switch
+
+`functions/udyam/src/udyam/features.js` has `OTP_ENABLED`, read by both the website and the function.
+It is currently **off**: the pop-up asks for name, email and mobile (not verified) and fetches the
+record straight away, and the certificate route accepts a valid 10-digit mobile without a code.
+To turn the one-time code back on, set it to `true` and deploy both:
+`npm run build && firebase deploy --only functions:udyamVerify,hosting` (needs the `FAST2SMS_API_KEY` secret).

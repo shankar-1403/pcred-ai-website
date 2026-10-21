@@ -8,7 +8,8 @@ import { publicPreview } from './payments/preview.js';
 import { UDYAM_NUMBER_PRICE_INR } from './payments/price.js';
 import { sealRecord } from './payments/seal.js';
 import { readProof } from './intake/otp.js';
-import { cachedLeadResponse, rememberLead } from './leads/store.js';
+import { OTP_ENABLED, PAYMENT_ENABLED } from './udyam/features.js';
+import { rememberLead, savedLeadRecord } from './leads/store.js';
 export const MAX_BODY_BYTES = 4096;
 // Identical numbers submitted at the same moment share one Cashfree call (each call is billed).
 const inflight = new Map();
@@ -56,9 +57,29 @@ export async function handleVerifyRequest(req, deps) {
         const check = checkUdyamNumber(input);
         if (!check.ok)
             return failure('INVALID_UDYAM', check.message, 400);
-        const cached = await cachedLeadResponse(deps.findLead, check.value, deps.now?.() ?? Date.now());
-        if (cached)
-            return reply(200, cached);
+        // A record saved in the last 90 days is reused instead of a new (billed) Cashfree lookup,
+        // but it is sealed like a fresh one: the report still opens only after payment
+        const saved = await savedLeadRecord(deps.findLead, check.value, deps.now?.() ?? Date.now());
+        // Payment switched off: the report opens straight away
+        if (saved && !(deps.paymentEnabled ?? PAYMENT_ENABLED))
+            return reply(200, { ok: true, data: saved.record });
+        if (saved) {
+            let sealed;
+            try {
+                sealed = sealRecord(saved.record, deps.loadSealSecret(), deps.now?.() ?? Date.now(), UDYAM_NUMBER_PRICE_INR);
+            }
+            catch (e) {
+                logEvent('error', 'udyam_verify', { outcome: 'error', reason: 'seal_failed', detail: e instanceof Error ? e.name : 'unknown' });
+                return failure('SERVICE_UNAVAILABLE', USER_MESSAGES.SERVICE_UNAVAILABLE, 503);
+            }
+            logEvent('info', 'udyam_verify', { outcome: 'saved_lead', udyam: maskUdyamNumber(check.value) });
+            return reply(200, {
+                ok: true,
+                preview: publicPreview(saved.record),
+                sealed,
+                price: { amount: UDYAM_NUMBER_PRICE_INR, currency: 'INR' },
+            });
+        }
         const limit = (deps.limiter ?? udyamRateLimiter).check(clientIp(req.headers));
         if (!limit.allowed) {
             logEvent('warn', 'udyam_verify', { outcome: 'rate_limited_locally', udyam: maskUdyamNumber(check.value) });
@@ -81,11 +102,17 @@ export async function handleVerifyRequest(req, deps) {
             }
             const secret = deps.loadSealSecret();
             const proof = readProof(typeof body.proof === 'string' ? body.proof : '', secret, deps.now?.() ?? Date.now());
+            // With OTP switched off the number is kept as entered (the lead store checks its format)
+            const enteredPhone = typeof body.phone === 'string' ? body.phone.replace(/\s+/g, '') : '';
             await rememberLead(deps.saveLead, result.record, {
                 source: 'udyam_number',
-                phone: proof?.phone || '',
+                phone: proof?.phone || ((deps.otpEnabled ?? OTP_ENABLED) ? '' : enteredPhone),
                 women: body.women,
+                name: body.name,
+                email: body.email,
             });
+            if (!(deps.paymentEnabled ?? PAYMENT_ENABLED))
+                return reply(200, { ok: true, data: result.record });
             return reply(200, {
                 ok: true,
                 preview: publicPreview(result.record),

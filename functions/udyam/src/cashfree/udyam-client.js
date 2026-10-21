@@ -193,7 +193,13 @@ export async function verifyUdyam(udyam, deps = {}) {
         });
         if (f.retryWithNewId && attempt < MAX_ATTEMPTS)
             continue;
-        return fail(f.code, f.httpStatus, verificationId);
+        const failed = fail(f.code, f.httpStatus, verificationId);
+        // A setup problem (keys, 2FA, balance) shows Cashfree's reason on the page; it never has keys
+        if (f.code === 'SERVICE_UNAVAILABLE' || f.code === 'UPSTREAM_ERROR') {
+            const said = str(b.message) ? `: ${scrub(str(b.message))}` : '';
+            failed.message = `${failed.message} (Cashfree ${res.status} ${f.reason}${said})`.slice(0, 300);
+        }
+        return failed;
     }
     return fail('UPSTREAM_ERROR', 502);
 }

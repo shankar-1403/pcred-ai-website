@@ -22,7 +22,7 @@ function request(path, body) {
     };
 }
 
-const deps = { loadSealSecret: () => SECRET, limiter: allow, now: () => NOW };
+const deps = { loadSealSecret: () => SECRET, paymentEnabled: true, limiter: allow, now: () => NOW };
 
 const CERT = `
 UDYAM REGISTRATION NUMBER
@@ -123,12 +123,43 @@ describe('certificate seal', () => {
         expect(opened.record.split_address.street).toBe('BHOSARI MIDC ROAD');
         expect(opened.record.enterprise_type).toBe('Micro');
     });
-    it('refuses a certificate when the mobile code was not verified', async () => {
+    it('refuses a certificate when the mobile code was not verified (OTP on)', async () => {
         const res = await handleCertificateRequest(request('/api/udyam/certificate', {
             proof: '',
             record: parseCertificateText(CERT),
-        }), deps);
+        }), { ...deps, otpEnabled: true });
         expect(res.status).toBe(400);
         expect(res.body.error.code).toBe('OTP_REQUIRED');
+    });
+    it('accepts a certificate with an entered mobile number when OTP is off', async () => {
+        const saved = [];
+        const res = await handleCertificateRequest(request('/api/udyam/certificate', {
+            phone: '9876543210',
+            record: parseCertificateText(CERT),
+        }), { ...deps, otpEnabled: false, saveLead: async (lead) => saved.push(lead) });
+        expect(res.status).toBe(200);
+        expect(res.body.ok).toBe(true);
+        expect(saved[0].phone).toBe('9876543210');
+    });
+    it('accepts a certificate with no mobile number when OTP is off', async () => {
+        const saved = [];
+        const res = await handleCertificateRequest(request('/api/udyam/certificate', {
+            record: parseCertificateText(CERT),
+        }), { ...deps, otpEnabled: false, saveLead: async (lead) => saved.push(lead) });
+        expect(res.status).toBe(200);
+        expect(res.body.ok).toBe(true);
+        expect(saved[0].phone).toBe('');
+    });
+});
+
+describe('payment switched off', () => {
+    it('returns the certificate record itself, with no seal or price', async () => {
+        const res = await handleCertificateRequest(request('/api/udyam/certificate', {
+            record: parseCertificateText(CERT),
+        }), { ...deps, otpEnabled: false, paymentEnabled: false, saveLead: async () => {} });
+        expect(res.status).toBe(200);
+        expect(res.body.data.enterprise_name).toBe('SHREE GANESH ENGINEERING WORKS');
+        expect(res.body.sealed).toBeUndefined();
+        expect(res.body.price).toBeUndefined();
     });
 });

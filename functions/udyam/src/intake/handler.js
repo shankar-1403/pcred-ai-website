@@ -9,7 +9,8 @@ import { checkUdyamNumber } from '../udyam/validate.js';
 import { checkOtp, issueOtp, readProof } from './otp.js';
 import { sendFast2Sms } from './sms.js';
 import { certificateBody } from './certificate.js';
-import { cachedLeadResponse, rememberLead } from '../leads/store.js';
+import { rememberLead, savedLeadRecord } from '../leads/store.js';
+import { OTP_ENABLED, PAYMENT_ENABLED } from '../udyam/features.js';
 
 const PHONE = /^[6-9]\d{9}$/;
 const otpSendLimiter = new RateLimiter(5, 20);
@@ -171,17 +172,21 @@ export async function handleCertificateRequest(req, deps) {
         return failure('SERVICE_UNAVAILABLE', 'The certificate could not be saved. Please try again later.', 503);
     const now = deps.now?.() ?? Date.now();
     const proof = readProof(typeof body.proof === 'string' ? body.proof : '', secret, now);
-    if (!proof)
-        return failure('OTP_REQUIRED', 'Verify your mobile number before continuing.', 400);
+    let phone = proof?.phone || '';
+    if (!proof) {
+        if (deps.otpEnabled ?? OTP_ENABLED)
+            return failure('OTP_REQUIRED', 'Verify your mobile number before continuing.', 400);
+        // OTP switched off: no mobile step at all; the payment form asks for the number
+        phone = PHONE.test(phoneOf(body)) ? phoneOf(body) : '';
+    }
     const built = certificateBody(body.record);
     if (!built.ok)
         return failure('INVALID_CERTIFICATE', built.message, 400);
     const record = normalizeUdyamSuccess(built.body);
     if (!record)
         return failure('INVALID_CERTIFICATE', 'The certificate details could not be used. Upload a clearer PDF.', 400);
-    const cached = await cachedLeadResponse(deps.findLead, record.udyam_number, now);
-    if (cached)
-        return reply(200, cached);
+    // Already saved: seal the upload for payment as usual, without storing a second lead
+    const saved = await savedLeadRecord(deps.findLead, record.udyam_number, now);
     let sealed;
     try {
         sealed = sealRecord(record, secret, now, CERTIFICATE_PRICE_INR);
@@ -190,11 +195,18 @@ export async function handleCertificateRequest(req, deps) {
         return failure('SERVICE_UNAVAILABLE', 'The certificate could not be saved. Please try again later.', 503);
     }
     logEvent('info', 'udyam_certificate', { outcome: 'sealed' });
-    await rememberLead(deps.saveLead, record, {
-        source: 'certificate',
-        phone: proof.phone,
-        women: body.women,
-    });
+    if (!saved) {
+        await rememberLead(deps.saveLead, record, {
+            source: 'certificate',
+            phone,
+            women: body.women,
+            name: body.name,
+            email: body.email,
+        });
+    }
+    // Payment switched off: the report opens straight away
+    if (!(deps.paymentEnabled ?? PAYMENT_ENABLED))
+        return reply(200, { ok: true, data: record });
     return reply(200, {
         ok: true,
         preview: publicPreview(record),
@@ -203,7 +215,10 @@ export async function handleCertificateRequest(req, deps) {
     });
 }
 
-/** Looks up a report already saved for this Udyam number. A miss tells the visitor to continue. */
+/**
+ * Kept for pages still calling it. Saved reports are never handed out here: every report opens
+ * through payment, so this always tells the visitor to continue.
+ */
 export async function handleLeadRequest(req, deps) {
     const gated = begin(req, deps, 2000, leadLimiter);
     if (gated.done)
@@ -212,8 +227,5 @@ export async function handleLeadRequest(req, deps) {
     const check = checkUdyamNumber(body.udyam);
     if (!check.ok)
         return failure('INVALID_UDYAM', check.message, 400);
-    const cached = await cachedLeadResponse(deps.findLead, check.value, deps.now?.() ?? Date.now());
-    if (cached)
-        return reply(200, cached);
     return reply(200, { ok: true, cached: false });
 }

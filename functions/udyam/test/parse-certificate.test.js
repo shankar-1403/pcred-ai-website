@@ -116,6 +116,61 @@ describe('certificate OCR text', () => {
         });
     });
 
+    // What OCR gives for a scanned print certificate: the shaded NIC header is lost, the name row
+    // is followed by the classification table, two address labels sit 13pt apart, and the
+    // mobile number row comes after the address table.
+    it('reads an OCR layout of a scanned print certificate', () => {
+        const parsed = parseCertificateLayout([
+            { y: 745, parts: [{ x: 54, text: 'UDYAM REGISTRATION NUMBER' }, { x: 335, text: 'UDYAM-MH-17-0000002' }] },
+            { y: 718, parts: [{ x: 81, text: 'NAME OF ENTERPRISE' }, { x: 357, text: 'EXAMPLE APPARELS' }] },
+            { y: 684, parts: [{ x: 256, text: 'SNo.' }, { x: 284, text: 'Classification Year' }, { x: 377, text: 'Enterprise Type' }, { x: 458, text: 'Classification Date' }] },
+            { y: 668, parts: [{ x: 264, text: '1' }, { x: 309, text: '2025-26' }, { x: 400, text: 'Micro' }, { x: 477, text: '01/04/2025' }] },
+            { y: 651, parts: [{ x: 78, text: 'TYPE OF ENTERPRISE' }] },
+            { y: 581, parts: [{ x: 93, text: 'MAJOR ACTIVITY' }, { x: 332, text: 'MANUFACTURING' }] },
+            { y: 451, parts: [{ x: 325, text: '7' }, { x: 402, text: 'Premises/' }, { x: 444, text: 'Sample Heights' }] },
+            { y: 447, parts: [{ x: 251, text: 'Flat/Door/Block' }] },
+            { y: 441, parts: [{ x: 251, text: 'No.' }] },
+            { y: 438, parts: [{ x: 402, text: 'Building' }] },
+            { y: 423, parts: [{ x: 283, text: 'Town' }, { x: 324, text: 'Station Area' }, { x: 402, text: 'Block' }, { x: 444, text: 'East Block' }] },
+            { y: 419, parts: [{ x: 47, text: 'OFFICAL ADDRESS OF ENTERPRISE' }, { x: 250, text: 'Village/' }] },
+            { y: 406, parts: [{ x: 251, text: 'Road/Street/Lane' }, { x: 324, text: 'Market Road' }, { x: 444, text: 'Sample Town' }] },
+            { y: 403, parts: [{ x: 402, text: 'City' }] },
+            { y: 390, parts: [{ x: 251, text: 'State' }, { x: 324, text: 'MAHARASHTRA' }, { x: 402, text: 'District' }, { x: 444, text: 'PALGHAR,' }, { x: 495, text: 'Pin 401000' }] },
+            { y: 373, parts: [{ x: 324, text: '9800000000' }, { x: 444, text: 'owner@example.com' }] },
+            { y: 370, parts: [{ x: 251, text: 'Mobile' }, { x: 402, text: 'Email:' }] },
+            { y: 343, parts: [{ x: 67, text: 'DATE OF INCORPORATION /' }] },
+            { y: 337, parts: [{ x: 376, text: '29/07/2021' }] },
+            { y: 248, parts: [{ x: 275, text: '14 -' }, { x: 339, text: '1410 -' }, { x: 411, text: '14104 -' }] },
+            { y: 245, parts: [{ x: 490, text: 'Manufacturing' }] },
+            { y: 235, parts: [{ x: 275, text: 'Manufacture' }, { x: 339, text: 'Manufacture of' }, { x: 410, text: 'Manufacture of' }] },
+            { y: 224, parts: [{ x: 410, text: 'wearing apparel' }] },
+            { y: 160, parts: [{ x: 54, text: 'DATE OF UDYAM REGISTRATION' }, { x: 376, text: '30/07/2021' }] },
+        ]);
+        expect(parsed.enterprise_name).toBe('EXAMPLE APPARELS');
+        expect(parsed.enterprise_type).toBe('Micro');
+        expect(parsed.major_activity).toBe('Manufacturing');
+        expect(parsed.classification_year).toBe('2025-26');
+        expect(parsed.split_address).toMatchObject({
+            flat: '7',
+            building: 'Sample Heights',
+            village: 'Station Area',
+            street: 'Market Road',
+            block: 'East Block',
+            city: 'Sample Town',
+            state: 'MAHARASHTRA',
+            district: 'PALGHAR',
+            pincode: '401000',
+        });
+        expect(parsed.nic_codes).toEqual([
+            expect.objectContaining({ nic_2_digit: '14', nic_4_digit: '1410', nic_5_digit: '14104', nic_5_description: 'Manufacture of wearing apparel', activity: 'Manufacturing' }),
+        ]);
+    });
+
+    it('cuts the classification table off a name read as plain text', () => {
+        const parsed = parseCertificateText('UDYAM REGISTRATION NUMBER UDYAM-MH-18-0000003\nNAME OF ENTERPRISE\nM/S EXAMPLE PRIVATE LIMITED * 1 2024-25 Micro 27/04/2024\nTYPE OF ENTERPRISE');
+        expect(parsed.enterprise_name).toBe('M/S EXAMPLE PRIVATE LIMITED');
+    });
+
     // Layout of the portal's "Print : Udyam Registration Certificate": headers centred over
     // left-aligned values, wrapped NIC descriptions, and the address as a label/value grid.
     it('reads the print-certificate layout (shifted NIC columns, address grid)', () => {

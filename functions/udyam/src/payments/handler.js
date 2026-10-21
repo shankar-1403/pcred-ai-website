@@ -24,14 +24,17 @@ function corsHeaders(headers, allowed) {
     };
 }
 
+// Where Cashfree sends the visitor back after paying. Cashfree only accepts return URLs on
+// whitelisted domains, so this is always one of the site's own addresses: never the function's
+// own host (which local testing goes through) or anything a request claims.
+export const SITE_URL = (process.env.UDYAM_SITE_URL || 'https://pcred-ai-website.web.app').replace(/\/+$/, '');
+const SITE_ORIGINS = [SITE_URL, 'https://pcred-ai-website.web.app', 'https://pcred-ai-website.firebaseapp.com'];
+
 function siteOrigin(headers) {
-    const origin = headers.get('origin');
-    if (origin && /^https:\/\//i.test(origin))
-        return origin.replace(/\/+$/, '');
-    const host = (headers.get('x-forwarded-host') ?? headers.get('host') ?? '').split(',')[0].trim();
-    if (host && !host.startsWith('localhost') && !host.startsWith('127.0.0.1'))
-        return `https://${host}`;
-    return 'https://pcred-ai-website.web.app';
+    const origin = (headers.get('origin') || '').trim().toLowerCase().replace(/\/+$/, '');
+    const allowed = [...SITE_ORIGINS, ...allowedOriginList(process.env.UDYAM_ALLOWED_ORIGINS ?? '')]
+        .filter((o) => /^https:\/\//.test(o));
+    return allowed.includes(origin) ? origin : SITE_URL;
 }
 
 function guard(req, deps) {
@@ -120,8 +123,10 @@ export async function handleCheckoutRequest(req, deps) {
         sealTag: sealHash(sealed),
     }, deps.fetchImpl);
     if (!created.ok) {
-        logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'order_rejected', cf_http: created.httpStatus, cf_code: created.code });
-        return failure('SERVICE_UNAVAILABLE', 'Payment could not be started. Please try again later.', created.httpStatus === 504 ? 504 : 503);
+        logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'order_rejected', cf_http: created.httpStatus, cf_code: created.code, cf_message: created.message });
+        // Cashfree's reason (it never contains keys) makes a setup problem visible on the page
+        const reason = `${created.code}: ${created.message}`.replace(/\s+/g, ' ').slice(0, 160);
+        return failure('SERVICE_UNAVAILABLE', `Payment could not be started. Please try again later. (Cashfree ${reason})`, created.httpStatus === 504 ? 504 : 503);
     }
     logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId });
     return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: opened.amount, currency: 'INR' } });

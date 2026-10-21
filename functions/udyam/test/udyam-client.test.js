@@ -105,7 +105,11 @@ describe('verifyUdyam: errors', () => {
             const r = await verifyUdyam(URN, { fetchImpl: fakeFetch(res).impl, config });
             expect(r).toMatchObject({ ok: false, httpStatus, code });
             if (!r.ok) {
-                expect(r.message).toBe(USER_MESSAGES[code]);
+                expect(r.message.startsWith(USER_MESSAGES[code])).toBe(true);
+                // Setup problems carry Cashfree's reason so they can be fixed from the page
+                if (code === 'SERVICE_UNAVAILABLE' || code === 'UPSTREAM_ERROR')
+                    expect(r.message).toContain(`${reason}`);
+                expect(r.message).not.toMatch(/UDYAM-[A-Z]{2}-\d{2}-\d{7}/);
                 expect(r.reference).toMatch(/^pcred_udyam_/);
             }
             expect(logs.join('\n')).toContain(`"reason":"${reason}"`);

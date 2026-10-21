@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { handleVerifyRequest } from '../src/handler.js';
 import { handleCertificateRequest, handleLeadRequest, handleOtpSendRequest, handleOtpVerifyRequest } from '../src/intake/handler.js';
-import { CERTIFICATE_PRICE_INR } from '../src/payments/price.js';
+import { CERTIFICATE_PRICE_INR, UDYAM_NUMBER_PRICE_INR } from '../src/payments/price.js';
+import { openRecord } from '../src/payments/seal.js';
 import { LEAD_ACTIVE_MS, leadDocument, leadState } from '../src/leads/store.js';
 import { parseCertificateText } from '../src/udyam/parse-certificate.js';
 
@@ -69,12 +70,22 @@ describe('lead documents', () => {
         expect(leadDocument(record, { phone: '123' }).phone).toBe('');
         expect(leadDocument(record, {}).women_hold_51).toBeNull();
     });
+
+    it('keeps the visitor name and email, and drops malformed ones', () => {
+        const lead = leadDocument(record, { name: '  Asha   Rao ', email: ' Asha@Example.COM ' });
+        expect(lead.name).toBe('Asha Rao');
+        expect(lead.email).toBe('asha@example.com');
+        const bad = leadDocument(record, { name: 42, email: 'not-an-email' });
+        expect(bad.name).toBe('');
+        expect(bad.email).toBe('');
+        expect(leadDocument(record, { name: 'x'.repeat(300) }).name).toHaveLength(100);
+    });
 });
 
 describe('saving a lead', () => {
     it('stores the Cashfree record after a verified mobile code', async () => {
         process.env.OTP_DEV_ECHO = '1';
-        const otpDeps = { loadSealSecret: () => SECRET, limiter: allow, now: () => NOW };
+        const otpDeps = { loadSealSecret: () => SECRET, paymentEnabled: true, limiter: allow, now: () => NOW };
         const sent = await handleOtpSendRequest(request('/api/udyam/otp/send', { phone: '9876543210' }), otpDeps);
         const verified = await handleOtpVerifyRequest(request('/api/udyam/otp/verify', {
             phone: '9876543210',
@@ -87,7 +98,7 @@ describe('saving a lead', () => {
             proof: verified.body.proof,
             women: false,
         }), {
-            loadSealSecret: () => SECRET,
+            loadSealSecret: () => SECRET, paymentEnabled: true,
             limiter: allow,
             now: () => NOW,
             loadConfig: () => ({}),
@@ -105,10 +116,10 @@ describe('saving a lead', () => {
         });
         expect(saved[0].details.enterprise_name).toBe(record.enterprise_name);
     });
-    it('returns a saved report and does not call Cashfree', async () => {
+    it('reuses a saved record without calling Cashfree, but still asks for payment', async () => {
         let called = false;
         const res = await handleVerifyRequest(request('/api/udyam/verify', { udyam: record.udyam_number }), {
-            loadSealSecret: () => SECRET,
+            loadSealSecret: () => SECRET, paymentEnabled: true,
             limiter: allow,
             now: () => NOW,
             loadConfig: () => ({}),
@@ -123,15 +134,16 @@ describe('saving a lead', () => {
         });
         expect(called).toBe(false);
         expect(res.status).toBe(200);
-        expect(res.body.cached).toBe(true);
-        expect(res.body.women).toBe(true);
-        expect(res.body.data.enterprise_name).toBe(record.enterprise_name);
-        expect(res.body.sealed).toBeUndefined();
+        expect(res.body.cached).toBeUndefined();
+        expect(res.body.data).toBeUndefined();
+        expect(res.body.preview.enterprise_name).toBe(record.enterprise_name);
+        expect(res.body.price.amount).toBe(UDYAM_NUMBER_PRICE_INR);
+        expect(openRecord(res.body.sealed, SECRET, NOW).record.udyam_number).toBe(record.udyam_number);
     });
     it('fetches again when the lead lookup fails', async () => {
         let called = false;
         const res = await handleVerifyRequest(request('/api/udyam/verify', { udyam: record.udyam_number }), {
-            loadSealSecret: () => SECRET,
+            loadSealSecret: () => SECRET, paymentEnabled: true,
             limiter: allow,
             loadConfig: () => ({}),
             verify: async () => { called = true; return { ok: true, record }; },
@@ -143,7 +155,7 @@ describe('saving a lead', () => {
     });
     it('still returns the preview when the database write fails', async () => {
         const res = await handleVerifyRequest(request('/api/udyam/verify', { udyam: record.udyam_number }), {
-            loadSealSecret: () => SECRET,
+            loadSealSecret: () => SECRET, paymentEnabled: true,
             limiter: allow,
             loadConfig: () => ({}),
             verify: async () => ({ ok: true, record }),
@@ -154,7 +166,7 @@ describe('saving a lead', () => {
     });
     it('stores certificate details as a certificate lead', async () => {
         process.env.OTP_DEV_ECHO = '1';
-        const otpDeps = { loadSealSecret: () => SECRET, limiter: allow, now: () => NOW };
+        const otpDeps = { loadSealSecret: () => SECRET, paymentEnabled: true, limiter: allow, now: () => NOW };
         const sent = await handleOtpSendRequest(request('/api/udyam/otp/send', { phone: '9123456780' }), otpDeps);
         const verified = await handleOtpVerifyRequest(request('/api/udyam/otp/verify', {
             phone: '9123456780',
@@ -179,7 +191,7 @@ describe('saving a lead', () => {
     });
     it('reuses a saved certificate lead instead of sealing a new one', async () => {
         process.env.OTP_DEV_ECHO = '1';
-        const otpDeps = { loadSealSecret: () => SECRET, limiter: allow, now: () => NOW };
+        const otpDeps = { loadSealSecret: () => SECRET, paymentEnabled: true, limiter: allow, now: () => NOW };
         const sent = await handleOtpSendRequest(request('/api/udyam/otp/send', { phone: '9123456780' }), otpDeps);
         const verified = await handleOtpVerifyRequest(request('/api/udyam/otp/verify', {
             phone: '9123456780',
@@ -203,9 +215,10 @@ describe('saving a lead', () => {
             }),
         });
         delete process.env.OTP_DEV_ECHO;
-        expect(res.body.cached).toBe(true);
-        expect(res.body.source).toBe('certificate');
-        expect(res.body.women).toBe(false);
+        expect(res.body.cached).toBeUndefined();
+        expect(res.body.data).toBeUndefined();
+        expect(res.body.sealed).toBeTruthy();
+        expect(res.body.price.amount).toBe(CERTIFICATE_PRICE_INR);
         expect(saved).toHaveLength(0);
     });
 });
@@ -219,7 +232,7 @@ describe('lead lookup', () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true, cached: false });
     });
-    it('returns the stored report for an active lead', async () => {
+    it('never hands out a stored report', async () => {
         const seen = [];
         const res = await handleLeadRequest(request('/api/udyam/lead', { udyam: `  ${record.udyam_number.toLowerCase()}  ` }), {
             limiter: allow,
@@ -235,8 +248,25 @@ describe('lead lookup', () => {
                 };
             },
         });
-        expect(seen).toEqual([record.udyam_number]);
-        expect(res.body.cached).toBe(true);
+        expect(seen).toEqual([]);
+        expect(res.body).toEqual({ ok: true, cached: false });
+    });
+});
+
+describe('payment switched off', () => {
+    it('verify returns the full record, with no seal or price', async () => {
+        const res = await handleVerifyRequest(request('/api/udyam/verify', { udyam: record.udyam_number }), {
+            loadSealSecret: () => SECRET,
+            paymentEnabled: false,
+            limiter: allow,
+            now: () => NOW,
+            loadConfig: () => ({}),
+            verify: async () => ({ ok: true, record }),
+            findLead: async () => null,
+            saveLead: async () => {},
+        });
+        expect(res.status).toBe(200);
         expect(res.body.data.udyam_number).toBe(record.udyam_number);
+        expect(res.body.sealed).toBeUndefined();
     });
 });

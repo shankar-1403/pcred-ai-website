@@ -40,10 +40,27 @@ function Table({ caption, columns, rows, empty }) {
 }
 const serial = (s, i) => (hasText(s) ? s : String(i + 1));
 const date = (s) => (hasText(s) ? formatDate(s) : '');
+const list = (v) => (Array.isArray(v) ? v : []);
+
+/**
+ * A saved report comes back from the Realtime Database without its empty lists (the database
+ * does not store empty arrays), and certificates have no unit locations or history. Fill them in.
+ */
+function withLists(raw) {
+    return {
+        ...raw,
+        split_address: raw?.split_address && typeof raw.split_address === 'object' ? raw.split_address : {},
+        unit_locations: list(raw?.unit_locations),
+        nic_codes: list(raw?.nic_codes),
+        classification_history: list(raw?.classification_history),
+    };
+}
+
 /** Everything Cashfree returned for the verified Udyam Registration Number. */
-export default function UdyamDetails({ record }) {
+export default function UdyamDetails({ record: raw }) {
     // Starts folded: the scheme report above is what most visitors came for
     const [open, setOpen] = useState(false);
+    const record = withLists(raw);
     const a = record.split_address;
     return (<section className="ud" id="udyam-details" aria-labelledby="ud-title">
       <header className="ud__head">

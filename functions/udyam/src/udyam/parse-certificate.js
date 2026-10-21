@@ -35,7 +35,7 @@ function word(block, pattern) {
 }
 
 function dateAfter(text, label) {
-    const block = section(text, label, 'DATE OF|NATIONAL INDUSTRY|TYPE OF ORGAN|DIC |NAME OF UNIT|OFFICIAL ADDRESS');
+    const block = section(text, label, 'DATE OF|NATIONAL INDUSTRY|TYPE OF ORGAN|DIC |NAME OF UNIT|OFFICI?AL ADDRESS');
     const m = /(\d{1,2})\s*[\/.-]\s*(\d{1,2})\s*[\/.-]\s*(\d{4})/.exec(block);
     return m ? `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3]}` : '';
 }
@@ -74,23 +74,31 @@ function nicCodes(text) {
  * Reads the fields a Udyam Registration Certificate usually prints.
  * Returns null when no Udyam number is present.
  */
+// The name can run into the classification table below it ("… LIMITED * 1 2024-25 Micro 27/04/2024")
+function cleanEnterpriseName(value) {
+    return String(value || '')
+        .replace(/\s*\*?\s*\b\d{1,2}\s+\d{4}\s*[-–]\s*\d{2,4}\b.*$/, '')
+        .replace(/\s*\*\s*$/, '')
+        .trim();
+}
+
 export function parseCertificateText(text) {
     const source = String(text || '').replace(/\r/g, '\n');
     const udyam = extractUdyamNumber(source);
     if (!udyam)
         return null;
-    const addressBlock = section(source, 'OFFICIAL ADDRESS OF ENTERPRISE', 'DATE OF INCORPORATION|DATE OF COMMENCEMENT|DATE OF UDYAM|NATIONAL INDUSTRY');
+    const addressBlock = section(source, 'OFFICI?AL ADDRESS OF ENTERPRISE', 'DATE OF INCORPORATION|DATE OF COMMENCEMENT|DATE OF UDYAM|NATIONAL INDUSTRY');
     const pin = labeled(addressBlock, 'Pin(?:code)?').replace(/\D/g, '').slice(0, 6);
-    const orgBlock = section(source, 'TYPE OF ORGANIS(?:ATION|ZATION)', 'DATE OF|NATIONAL INDUSTRY|DIC |OFFICIAL ADDRESS|NAME OF');
+    const orgBlock = section(source, 'TYPE OF ORGANIS(?:ATION|ZATION)', 'DATE OF|NATIONAL INDUSTRY|DIC |OFFICI?AL ADDRESS|NAME OF');
     const orgLine = firstLine(orgBlock);
     const orgFallback = /\b(Proprietary|Partnership|Private Limited Company|Limited Liability Partnership|Hindu Undivided Family|Public Limited Company|Co-operative Society|Society|Trust)\b/i.exec(source);
     const fy = /FY\s*(\d{4}\s*[-–]\s*\d{2,4})/i.exec(source);
     return {
         udyam_number: udyam,
-        enterprise_name: firstLine(section(source, 'NAME OF ENTERPRISE', 'TYPE OF ENTERPRISE|MAJOR ACTIVITY|SOCIAL CATEGORY|NAME OF UNIT')),
-        enterprise_type: word(section(source, 'TYPE OF ENTERPRISE', 'MAJOR ACTIVITY|SOCIAL CATEGORY|NAME OF UNIT|OFFICIAL ADDRESS'), /\b(MICRO|SMALL|MEDIUM)\b/i),
-        major_activity: word(section(source, 'MAJOR ACTIVITY', 'SOCIAL CATEGORY|NAME OF UNIT|OFFICIAL ADDRESS|TYPE OF'), /\b(MANUFACTURING|SERVICES|TRADING)\b/i),
-        social_category: (/\b(GENERAL|OBC|SC|ST|SCHEDULED CASTE|SCHEDULED TRIBE)\b/i.exec(section(source, 'SOCIAL CATEGORY', 'NAME OF UNIT|OFFICIAL ADDRESS|MAJOR ACTIVITY|TYPE OF')) || [])[1]?.toUpperCase() || '',
+        enterprise_name: cleanEnterpriseName(firstLine(section(source, 'NAME OF ENTERPRISE', 'TYPE OF ENTERPRISE|MAJOR ACTIVITY|SOCIAL CATEGORY|NAME OF UNIT|SNO'))),
+        enterprise_type: word(section(source, 'TYPE OF ENTERPRISE', 'MAJOR ACTIVITY|SOCIAL CATEGORY|NAME OF UNIT|OFFICI?AL ADDRESS'), /\b(MICRO|SMALL|MEDIUM)\b/i),
+        major_activity: word(section(source, 'MAJOR ACTIVITY', 'SOCIAL CATEGORY|NAME OF UNIT|OFFICI?AL ADDRESS|TYPE OF'), /\b(MANUFACTURING|SERVICES|TRADING)\b/i),
+        social_category: (/\b(GENERAL|OBC|SC|ST|SCHEDULED CASTE|SCHEDULED TRIBE)\b/i.exec(section(source, 'SOCIAL CATEGORY', 'NAME OF UNIT|OFFICI?AL ADDRESS|MAJOR ACTIVITY|TYPE OF')) || [])[1]?.toUpperCase() || '',
         organization_type: orgLine || (orgFallback ? orgFallback[1] : ''),
         date_of_incorporation: dateAfter(source, 'DATE OF INCORPORATION'),
         date_of_commencement: dateAfter(source, 'DATE OF COMMENCEMENT'),
@@ -135,6 +143,20 @@ function assignColumns(headers, values) {
         cells[index].value = cells[index].value ? `${cells[index].value} ${value.text}` : value.text;
     }
     return cells;
+}
+
+/** Text to the right of a label on the same row ("NAME OF ENTERPRISE   M/S EXAMPLE PVT LTD"). */
+function sameLineValue(lines, labelTest) {
+    for (const line of lines) {
+        const index = line.parts.findIndex((part) => labelTest.test(part.text));
+        if (index < 0)
+            continue;
+        const label = line.parts[index];
+        const value = line.parts.filter((part) => part.x > label.x && part !== label).map((part) => part.text).join(' ').replace(/\s+/g, ' ').trim();
+        if (value)
+            return value;
+    }
+    return '';
 }
 
 function columnValue(lines, headerTest) {
@@ -223,11 +245,22 @@ const NIC_LEVELS = [
  * left-aligned values) and descriptions wrap onto following lines. A row starts at a 5-digit code;
  * each wrapped line is joined to the column it sits under.
  */
+const ACTIVITY_WORD = /^(manufactur\w*|services?|trading)$/i;
+
 function nicRows(lines) {
-    const start = lines.findIndex((line) => line.parts.some((part) => /nic\s*5\s*digit/i.test(part.text)));
-    if (start < 0)
-        return [];
-    const activityX = lines[start].parts.find((part) => /^activity/i.test(part.text))?.x ?? Infinity;
+    let start = lines.findIndex((line) => line.parts.some((part) => /nic\s*5\s*digit/i.test(part.text)));
+    if (start < 0) {
+        // OCR often loses the shaded header row: start just above the first row that has both a
+        // 4-digit and a 5-digit code
+        const first = lines.findIndex((line) => line.parts.some((p) => /^\d{5}\b/.test(p.text)) && line.parts.some((p) => /^\d{4}\b(?!\d)/.test(p.text)));
+        if (first < 0)
+            return [];
+        start = first - 1;
+    }
+    const header = lines[start] || { parts: [] };
+    const activityX = header.parts.find((part) => /^activity/i.test(part.text))?.x ?? Infinity;
+    // Without a header, the activity is the right-most cell of a row, after the 5-digit code
+    const isActivity = (part, row) => ACTIVITY_WORD.test(part.text) && (part.x >= activityX - 15 || (row && row.columns.some((col) => col.level === '5' && part.x > col.x + 30)));
     const out = [];
     let row = null;
     for (const line of lines.slice(start + 1, start + 60)) {
@@ -236,22 +269,28 @@ function nicRows(lines) {
         if (line.parts.some((part) => NIC_LEVELS[0][1].test(part.text))) {
             row = { columns: [], activity: '' };
             out.push(row);
+            const rest = [];
             for (const part of line.parts) {
-                if (part.x >= activityX - 15 && /manufactur|servic|trad/i.test(part.text)) {
-                    row.activity = part.text;
+                const level = NIC_LEVELS.find(([, re]) => re.test(part.text));
+                if (!level) {
+                    rest.push(part);
                     continue;
                 }
-                const level = NIC_LEVELS.find(([, re]) => re.test(part.text));
-                if (!level)
-                    continue;
                 const m = level[1].exec(part.text);
                 row.columns.push({ level: level[0], x: part.x, code: m[1], description: m[2] });
             }
+            const activity = rest.find((part) => isActivity(part, row));
+            if (activity)
+                row.activity = activity.text;
             continue;
         }
         if (!row)
             continue;
         for (const part of line.parts) {
+            if (!row.activity && isActivity(part, row)) {
+                row.activity = part.text;
+                continue;
+            }
             const column = row.columns.find((col) => Math.abs(col.x - part.x) <= 8);
             if (column)
                 column.description = `${column.description} ${part.text}`;
@@ -298,6 +337,10 @@ function gridKey(label) {
         return 'district';
     if (/^pin/.test(t))
         return 'pincode';
+    if (/^mobile\b/.test(t))
+        return 'mobile';
+    if (/^e-?mail\b/.test(t))
+        return 'email';
     return '';
 }
 
@@ -317,24 +360,29 @@ function addressGrid(lines) {
     const rightX = rightLabel ? rightLabel.x : Infinity;
     const region = [];
     for (const line of lines.slice(Math.max(0, start - 3), start + 30)) {
-        if (/^(mobile|email)/i.test(line.parts.find((p) => Math.abs(p.x - leftX) <= 10)?.text || '') && region.length)
-            break;
         if (/date of incorporation|date of commencement|national industry/i.test(lineText(line)))
             break;
         region.push(line);
     }
+    // Where each value column starts. Labels can wrap sideways ("Village/" then "Town"), so
+    // anything left of the value column belongs to the label.
+    const parts = region.flatMap((line) => line.parts);
+    const valueLeftX = Math.min(...parts.filter((p) => p.x > leftX + 40 && p.x < rightX - 10).map((p) => p.x), Infinity);
+    const valueRightX = Math.min(...parts.filter((p) => p.x > rightX + 20).map((p) => p.x), Infinity);
     const labels = [];
     const values = [];
     for (const line of region) {
         for (const part of line.parts) {
             const y = line.y ?? 0;
-            if (Math.abs(part.x - leftX) <= 10)
+            if (part.x < leftX - 10)
+                continue;
+            if (part.x < valueLeftX - 5)
                 labels.push({ side: 0, y, text: part.text });
-            else if (Math.abs(part.x - rightX) <= 10)
-                labels.push({ side: 1, y, text: part.text });
-            else if (part.x > leftX + 10 && part.x < rightX - 10)
+            else if (part.x < rightX - 10)
                 values.push({ side: 0, y, text: part.text });
-            else if (part.x > rightX + 10)
+            else if (part.x < valueRightX - 5)
+                labels.push({ side: 1, y, text: part.text });
+            else
                 values.push({ side: 1, y, text: part.text });
         }
     }
@@ -343,7 +391,11 @@ function addressGrid(lines) {
     for (const side of [0, 1]) {
         let current = null;
         for (const frag of labels.filter((l) => l.side === side)) {
-            if (current && Math.abs(current.last - frag.y) <= 13) {
+            // Joins a wrapped label ("Name of" / "Premises/" / "Building"), but never two different
+            // labels that happen to sit close together on a scan ("Village/Town", "Road/Street/Lane")
+            const own = gridKey(frag.text);
+            const group = current ? gridKey(current.text) : '';
+            if (current && Math.abs(current.last - frag.y) <= 14 && (!own || !group || own === group)) {
                 current.text += ` ${frag.text}`;
                 current.last = frag.y;
                 current.ys.push(frag.y);
@@ -393,12 +445,22 @@ export function parseCertificateLayout(lines) {
     const parsed = parseCertificateText(lines.map(lineText).join('\n'));
     if (!parsed)
         return null;
+    // The name sits on the same row as its label; take that cell only
+    const name = sameLineValue(lines, /^name of enterprise/i);
+    if (name.length >= 2)
+        parsed.enterprise_name = name.slice(0, 160);
+    if (!parsed.major_activity) {
+        const activity = /\b(manufacturing|services|trading)\b/i.exec(sameLineValue(lines, /^major activity/i));
+        if (activity)
+            parsed.major_activity = titleWord(activity[1]);
+    }
     const type = titleWord(columnValue(lines, /enterprise\s*type/i));
     if (type)
         parsed.enterprise_type = type;
-    const year = columnValue(lines, /classification\s*year/i).replace(/\s+/g, '');
+    // Only the year itself; OCR can run the row number into it ("1 2025-26")
+    const year = /(\d{4})\s*[-–]\s*(\d{2,4})/.exec(columnValue(lines, /classification\s*year/i));
     if (year && !parsed.classification_year)
-        parsed.classification_year = year.slice(0, 20);
+        parsed.classification_year = `${year[1]}-${year[2]}`;
     const address = addressTable(lines) || addressGrid(lines);
     if (address)
         parsed.split_address = { ...parsed.split_address, ...address };

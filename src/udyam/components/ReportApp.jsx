@@ -4,14 +4,15 @@ import UdyamVerification from './UdyamVerification';
 import UdyamDetails from './UdyamDetails';
 import LockedPreview, { unlockPaidOrder } from './LockedPreview';
 import { DETAILS_CARD_HTML, QUESTIONS_CARD_HTML } from './legacy-markup';
+import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
 
 const PREVIEW_KEY = 'pcred_udyam_preview';
 
 // The page walks the visitor through four stages. Only what matters for the current stage is shown.
+// With payment switched off (features.js) the Payment step is left out
 const STAGES = [
     ['Your details', 'Udyam number or certificate'],
-    ['Verify mobile', 'One-time code by SMS'],
-    ['Payment', 'Secure, by Cashfree'],
+    ...(PAYMENT_ENABLED ? [['Payment', 'Secure, by Cashfree']] : []),
     ['Your report', 'Schemes matched to you'],
 ];
 
@@ -34,6 +35,29 @@ function Stepper({ current }) {
 // The report engine (src/udyam/report/engine.js) owns the markup in the memoised blocks below:
 // it fills fields, wires buttons and renders the report by element id. React renders those
 // blocks once and never re-renders them; they are shown or hidden around them, never unmounted.
+const OWNERSHIP_OPTIONS = [[true, 'Yes, 51% or more'], [false, 'No, less than 51%']];
+
+// Asked once, below the business details; the answer goes with the mobile verification
+function OwnershipCard({ value, alert, onChange }) {
+    return (<div className={`card ownership${alert ? ' ownership--alert' : ''}`} id="card-ownership">
+      <div className="card__head">
+        <span className="card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c1.7.6 2.7 2.4 3 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+        </span>
+        <div>
+          <h2 id="ownership-q">Do women hold 51% or more of the business?</h2>
+          <p className="card__sub card__sub--tight">Some schemes give women-owned businesses extra support.</p>
+        </div>
+      </div>
+      <div className="ownership__options" role="group" aria-labelledby="ownership-q">
+        {OWNERSHIP_OPTIONS.map(([option, label]) => (<button key={label} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className="ownership__option">
+            {label}
+          </button>))}
+      </div>
+      {alert ? <p className="ownership__alert" role="alert">Answer this to continue.</p> : null}
+    </div>);
+}
+
 const DetailsCard = memo(function DetailsCard() {
     return <div className="card" id="card-details" dangerouslySetInnerHTML={{ __html: DETAILS_CARD_HTML }}/>;
 });
@@ -70,15 +94,27 @@ export default function ReportApp() {
     const [previewPack, setPreviewPack] = useState(null);
     const [returnError, setReturnError] = useState('');
     const [hasDetails, setHasDetails] = useState(false);
+    // Women's ownership, asked below the Business details card before mobile verification
+    const [women, setWomen] = useState(null);
+    const [ownershipAlert, setOwnershipAlert] = useState(false);
+    const needOwnership = useCallback(() => {
+        setOwnershipAlert(true);
+        document.getElementById('card-ownership')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, []);
+    const answerOwnership = useCallback((value) => {
+        setWomen(value);
+        setOwnershipAlert(false);
+    }, []);
     const [verifyStep, setVerifyStep] = useState('choose');
     const engine = useRef(null);
     const queued = useRef(null);
     const applyRecord = useCallback((r, extra = {}) => {
-        const opts = { source: extra.source, women: extra.women };
+        // Every report opened here is new (fetched or just paid for), so its PDF downloads too
+        const opts = { source: extra.source, women: extra.women, autoDownload: true };
         if (engine.current)
             engine.current.applyUdyam(r, opts);
         else
-            queued.current = { record: r, source: opts.source, women: opts.women };
+            queued.current = { record: r, ...opts };
     }, []);
     useEffect(() => {
         let active = true;
@@ -92,9 +128,9 @@ export default function ReportApp() {
             queued.current = null;
             if (q) {
                 if (q.record)
-                    api.applyUdyam(q.record, { source: q.source, women: q.women });
+                    api.applyUdyam(q.record, { source: q.source, women: q.women, autoDownload: q.autoDownload });
                 else if (q.details)
-                    api.showDetails(q.details, { source: 'cert' });
+                    api.showDetails(q.details, { source: q.source ?? 'cert' });
                 else
                     api.resetToSample();
             }
@@ -110,18 +146,24 @@ export default function ReportApp() {
             navigate('/report', { replace: true, state: null });
     }, [start, navigate]);
     // Certificate details (read on this device) go into the Details card before payment
-    const showDetails = useCallback((details) => {
+    const showDetails = useCallback((details, source = 'cert') => {
         setHasDetails(true);
         if (engine.current)
-            engine.current.showDetails(details, { source: 'cert' });
+            engine.current.showDetails(details, { source });
         else
-            queued.current = { details };
+            queued.current = { details, source };
     }, []);
     useEffect(() => {
+        const orderId = new URLSearchParams(window.location.search).get('order_id');
+        // A new number or certificate from the banner starts over at "Your details": an older
+        // unpaid preview kept in this tab must not jump the visitor to payment
+        if (start && !orderId) {
+            sessionStorage.removeItem(PREVIEW_KEY);
+            return;
+        }
         const pack = readStoredPreview();
         if (!pack)
             return;
-        const orderId = new URLSearchParams(window.location.search).get('order_id');
         if (!orderId) {
             setPreviewPack(pack);
             if (pack.details)
@@ -149,16 +191,14 @@ export default function ReportApp() {
         return () => {
             active = false;
         };
-    }, [applyRecord, navigate, showDetails]);
-    const handleCached = useCallback((hit) => {
+    }, [applyRecord, navigate, showDetails, start]);
+    // Payment switched off: the fetched record opens the report straight away
+    const handleReport = useCallback((hit) => {
         sessionStorage.removeItem(PREVIEW_KEY);
         setReturnError('');
         setPreviewPack(null);
         setRecord(hit.data);
-        applyRecord(hit.data, {
-            source: hit.source === 'certificate' ? 'cert' : 'udyam',
-            women: hit.women,
-        });
+        applyRecord(hit.data, { source: hit.source, women: hit.women });
     }, [applyRecord]);
     const handleVerified = useCallback((pack) => {
         setRecord(null);
@@ -183,21 +223,11 @@ export default function ReportApp() {
         setRecord(r);
         applyRecord(r, extra);
     }, [applyRecord, previewPack]);
-    const handleReset = useCallback(() => {
-        sessionStorage.removeItem(PREVIEW_KEY);
-        setRecord(null);
-        setPreviewPack(null);
-        setReturnError('');
-        setHasDetails(false);
-        if (engine.current)
-            engine.current.resetToSample();
-        else
-            queued.current = { record: null };
-    }, []);
 
     // start → verify → pay → report
     const stage = record ? 'report' : previewPack ? 'pay' : verifyStep === 'otp' || verifyStep === 'women' ? 'verify' : 'start';
-    const current = { start: 0, verify: 1, pay: 2, report: 3 }[stage];
+    // Mobile verification happens in a pop-up within "Your details", so it has no step of its own
+    const current = { start: 0, verify: 0, pay: 1, report: STAGES.length - 1 }[stage];
     // The details card sits beside the start card from the beginning; at payment only when filled
     const showDetailsCard = stage !== 'pay' || hasDetails;
 
@@ -208,10 +238,13 @@ export default function ReportApp() {
       <div className="flow">
         <aside className="flow__side" aria-label="Your details">
           <div className="flow__verify">
-            <UdyamVerification start={start} stage={stage} onStep={setVerifyStep} onRead={showDetails} onVerified={handleVerified} onCached={handleCached} onReset={handleReset}/>
+            <UdyamVerification start={start} stage={stage} women={women} onNeedOwnership={needOwnership} onStep={setVerifyStep} onRead={showDetails} onVerified={handleVerified} onReport={handleReport}/>
           </div>
           <div className="flow__details" hidden={!showDetailsCard || undefined}>
             <DetailsCard />
+          </div>
+          <div className="flow__ownership" hidden={!(stage === 'start' || stage === 'verify') || undefined}>
+            <OwnershipCard value={women} alert={ownershipAlert} onChange={answerOwnership}/>
           </div>
           <div className="flow__questions" hidden={stage !== 'report' || undefined}>
             <QuestionsCard />

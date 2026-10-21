@@ -20,9 +20,22 @@ const CHECKLIST = [
 const inputClass =
   'w-full rounded-xl border border-[#00245A]/12 bg-white px-4 py-3 text-sm text-[#00245A] outline-none transition placeholder:text-[#00245A]/40 focus:border-[#00B2FC] focus:ring-4 focus:ring-[#00B2FC]/15'
 
+// Services beyond the bundles, with how each reads in the WhatsApp message
+const SERVICE_TOPICS = {
+  Debt: 'I would like to enquire about debt.',
+  IPO: 'I would like to enquire about an IPO.',
+  'CFO Advisory': 'I would like to enquire about CFO advisory.',
+  Other: 'I have another enquiry.',
+}
+
+function topicLine(topic) {
+  if (topic === GENERAL_TOPIC) return 'I have a general enquiry.'
+  return SERVICE_TOPICS[topic] ?? `I would like to enquire about the ${topic}.`
+}
+
 function buildMessage({ name, business, topic, message }) {
   const lines = [`Hello, I'm ${name.trim()}${business.trim() ? ` from ${business.trim()}` : ''}.`]
-  lines.push(topic === GENERAL_TOPIC ? 'I have a general enquiry.' : `I would like to enquire about the ${topic}.`)
+  lines.push(topicLine(topic))
   if (message.trim()) lines.push(message.trim())
   lines.push('Please share the details.')
   return lines.join('\n')
@@ -212,14 +225,18 @@ function Contact() {
                     className={`${inputClass} cursor-pointer appearance-none pr-10`}
                   >
                     <option>{GENERAL_TOPIC}</option>
-                    {suits.map((suit) => (
-                      <optgroup key={suit.slug} label={suit.name}>
-                        <option value={suit.name}>{suit.name} (whole category)</option>
-                        {suit.products.map((product) => (
-                          <option key={product.name}>{product.name}</option>
+                    <optgroup label="Services">
+                      {Object.keys(SERVICE_TOPICS).map((topic) => (
+                        <option key={topic}>{topic}</option>
+                      ))}
+                    </optgroup>
+                    {suits.length ? (
+                      <optgroup label="Suites">
+                        {suits.map((suit) => (
+                          <option key={suit.slug}>{suit.name}</option>
                         ))}
                       </optgroup>
-                    ))}
+                    ) : null}
                   </select>
                   <svg
                     aria-hidden="true"

@@ -29,7 +29,7 @@ function request(path, body, headers = {}) {
 }
 
 const deps = {
-    loadSealSecret: () => SECRET,
+    loadSealSecret: () => SECRET, paymentEnabled: true,
     loadPgConfig: () => ({ clientId: 'pg_id', clientSecret: 'pg_secret' }),
     limiter: allow,
 };
@@ -121,7 +121,8 @@ describe('payment handlers', () => {
         expect(sent.order_currency).toBe('INR');
         expect(sent.customer_details.customer_phone).toBe('9876543210');
         expect(sent.order_tags.seal).toBe(sealHash(sealed));
-        expect(sent.order_meta.return_url).toBe('https://pcred-udyam-system.web.app/report?order_id={order_id}');
+        // A request from another site never sets the return address; it is always the site's own
+        expect(sent.order_meta.return_url).toBe('https://pcred-ai-website.web.app/report?order_id={order_id}');
         expect(JSON.stringify(sent)).not.toContain(record.udyam_number);
         expect(JSON.stringify(sent)).not.toContain('Shed No. 12');
     });

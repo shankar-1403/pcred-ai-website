@@ -10,6 +10,19 @@ function text(v) {
     return typeof v === 'string' ? v : '';
 }
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** The visitor's name, trimmed to a sane length, or '' when missing. */
+export function cleanName(value) {
+    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, 100) : '';
+}
+
+/** A plausible email address, lower-cased, or '' when missing or malformed. */
+export function cleanEmail(value) {
+    const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    return email.length <= 200 && EMAIL.test(email) ? email : '';
+}
+
 /** Lead fields for the Firebase console, plus the full Udyam record under `details`. */
 export function leadDocument(record, extra = {}) {
     const address = record?.split_address && typeof record.split_address === 'object' ? record.split_address : {};
@@ -17,6 +30,8 @@ export function leadDocument(record, extra = {}) {
     return {
         status: 'active',
         source: extra.source === 'certificate' ? 'certificate' : 'udyam_number',
+        name: cleanName(extra.name),
+        email: cleanEmail(extra.email),
         phone: PHONE.test(phone) ? phone : '',
         women_hold_51: extra.women === true ? true : extra.women === false ? false : null,
         udyam_number: text(record?.udyam_number),
@@ -76,26 +91,28 @@ export function leadState(lead, now = Date.now()) {
     return now - created < LEAD_ACTIVE_MS ? 'active' : 'expired';
 }
 
-export function cachedFromLead(lead) {
+/**
+ * The record kept with a saved lead, so a repeat visitor is not charged a second Cashfree lookup.
+ * It is only ever sealed again for payment: a saved lead never opens the report by itself.
+ */
+export function savedRecordFromLead(lead) {
     if (!lead?.details || typeof lead.details !== 'object')
         return null;
     const women = lead.women_hold_51 === true ? true : lead.women_hold_51 === false ? false : null;
     return {
-        ok: true,
-        cached: true,
-        data: lead.details,
+        record: lead.details,
         women,
         source: lead.source === 'certificate' ? 'certificate' : 'udyam_number',
     };
 }
 
-/** Looks up a saved lead. Returns the cached response, or null when the visitor should fetch again. */
-export async function cachedLeadResponse(findLead, udyam, now = Date.now()) {
+/** Looks up a saved lead's record. Null when there is none, or the lookup failed (fetch again). */
+export async function savedLeadRecord(findLead, udyam, now = Date.now()) {
     if (typeof findLead !== 'function')
         return null;
     try {
         const lead = await findLead(udyam, now);
-        return cachedFromLead(lead);
+        return savedRecordFromLead(lead);
     }
     catch (e) {
         logEvent('error', 'udyam_lead', {

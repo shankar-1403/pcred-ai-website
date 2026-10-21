@@ -6,6 +6,7 @@ import { suitIcon } from '../lib/suitIcons'
 import { cartItemId, formatPrice, useCart } from '../lib/cart'
 import { CartIcon } from '../components/CartDrawer'
 import { useBundlePreviews } from '../lib/bundlePreviews'
+import HowItWorks from '../components/HowItWorks'
 
 function ArrowIcon({ className = 'h-4 w-4' }) {
   return (
@@ -329,6 +330,8 @@ function Suit() {
           </div>
         </section>
       ) : null}
+
+      <HowItWorks />
     </main>
   )
 }

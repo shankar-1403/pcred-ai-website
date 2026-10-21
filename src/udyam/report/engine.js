@@ -10,6 +10,7 @@
  */
 import statesData from '../data/states.json';
 import extrasData from '../data/extras.json';
+import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
 
 let engine = null;
 
@@ -1120,7 +1121,7 @@ function syncFields() {
   }
   $('#nic-list').innerHTML = (p.nic || []).map((n) => `<li><code>${esc(n.code)}</code> ${esc(n.desc || '')}${n.act ? ` <span class="muted">(${esc(ACT_L[n.act] || n.act)})</span>` : ''}</li>`).join('');
   $('#details-sub').textContent = state.mode === 'preview'
-    ? 'Read from your certificate. Check them now; the scheme report opens after payment.'
+    ? `${Object.values(state.src).includes('cert') ? 'Read from your certificate' : 'Fetched from your Udyam record'}. Check them now; the scheme report opens ${PAYMENT_ENABLED ? 'after payment' : 'when you continue'}.`
     : state.mode === 'verified'
     ? (Object.values(state.src).includes('cert')
       ? 'From your Udyam certificate. Correct anything that looks wrong.'
@@ -1274,6 +1275,8 @@ function applyUdyam(d, opts = {}) {
   if (opts.women === true || opts.women === false) state.answers.women = opts.women;
   if (fromSample) state.showAll = false;
   refresh();
+  // A newly opened report also downloads its PDF once, after the report has drawn
+  if (opts.autoDownload) setTimeout(onDownload, 300);
   return profile;
 }
 // Fills the Details card from a certificate read on this device, before payment. The mode stays
