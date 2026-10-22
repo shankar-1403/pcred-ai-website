@@ -55,6 +55,7 @@ function Login() {
                                 <div className="flex items-center justify-center">
                                     <img src={Logo} alt="Logo" className='h-10' />
                                 </div>
+                                <h1 className="sr-only">Sign in</h1>
                             </div>
                             {/* Form */}
                             <form onSubmit={handleSubmit} className="space-y-4">

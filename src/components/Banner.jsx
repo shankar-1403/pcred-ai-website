@@ -160,11 +160,11 @@ function Banner() {
           </p>
 
           <h1 className="mt-4 text-[2.9rem] leading-[0.95] font-semibold tracking-[-0.06em] sm:text-7xl lg:text-[3.5rem] xl:text-[3.75rem]">
-            Scheme
+            Scheme{' '}
             <span className="block">
               <span className="hero-gradient-text bg-[linear-gradient(100deg,#00B2FC,#003BD9_35%,#00B2FC_60%,#003BD9)] bg-[length:220%_100%] bg-clip-text text-transparent">
                 Discovery
-              </span>
+              </span>{' '}
             </span>
             <span className="flex items-center justify-center gap-3 lg:justify-start">
               Report

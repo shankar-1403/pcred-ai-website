@@ -1007,15 +1007,15 @@ function renderReport() {
         ${conf ? `<span class="conf conf--${s.conf}">${esc(conf)}</span>` : ''}
         ${x.goalHit ? '<span class="goalhit">Fits your goals</span>' : ''}
       </div>
-      <h3 class="scheme__name">${esc(s.name)}${s.abbr && s.abbr !== s.name ? `<span class="abbr">${esc(s.abbr)}</span>` : ''}</h3>
+      <h4 class="scheme__name">${esc(s.name)}${s.abbr && s.abbr !== s.name ? ` <span class="abbr">${esc(s.abbr)}</span>` : ''}</h4>
       <p class="scheme__agency">${esc(s.agency)}</p>
       <p class="headline">${esc(r.headline)}</p>
       <ul class="why">${r.why.map((w) => `<li class="${w.ok === true ? 'w-ok' : w.ok === false ? 'w-bad' : 'w-info'}">${esc(w.text)}</li>`).join('')}</ul>
       <details class="more"><summary>Benefits, conditions and how to apply</summary>
         <div class="more__grid">
-          <section><h4>What you get</h4><ul>${r.gets.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
-          <section><h4>Check before applying</h4><ul>${r.checks.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
-          <section><h4>How to apply</h4><ul class="links">${apply.map(([l, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a></li>`).join('')}</ul><h4 style="margin-top:14px">Documents</h4><p>${esc(s.docs)}</p></section>
+          <section><h5>What you get</h5><ul>${r.gets.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
+          <section><h5>Check before applying</h5><ul>${r.checks.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
+          <section><h5>How to apply</h5><ul class="links">${apply.map(([l, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a></li>`).join('')}</ul><h5 style="margin-top:14px">Documents</h5><p>${esc(s.docs)}</p></section>
         </div>
         <p class="more__status"><b>Status:</b> ${esc(s.prog.note)} Source: ${s.src.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join(', ')}. Checked ${esc(s.checked || VERIFIED)}.</p>
       </details>
@@ -1270,8 +1270,9 @@ function applyUdyam(d, opts = {}) {
   state.mode = 'verified';
   state.profile = profile;
   state.src = src;
-  // Goals and credit need belong to the person using the page; ownership belongs to the business.
-  state.answers = fromSample ? blankAnswers() : { ...state.answers, women: null };
+  // Goals and credit need belong to the person using the page and are asked in the first step,
+  // before the report opens, so they carry over; ownership belongs to the business.
+  state.answers = { ...state.answers, women: null };
   if (opts.women === true || opts.women === false) state.answers.women = opts.women;
   if (fromSample) state.showAll = false;
   refresh();

@@ -155,10 +155,11 @@ function SignIn() {
             <span className="h-1.5 w-1.5 rounded-full bg-[#00B2FC]" />
             Content manager
           </p>
-          <h2 className="mt-6 text-4xl leading-[1.05] font-semibold tracking-[-0.04em] xl:text-5xl">
+          {/* A tagline, not a heading: the page heading is "Welcome back" beside it */}
+          <p className="mt-6 text-4xl leading-[1.05] font-semibold tracking-[-0.04em] xl:text-5xl">
             Manage what the{' '}
             <span className="bg-gradient-to-r from-[#00B2FC] to-[#9BE3FF] bg-clip-text text-transparent">site shows</span>
-          </h2>
+          </p>
           <ul className="mt-8 space-y-3">
             {SIGN_IN_POINTS.map((point) => (
               <li key={point} className="flex items-center gap-3 text-sm text-white/75">

@@ -87,8 +87,10 @@ function SchemeStats() {
   ]
 
   return (
-    <section aria-label="Scheme coverage" className="relative bg-[#EAF6FF] py-6 text-[#00245A] sm:py-8">
+    <section aria-labelledby="scheme-coverage" className="relative bg-[#EAF6FF] py-6 text-[#00245A] sm:py-8">
       <div className="mx-auto w-full max-w-screen-xl px-6">
+        {/* The strip speaks for itself on screen; the heading keeps the page outline complete */}
+        <h2 id="scheme-coverage" className="sr-only">Scheme coverage</h2>
         {/* One glass strip, four segments */}
         <ul className="relative grid grid-cols-2 gap-1 overflow-hidden rounded-[1.75rem] border border-white bg-white/75 p-1.5 shadow-[0_24px_50px_-34px_rgba(0,36,90,0.55)] backdrop-blur lg:grid-cols-4 lg:gap-0">
           <span aria-hidden="true" className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#00B2FC]/60 to-transparent" />

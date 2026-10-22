@@ -27,7 +27,7 @@
 .udyam-app a:hover{color:var(--accent-hover)}
 .udyam-app :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .udyam-app button,.udyam-app input,.udyam-app select{font:inherit;color:inherit}
-.udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4{font-family:var(--f-display);color:var(--navy);text-wrap:balance;margin:0}
+.udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4,.udyam-app h5{font-family:var(--f-display);color:var(--navy);text-wrap:balance;margin:0}
 .udyam-app .muted{color:var(--ink-3)}
 .udyam-app .small{font-size:12.5px}
 .udyam-app .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -184,7 +184,7 @@
 .udyam-app .goalhit{color:var(--accent)}
 .udyam-app .goalhit::before{content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:1px;background:var(--grad);transform:rotate(45deg);vertical-align:2px}
 .udyam-app .scheme__name{margin-top:13px;font-size:18px;font-weight:600;line-height:1.3;letter-spacing:-.005em}
-.udyam-app .abbr{margin-left:4px;font:500 12px/1 var(--f-mono);color:var(--ink-3);white-space:nowrap}
+.udyam-app .abbr{font:500 12px/1 var(--f-mono);color:var(--ink-3);white-space:nowrap}
 .udyam-app .scheme__agency{margin:3px 0 0;font-size:13px;color:var(--ink-3)}
 .udyam-app .headline{margin:10px 0 0;font:600 16px/1.45 var(--f-body);color:var(--ink)}
 .udyam-app .why{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px}
@@ -199,7 +199,7 @@
 .udyam-app .more summary::before{content:"+";width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;font:600 12px/15px var(--f-mono);text-align:center}
 .udyam-app .more[open] summary::before{content:"−"}
 .udyam-app .more__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px 26px;margin-top:14px;padding:16px 18px;background:var(--surface-2);border-radius:var(--r-sm)}
-.udyam-app .more h4{margin:0 0 8px;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.udyam-app .more h5{margin:0 0 8px;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
 .udyam-app .more ul{margin:0;padding-left:18px;display:grid;gap:6px}
 .udyam-app .more li{font-size:14px;line-height:1.5}
 .udyam-app .more ul.links{padding-left:0;list-style:none}

@@ -47,16 +47,6 @@ function Categories() {
             </p>
           </div>
 
-          <dl className="flex shrink-0 gap-8 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4">
-            <div>
-              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Suites</dt>
-              <dd className="mt-1 text-3xl font-semibold tracking-tight">{String(suits.length).padStart(2, '0')}</dd>
-            </div>
-            <div className="border-l border-white/10 pl-8">
-              <dt className="font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">Bundles</dt>
-              <dd className="mt-1 text-3xl font-semibold tracking-tight">{String(productCount).padStart(2, '0')}</dd>
-            </div>
-          </dl>
         </div>
 
         {/* Category grid: grows by rows as suits are added */}
@@ -100,7 +90,7 @@ function Categories() {
                     </span>
                   </span>
 
-                  <span className="mt-6 text-xl font-semibold tracking-tight">{suit.name}</span>
+                  <h3 className="mt-6 text-xl font-semibold tracking-tight">{suit.name}</h3>
                   <span className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-white/55">{suit.summary}</span>
 
                   <span className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
@@ -121,13 +111,13 @@ function Categories() {
               onClick={() => window.scrollTo(0, 0)}
               className="group flex h-full flex-col justify-between gap-6 rounded-3xl border border-dashed border-white/20 p-6 transition duration-300 hover:border-[#25D366]/60 hover:bg-white/[0.03] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00B2FC]"
             >
-              <span>
+              <div>
                 <span className="font-mono text-[10px] tracking-[0.22em] text-white/45 uppercase">Need a hand?</span>
-                <span className="mt-3 block text-xl font-semibold tracking-tight">Not sure which suite fits?</span>
+                <h3 className="mt-3 text-xl font-semibold tracking-tight">Not sure which suite fits?</h3>
                 <span className="mt-2 block text-sm leading-relaxed text-white/55">
                   Tell us about the business and we’ll take it from there.
                 </span>
-              </span>
+              </div>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#25D366]">
                 Talk to us
                 <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-1" />

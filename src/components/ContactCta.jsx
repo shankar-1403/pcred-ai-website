@@ -29,7 +29,7 @@ function ContactCta() {
                 Talk to us
               </p>
               <h2 className="mt-5 text-4xl leading-[1.02] font-semibold tracking-[-0.045em] text-[#00245A] sm:text-6xl">
-                Need a report?
+                Need a report?{' '}
                 <span className="block bg-gradient-to-r from-[#00B2FC] to-[#003BD9] bg-clip-text pb-[0.1em] text-transparent">Message us.</span>
               </h2>
               <p className="mt-5 max-w-md text-base leading-relaxed text-[#00245A]/65 sm:text-lg">

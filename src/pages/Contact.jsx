@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import Logo from '../assets/favicon.svg'
 import { useSuits } from '../lib/suitsStore'
-import { suitIcon } from '../lib/suitIcons'
 import { WHATSAPP_NUMBER, generalEnquireHref, whatsappHref } from '../lib/whatsapp'
 import WhatsAppIcon from '../components/WhatsAppIcon'
 
@@ -132,33 +130,6 @@ function Contact() {
                     {item}
                   </li>
                 ))}
-              </ul>
-            </div>
-
-            <div className="rounded-[2rem] border border-white bg-white/80 p-6 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur sm:p-8">
-              <p className="font-mono text-[10px] tracking-[0.22em] text-[#003BD9] uppercase">Browse first</p>
-              <ul className="mt-4 space-y-2">
-                {suits.map((suit) => {
-                  const icon = suitIcon(suit.icon)
-                  return (
-                    <li key={suit.slug}>
-                      <Link
-                        to={`/suits/${suit.slug}`}
-                        className="group flex items-center gap-3 rounded-2xl p-2 transition hover:bg-[#F4F9FF]"
-                      >
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${icon.badge}`}>
-                          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-                            <path d={icon.path} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </span>
-                        <span className="min-w-0 flex-1 text-sm font-semibold">{suit.name}</span>
-                        <svg className="h-4 w-4 text-[#003BD9] transition group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </Link>
-                    </li>
-                  )
-                })}
               </ul>
             </div>
           </aside>

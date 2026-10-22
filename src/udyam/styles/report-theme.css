@@ -23,7 +23,7 @@
 /* Soft light behind the hero, like the home banner */
 .udyam-app::before{content:"";position:absolute;z-index:-1;top:-12rem;right:-14rem;width:46rem;height:46rem;border-radius:50%;background:radial-gradient(circle,rgba(0,178,252,.22),transparent 65%);pointer-events:none}
 .udyam-app .app{max-width:1280px;padding-inline:24px;padding-block:0 56px}
-.udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4{letter-spacing:-.02em}
+.udyam-app h1,.udyam-app h2,.udyam-app h3,.udyam-app h4,.udyam-app h5{letter-spacing:-.02em}
 
 /* ------------------------------------------------------- progress stepper */
 .udyam-app .stepper{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;margin:14px 0 20px;padding:6px;list-style:none;border:1px solid #fff;border-radius:22px;background:rgba(255,255,255,.8);box-shadow:var(--shadow-sm);backdrop-filter:blur(8px)}
@@ -56,17 +56,18 @@
 .udyam-app .flow__questions{grid-area:questions;min-width:0}
 .udyam-app .flow__main{grid-area:main;display:flex;flex-direction:column;gap:20px;min-width:0}
 /* Start and mobile check: business details full width, with a slim status bar above it */
-.udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"verify" "details" "ownership";gap:12px}
-.udyam-app .flow__ownership{grid-area:ownership;min-width:0}
-/* Women's ownership, below the business details */
+.udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"verify" "details" "questions";gap:12px}
+/* First step: the ownership question and the engine's questions card form one card. The inner card loses its own frame, its heading (the ownership part carries it) and its women question (asked just above) */
+.udyam-app .card--merged #card-questions{background:none;border:0;border-radius:0;box-shadow:none;padding:0;backdrop-filter:none}
+.udyam-app .card--merged #card-questions .card__head,.udyam-app .card--merged #card-questions .q:has(#w-yes),.udyam-app .card--merged #card-questions .to-report{display:none}
+/* Women's ownership: the first question of the merged card in the first step */
 .udyam-app .ownership{transition:box-shadow .2s,border-color .2s}
 .udyam-app .ownership .card__head{margin-bottom:12px}
-.udyam-app .ownership h2{font-size:16px}
 .udyam-app .ownership__options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:520px}
 .udyam-app .ownership__option{cursor:pointer;border:2px solid var(--line-2);border-radius:14px;background:#fff;padding:11px 14px;font:600 13.5px/1.2 var(--f-body);color:var(--ink-2);transition:border-color .15s,background .15s,color .15s}
 .udyam-app .ownership__option:hover{border-color:rgba(0,178,252,.55);color:var(--navy)}
 .udyam-app .ownership__option[aria-pressed="true"]{border-color:#00B2FC;background:#EAF6FF;color:#003BD9}
-.udyam-app .ownership--alert{border-color:#F5B5AE;box-shadow:0 0 0 4px rgba(194,38,28,.12),var(--shadow-sm)}
+.udyam-app .ownership--alert .ownership__option{border-color:#F5B5AE}
 .udyam-app .ownership__alert{margin:10px 0 0;font-size:13px;font-weight:600;color:var(--danger)}
 .udyam-app .app--start .flow__main,.udyam-app .app--verify .flow__main{display:none}
 /* Payment: the pay panel is the main column */
@@ -75,7 +76,7 @@
 .udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
 @media (max-width:1000px){
   .udyam-app .flow{grid-template-columns:minmax(0,1fr)}
-  .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"verify" "details" "ownership"}
+  .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"verify" "details" "questions"}
   .udyam-app .app--pay .flow{grid-template-areas:"verify" "main" "details";grid-template-rows:none}
   .udyam-app .app--report .flow{grid-template-areas:"questions" "main" "details" "verify";grid-template-rows:none}
 }

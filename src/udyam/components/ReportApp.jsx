@@ -37,24 +37,30 @@ function Stepper({ current }) {
 // blocks once and never re-renders them; they are shown or hidden around them, never unmounted.
 const OWNERSHIP_OPTIONS = [[true, 'Yes, 51% or more'], [false, 'No, less than 51%']];
 
-// Asked once, below the business details; the answer goes with the mobile verification
+// The top of the one "Tailor your report" card in the first step: the ownership question, with
+// the engine's help and credit questions (QuestionsCard) right below it in the same card.
+// The answer goes with the record fetch.
 function OwnershipCard({ value, alert, onChange }) {
-    return (<div className={`card ownership${alert ? ' ownership--alert' : ''}`} id="card-ownership">
+    return (<div className={`ownership${alert ? ' ownership--alert' : ''}`} id="card-ownership">
       <div className="card__head">
         <span className="card__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c1.7.6 2.7 2.4 3 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="16" cy="7" r="2" stroke="currentColor" strokeWidth="1.8"/><circle cx="10" cy="17" r="2" stroke="currentColor" strokeWidth="1.8"/></svg>
         </span>
         <div>
-          <h2 id="ownership-q">Do women hold 51% or more of the business?</h2>
-          <p className="card__sub card__sub--tight">Some schemes give women-owned businesses extra support.</p>
+          <h2>Tailor your report</h2>
+          <p className="card__sub card__sub--tight">A few quick questions so the schemes fit the business.</p>
         </div>
       </div>
-      <div className="ownership__options" role="group" aria-labelledby="ownership-q">
-        {OWNERSHIP_OPTIONS.map(([option, label]) => (<button key={label} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className="ownership__option">
-            {label}
-          </button>))}
+      <div className="q">
+        <div className="q__label" id="ownership-q">Do women hold 51% or more of the business?</div>
+        <div className="q__hint">Some schemes give women-owned businesses extra support.</div>
+        <div className="ownership__options" role="group" aria-labelledby="ownership-q">
+          {OWNERSHIP_OPTIONS.map(([option, label]) => (<button key={label} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className="ownership__option">
+              {label}
+            </button>))}
+        </div>
+        {alert ? <p className="ownership__alert" role="alert">Answer this to continue.</p> : null}
       </div>
-      {alert ? <p className="ownership__alert" role="alert">Answer this to continue.</p> : null}
     </div>);
 }
 
@@ -230,6 +236,7 @@ export default function ReportApp() {
     const current = { start: 0, verify: 0, pay: 1, report: STAGES.length - 1 }[stage];
     // The details card sits beside the start card from the beginning; at payment only when filled
     const showDetailsCard = stage !== 'pay' || hasDetails;
+    const firstStep = stage === 'start' || stage === 'verify';
 
     return (<div className={`app app--${stage}`}>
       {/* The page opens straight on the steps; the heading is for screen readers */}
@@ -243,10 +250,10 @@ export default function ReportApp() {
           <div className="flow__details" hidden={!showDetailsCard || undefined}>
             <DetailsCard />
           </div>
-          <div className="flow__ownership" hidden={!(stage === 'start' || stage === 'verify') || undefined}>
-            <OwnershipCard value={women} alert={ownershipAlert} onChange={answerOwnership}/>
-          </div>
-          <div className="flow__questions" hidden={stage !== 'report' || undefined}>
+          {/* In the first step this is one card: ownership, then what help and how much credit, so
+              the report opens already tailored. Beside the report it is the engine's card alone. */}
+          <div className={`flow__questions${firstStep ? ' card card--merged' : ''}`} hidden={stage === 'pay' || undefined}>
+            {firstStep ? <OwnershipCard value={women} alert={ownershipAlert} onChange={answerOwnership}/> : null}
             <QuestionsCard />
           </div>
         </aside>
@@ -259,6 +266,5 @@ export default function ReportApp() {
           {record ? <UdyamDetails key={record.verification_id || record.udyam_number} record={record}/> : null}
         </div>
       </div>
-      <p className="report-foot">An independent PCRED tool, not affiliated with the Ministry of MSME or any government body. Check every scheme with the bank or agency before you apply.</p>
     </div>);
 }

@@ -228,20 +228,33 @@ function Suit() {
               <Link to="/" className="transition hover:text-[#00245A]">Home</Link>
             </li>
             <li aria-hidden="true">/</li>
-            <li>
-              <Link to="/#categories" className="transition hover:text-[#00245A]">Categories</Link>
-            </li>
-            <li aria-hidden="true">/</li>
             <li aria-current="page" className="font-semibold text-[#00245A]">{suit.name}</li>
           </ol>
         </nav>
 
-        <div className="mt-8 max-w-3xl">
-          <div>
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl">
             <SuitBadge icon={suit.icon} className="h-14 w-14 rounded-2xl shadow-[0_16px_30px_-14px_rgba(0,59,217,0.8)]" />
             <h1 className="mt-6 text-4xl leading-[1.02] font-semibold tracking-[-0.045em] sm:text-6xl">{suit.name}</h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-[#00245A]/65 sm:text-lg">{suit.summary}</p>
           </div>
+
+          {/* Jumps down to the "How it works" steps at the bottom of the page */}
+          <button
+            type="button"
+            onClick={() => document.getElementById('how-it-works')?.closest('section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="group inline-flex w-fit shrink-0 cursor-pointer items-center gap-3 rounded-full bg-[#00245A] py-2 pr-5 pl-2 text-left text-white shadow-[0_20px_40px_-20px_rgba(0,36,90,0.8)] transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00B2FC]"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-[#00B2FC] to-[#003BD9] transition group-hover:from-white group-hover:to-white group-hover:text-[#003BD9]">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4.5 w-4.5 transition group-hover:translate-y-0.5" fill="none">
+                <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span>
+              <span className="block text-sm font-semibold">See how it works</span>
+              <span className="block text-xs text-white/60">From bundle to report in 4 steps</span>
+            </span>
+          </button>
         </div>
       </section>
 
@@ -318,10 +331,10 @@ function Suit() {
                     className="group flex h-full items-center gap-4 rounded-2xl border border-[#00245A]/8 bg-white p-4 transition hover:border-[#00B2FC]/40 hover:shadow-[0_20px_40px_-30px_rgba(0,59,217,0.6)]"
                   >
                     <SuitBadge icon={item.icon} className="h-11 w-11 rounded-xl" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-semibold tracking-tight">{item.name}</span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold tracking-tight">{item.name}</h3>
                       <span className="block text-xs text-[#00245A]/55">{item.products.length} {item.products.length === 1 ? 'bundle' : 'bundles'}</span>
-                    </span>
+                    </div>
                     <ArrowIcon className="h-4 w-4 text-[#003BD9] transition group-hover:translate-x-1" />
                   </Link>
                 </li>
