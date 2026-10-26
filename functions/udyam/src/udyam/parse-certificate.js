@@ -82,6 +82,70 @@ function cleanEnterpriseName(value) {
         .trim();
 }
 
+const DMY = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/;
+const toYmd = (dmy) => {
+    const m = DMY.exec(String(dmy || ''));
+    return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : '';
+};
+const amount = (v) => String(v || '').replace(/,/g, '');
+// "MALE" or "yes" to "Male" / "Yes"
+const capital = (v) => { const w = String(v || '').trim().toLowerCase(); return w.charAt(0).toUpperCase() + w.slice(1); };
+const officeName = (v) => String(v || '').replace(/\s+/g, ' ').replace(/\s*\(\s*/g, ' (').replace(/\s*\)\s*/g, ')').trim().slice(0, 80);
+
+/**
+ * The extra details on a full "Print Udyam Application" PDF: the classification table and the
+ * DIC/MSME-DFO on the certificate pages, then gender, GST, employment, the investment and
+ * turnover table and IEC status on the application pages. Bank details, PAN, mobile and email
+ * are left out: no scheme rule needs them. Anything not on the PDF comes back empty.
+ */
+function applicationDetails(source) {
+    // "1 2024-25 Micro 27/04/2024": classification rows end with a date
+    const history = [];
+    const classRe = /(?:^|\n)\s*\*?\s*(\d{1,2})\s+(\d{4}\s*-\s*\d{2,4})\s+(Micro|Small|Medium)\s+(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4})/gi;
+    let m;
+    while ((m = classRe.exec(source))) {
+        const year = m[2].replace(/\s+/g, '');
+        if (!history.some((h) => h.classification_year === year))
+            history.push({ serial_number: m[1], classification_year: year, enterprise_type: titleWord(m[3]), classification_date: toYmd(m[4]) });
+    }
+    // "1 2022-23 Micro 169057.00 0.00 169057.00 2751151.00 0.00 2751151.00 Yes": investment and turnover rows
+    const years = [];
+    const n = '([\\d,]+(?:\\.\\d{1,2})?)';
+    const finRe = new RegExp(`(?:^|\\n)\\s*(\\d{1,2})\\s+(\\d{4}\\s*-\\s*\\d{2,4})\\s+(Micro|Small|Medium)\\s+${n}\\s+${n}\\s+${n}\\s+${n}\\s+${n}\\s+${n}(?:\\s+(Yes|No)\\b)?`, 'gi');
+    while ((m = finRe.exec(source))) {
+        const year = m[2].replace(/\s+/g, '');
+        if (years.some((y) => y.financial_year === year))
+            continue;
+        years.push({
+            financial_year: year, enterprise_type: titleWord(m[3]),
+            wdv: amount(m[4]), exclusion: amount(m[5]), net_investment: amount(m[6]),
+            total_turnover: amount(m[7]), export_turnover: amount(m[8]), net_turnover: amount(m[9]),
+            itr_filed: m[10] ? capital(m[10]) : '',
+        });
+    }
+    // "Gender Male No": the "No" is the Specially Abled (DIVYANG) answer printed beside it
+    const gender = /\bGender\s*:?\s*(Male|Female|Others?|Transgender)\b(?:\s+(Yes|No)\b)?/i.exec(source);
+    const divyang = gender?.[2] || (/DIVYANG\)?\s*:?\s*(Yes|No)\b/i.exec(source) || [])[1] || '';
+    const gst = /Do you have GSTIN\s*:?\s*(Yes|No|Exempted)\b/i.exec(source);
+    const jobs = /Employment Details[\s\S]{0,60}?Male\s+Female\s+Other\s+Total\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/i.exec(source);
+    const iec = /IEC Status\s*:?\s*(Active|Inactive|Cancelled|Suspended)\b/i.exec(source);
+    const iecSince = /IEC Registration Date\s*:?\s*(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4})/i.exec(source);
+    const dic = /District Industries Centre\s*:\s*([A-Z][A-Z .&-]*?\(\s*[A-Z .&-]+\))/i.exec(source);
+    const dfo = /MSME-DFO\s*:?\s*([A-Z][A-Z .&-]*?\(\s*[A-Z .&-]+\))/i.exec(source);
+    return {
+        classification_history: history.slice(0, 20),
+        financial_years: years.slice(0, 10),
+        owner_gender: gender ? capital(gender[1]) : '',
+        specially_abled: divyang ? capital(divyang) : '',
+        has_gstin: gst ? capital(gst[1]) : '',
+        employment: jobs ? { male: jobs[1], female: jobs[2], other: jobs[3], total: jobs[4] } : { male: '', female: '', other: '', total: '' },
+        iec_status: iec ? capital(iec[1]) : '',
+        iec_registration_date: iecSince ? iecSince[1].replace(/\s+/g, '') : '',
+        dic: dic ? officeName(dic[1]) : '',
+        msme_di: dfo ? officeName(dfo[1]) : '',
+    };
+}
+
 export function parseCertificateText(text) {
     const source = String(text || '').replace(/\r/g, '\n');
     const udyam = extractUdyamNumber(source);
@@ -114,6 +178,7 @@ export function parseCertificateText(text) {
             pincode: pin.length === 6 ? pin : '',
         },
         nic_codes: nicCodes(source),
+        ...applicationDetails(source),
     };
 }
 

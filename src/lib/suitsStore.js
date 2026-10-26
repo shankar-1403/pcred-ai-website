@@ -24,7 +24,7 @@ export function slugify(text) {
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
 
-// Database shape: suits/{slug} = { name, summary, icon, order, products: { {id}: { name, description, price, documents[], order } } }
+// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, products: { {id}: { name, description, price, documents[], order } } }
 export function normalizeSuits(snapshotValue) {
   if (!snapshotValue) return []
   return Object.entries(snapshotValue)
@@ -34,6 +34,8 @@ export function normalizeSuits(snapshotValue) {
       summary: suit.summary ?? '',
       icon: suit.icon ?? DEFAULT_ICON,
       order: Number(suit.order ?? 0),
+      // Strip shown above the header on this category's page (edited in the CMS category editor)
+      banner: suit.banner?.text ? { text: String(suit.banner.text), enabled: suit.banner.enabled === true } : null,
       products: Object.entries(suit.products ?? {})
         .map(([id, product]) => ({
           id,

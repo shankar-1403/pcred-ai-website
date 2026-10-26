@@ -1,7 +1,8 @@
 import { parseCertificateLayout, parseCertificateText } from '../../../functions/udyam/src/udyam/parse-certificate.js';
 
 const MAX_BYTES = 8 * 1024 * 1024;
-const MAX_PAGES = 3;
+// A full "Print Udyam Application" is 4 pages: certificate, then the application details
+const MAX_PAGES = 4;
 
 function localAsset(path) {
     return new URL(path, window.location.origin).href;

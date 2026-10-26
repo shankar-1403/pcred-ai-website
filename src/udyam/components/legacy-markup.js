@@ -32,4 +32,10 @@ export const QUESTIONS_CARD_HTML = `<div class="card__head"><span class="card__i
           <div class="q__label" id="q3">How much credit do you need?</div>
           <div class="chips" role="group" aria-labelledby="q3" id="loans"></div>
         </div>
+        <div class="q" id="q-turnover">
+          <div class="q__label" id="q4">Latest annual turnover</div>
+          <div class="q__hint">Optional. Some schemes have turnover limits.</div>
+          <div class="chips" role="group" aria-labelledby="q4" id="turnovers"></div>
+        </div>
+        <details class="qmore" id="q-more"><summary>More details <span>optional</span></summary><div id="more-rows"></div></details>
         <a class="btn btn--ghost btn--sm to-report" href="#report">See the report ↓</a>`;

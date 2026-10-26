@@ -163,3 +163,31 @@ describe('payment switched off', () => {
         expect(res.body.price).toBeUndefined();
     });
 });
+
+describe('certificate application details', () => {
+    it('keeps the turnover, employment and owner details, and drops anything malformed', async () => {
+        const record = {
+            ...parseCertificateText(CERT),
+            financial_years: [
+                { financial_year: '2023-24', enterprise_type: 'Micro', wdv: '100.00', exclusion: '0.00', net_investment: '100.00', total_turnover: '2751151.00', export_turnover: '0.00', net_turnover: '2751151.00', itr_filed: 'Yes' },
+                { financial_year: 'last year', total_turnover: '<script>' },
+            ],
+            employment: { male: '7', female: '5', other: '0', total: 'twelve' },
+            owner_gender: 'Female',
+            has_gstin: 'Maybe',
+            classification_history: [{ classification_year: '2024-25', enterprise_type: 'Small', classification_date: '2024-04-27' }],
+            dic: 'PUNE (MAHARASHTRA)',
+        };
+        const res = await handleCertificateRequest(request('/api/udyam/certificate', { record }), {
+            ...deps, otpEnabled: false, paymentEnabled: false, saveLead: async () => {},
+        });
+        const data = res.body.data;
+        expect(data.financial_years).toHaveLength(1);
+        expect(data.financial_years[0].total_turnover).toBe('2751151.00');
+        expect(data.employment).toEqual({ male: '7', female: '5', other: '0', total: '' });
+        expect(data.owner_gender).toBe('Female');
+        expect(data.has_gstin).toBe('');
+        expect(data.classification_history[0]).toMatchObject({ classification_year: '2024-25', enterprise_type: 'Small', classification_date: '2024-04-27' });
+        expect(data.dic).toBe('PUNE (MAHARASHTRA)');
+    });
+});

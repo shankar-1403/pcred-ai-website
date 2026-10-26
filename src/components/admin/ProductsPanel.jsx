@@ -3,11 +3,11 @@ import { ref, update } from 'firebase/database'
 import { db } from '../../lib/firebase'
 import { previewPath } from '../../lib/bundlePreviews'
 import { formatPrice } from '../../lib/cart'
-import { saveOrder } from '../../lib/cms'
+import { saveOrder, swap } from '../../lib/cms'
 import Modal from './Modal'
 import ProductEditor from './ProductEditor'
 import { IconBadge } from './SuitEditor'
-import { Button, Notice, inputClass } from './ui'
+import { Button, MoveButtons, Notice, inputClass } from './ui'
 
 const ALL = 'all'
 
@@ -42,6 +42,14 @@ function ProductsPanel({ suits, loading, initialCategory }) {
       (!needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle)),
   )
   const editingRow = rows.find((row) => row.key === editing)
+
+  // Moves a bundle up or down within its own category; that order is the order on the category's page
+  const move = ({ suit, product }, offset) => {
+    const index = suit.products.findIndex((item) => item.id === product.id)
+    saveOrder(`suits/${suit.slug}/products`, swap(suit.products, index, offset).map((item) => item.id)).catch((moveError) =>
+      setNotice({ tone: 'error', text: `Could not reorder: ${moveError.message}` }),
+    )
+  }
 
   const onDelete = async ({ suit, product }) => {
     if (!window.confirm(`Delete "${product.name}" from ${suit.name}? This cannot be undone.`)) return
@@ -126,6 +134,7 @@ function ProductsPanel({ suits, loading, initialCategory }) {
         <table className="w-full min-w-[40rem] text-left text-sm">
           <thead className="border-b border-[#00245A]/8 bg-[#F4F9FF] text-xs font-semibold text-[#00245A]/60">
             <tr>
+              <th scope="col" className="w-20 px-5 py-3">Order</th>
               <th scope="col" className="px-5 py-3">Bundle</th>
               <th scope="col" className="px-5 py-3">Category</th>
               <th scope="col" className="px-5 py-3 text-right">Price</th>
@@ -137,19 +146,35 @@ function ProductsPanel({ suits, loading, initialCategory }) {
           <tbody className="divide-y divide-[#00245A]/6">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-[#00245A]/50" aria-busy="true">
+                <td colSpan={5} className="px-5 py-10 text-center text-[#00245A]/50" aria-busy="true">
                   Loading bundles…
                 </td>
               </tr>
             ) : visible.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-[#00245A]/50">
+                <td colSpan={5} className="px-5 py-10 text-center text-[#00245A]/50">
                   {rows.length === 0 ? 'No bundles yet. Add the first one.' : 'No bundles match this filter.'}
                 </td>
               </tr>
             ) : (
-              visible.map((row) => (
+              visible.map((row) => {
+                const position = row.suit.products.findIndex((item) => item.id === row.product.id)
+                return (
                 <tr key={row.key} className={editing === row.key ? 'bg-[#EAF6FF]/60' : 'hover:bg-[#F4F9FF]/70'}>
+                  <td className="px-5 py-3.5">
+                    <span className="flex items-center gap-2">
+                      <MoveButtons
+                        label={row.product.name}
+                        onUp={() => move(row, -1)}
+                        onDown={() => move(row, 1)}
+                        disabledUp={position === 0}
+                        disabledDown={position === row.suit.products.length - 1}
+                      />
+                      <span className="font-mono text-xs text-[#00245A]/50" title={`Position ${position + 1} in ${row.suit.name}`}>
+                        {String(position + 1).padStart(2, '0')}
+                      </span>
+                    </span>
+                  </td>
                   <td className="max-w-xs px-5 py-3.5">
                     <p className="truncate font-semibold">{row.product.name}</p>
                     <p className="truncate text-xs text-[#00245A]/50">{documentsSummary(row.product)}</p>
@@ -160,7 +185,10 @@ function ProductsPanel({ suits, loading, initialCategory }) {
                       <span className="truncate">{row.suit.name}</span>
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-right font-semibold whitespace-nowrap">{formatPrice(row.product.price)}</td>
+                  <td className="px-5 py-3.5 text-right font-semibold whitespace-nowrap">
+                    {/* 0 means the price is not set yet; the site shows "Price on request" */}
+                    {row.product.price > 0 ? formatPrice(row.product.price) : <span className="font-medium text-[#00245A]/50">On request</span>}
+                  </td>
                   <td className="px-5 py-3.5 text-right whitespace-nowrap">
                     <Button
                       tone="ghost"
@@ -177,7 +205,8 @@ function ProductsPanel({ suits, loading, initialCategory }) {
                     </Button>
                   </td>
                 </tr>
-              ))
+                )
+              })
             )}
           </tbody>
         </table>

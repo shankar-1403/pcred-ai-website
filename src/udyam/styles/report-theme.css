@@ -57,9 +57,11 @@
 .udyam-app .flow__main{grid-area:main;display:flex;flex-direction:column;gap:20px;min-width:0}
 /* Start and mobile check: business details full width, with a slim status bar above it */
 .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"verify" "details" "questions";gap:12px}
-/* First step: the ownership question and the engine's questions card form one card. The inner card loses its own frame, its heading (the ownership part carries it) and its women question (asked just above) */
-.udyam-app .card--merged #card-questions{background:none;border:0;border-radius:0;box-shadow:none;padding:0;backdrop-filter:none}
-.udyam-app .card--merged #card-questions .card__head,.udyam-app .card--merged #card-questions .q:has(#w-yes),.udyam-app .card--merged #card-questions .to-report{display:none}
+/* First step: only the ownership question. The help, credit, turnover and "More details" questions are asked beside the report, where they re-rank it */
+.udyam-app .card--merged #card-questions{display:none}
+/* Beside the report only the ownership question is asked. The help, credit, turnover and
+   "More details" questions stay in the markup (the report engine fills and reads them) but are not shown. */
+.udyam-app #card-questions .q:not(:has(#w-yes)),.udyam-app #card-questions .qmore{display:none!important}
 /* Women's ownership: the first question of the merged card in the first step */
 .udyam-app .ownership{transition:box-shadow .2s,border-color .2s}
 .udyam-app .ownership .card__head{margin-bottom:12px}
@@ -213,3 +215,11 @@
 .udyam-app .uv-status__cta{justify-self:start}
 .udyam-app .uv-status__actions{display:flex;flex-wrap:wrap;gap:8px}
 .udyam-app .uv-status .btn{text-decoration:none}
+/* "More details": optional questions folded under the main ones */
+.udyam-app .qmore{border-top:1px solid var(--line);padding-top:11px}
+.udyam-app .qmore>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font:600 14px/1.4 var(--f-body);color:var(--navy)}
+.udyam-app .qmore>summary::-webkit-details-marker{display:none}
+.udyam-app .qmore>summary::after{content:"";width:7px;height:7px;margin-left:auto;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s}
+.udyam-app .qmore[open]>summary::after{transform:rotate(-135deg)}
+.udyam-app .qmore>summary span{font-size:12px;font-weight:500;color:var(--ink-3)}
+.udyam-app .qmore .q:first-child{border-top:0}

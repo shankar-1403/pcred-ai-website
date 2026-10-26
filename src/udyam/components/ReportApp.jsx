@@ -5,6 +5,7 @@ import UdyamDetails from './UdyamDetails';
 import LockedPreview, { unlockPaidOrder } from './LockedPreview';
 import { DETAILS_CARD_HTML, QUESTIONS_CARD_HTML } from './legacy-markup';
 import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
+import { loadLiveSchemes } from '../lib/live-schemes';
 
 const PREVIEW_KEY = 'pcred_udyam_preview';
 
@@ -37,10 +38,10 @@ function Stepper({ current }) {
 // blocks once and never re-renders them; they are shown or hidden around them, never unmounted.
 const OWNERSHIP_OPTIONS = [[true, 'Yes, 51% or more'], [false, 'No, less than 51%']];
 
-// The top of the one "Tailor your report" card in the first step: the ownership question, with
-// the engine's help and credit questions (QuestionsCard) right below it in the same card.
+// The "Tailor your report" card in the first step: only the ownership question. The help,
+// credit and other questions (QuestionsCard) stay hidden until the report opens.
 // The answer goes with the record fetch.
-function OwnershipCard({ value, alert, onChange }) {
+function OwnershipCard({ value, alert, fromRecord, onChange }) {
     return (<div className={`ownership${alert ? ' ownership--alert' : ''}`} id="card-ownership">
       <div className="card__head">
         <span className="card__icon" aria-hidden="true">
@@ -48,12 +49,12 @@ function OwnershipCard({ value, alert, onChange }) {
         </span>
         <div>
           <h2>Tailor your report</h2>
-          <p className="card__sub card__sub--tight">A few quick questions so the schemes fit the business.</p>
+          <p className="card__sub card__sub--tight">One quick question so the schemes fit the business.</p>
         </div>
       </div>
       <div className="q">
         <div className="q__label" id="ownership-q">Do women hold 51% or more of the business?</div>
-        <div className="q__hint">Some schemes give women-owned businesses extra support.</div>
+        <div className="q__hint">{fromRecord ? 'Filled from your Udyam record: the proprietor is a woman.' : 'Some schemes give women-owned businesses extra support.'}</div>
         <div className="ownership__options" role="group" aria-labelledby="ownership-q">
           {OWNERSHIP_OPTIONS.map(([option, label]) => (<button key={label} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className="ownership__option">
               {label}
@@ -102,6 +103,8 @@ export default function ReportApp() {
     const [hasDetails, setHasDetails] = useState(false);
     // Women's ownership, asked below the Business details card before mobile verification
     const [women, setWomen] = useState(null);
+    // Set when the uploaded Udyam PDF names a woman proprietor
+    const [womenFromRecord, setWomenFromRecord] = useState(false);
     const [ownershipAlert, setOwnershipAlert] = useState(false);
     const needOwnership = useCallback(() => {
         setOwnershipAlert(true);
@@ -124,11 +127,12 @@ export default function ReportApp() {
     }, []);
     useEffect(() => {
         let active = true;
-        import('../report/engine')
-            .then(({ initReport }) => {
+        // The latest monthly scheme import from Firebase; the bundled data if it is slow or missing
+        Promise.all([import('../report/engine'), loadLiveSchemes()])
+            .then(([{ initReport }, live]) => {
             if (!active)
                 return;
-            const api = initReport();
+            const api = initReport(live);
             engine.current = api;
             const q = queued.current;
             queued.current = null;
@@ -154,6 +158,12 @@ export default function ReportApp() {
     // Certificate details (read on this device) go into the Details card before payment
     const showDetails = useCallback((details, source = 'cert') => {
         setHasDetails(true);
+        // A woman proprietor owns the whole business, so the ownership answer is known; for
+        // firms and companies the owner's gender does not settle the 51% question
+        if (String(details?.owner_gender).toLowerCase() === 'female' && /propriet/i.test(String(details?.organization_type))) {
+            setWomen((current) => (current === null ? true : current));
+            setWomenFromRecord(true);
+        }
         if (engine.current)
             engine.current.showDetails(details, { source });
         else
@@ -253,7 +263,7 @@ export default function ReportApp() {
           {/* In the first step this is one card: ownership, then what help and how much credit, so
               the report opens already tailored. Beside the report it is the engine's card alone. */}
           <div className={`flow__questions${firstStep ? ' card card--merged' : ''}`} hidden={stage === 'pay' || undefined}>
-            {firstStep ? <OwnershipCard value={women} alert={ownershipAlert} onChange={answerOwnership}/> : null}
+            {firstStep ? <OwnershipCard value={women} alert={ownershipAlert} fromRecord={womenFromRecord && women === true} onChange={answerOwnership}/> : null}
             <QuestionsCard />
           </div>
         </aside>

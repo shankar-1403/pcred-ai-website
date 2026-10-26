@@ -1,26 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
-import { onValue, ref } from 'firebase/database'
 import { db } from '../lib/firebase'
 
 // Counts from the last monthly scheme import (schemes/current/meta/counts, written by the
-// importSchemes function). These are the report's counts at the time of writing, used until
-// the first import lands or if the database cannot be reached.
-const FALLBACK = { central: 21, states: 36, extras: 63 }
+// importSchemes function). These are the counts of the 24 Oct 2026 import, used if the
+// database cannot be reached.
+const FALLBACK = { central: 21, states: 36, extras: 211 }
 
 function useSchemeCounts() {
   const [counts, setCounts] = useState(FALLBACK)
   useEffect(() => {
-    if (!db) return undefined
-    return onValue(
-      ref(db, 'schemes/current/meta/counts'),
-      (snapshot) => {
-        const value = snapshot.val()
-        if (value && Number(value.central) > 0) {
+    const base = db?.app?.options?.databaseURL
+    if (!base) return undefined
+    let active = true
+    // Plain HTTPS (the database's REST address), not the SDK's WebSocket, which some networks block
+    fetch(`${base.replace(/\/+$/, '')}/schemes/current/meta/counts.json`, { signal: AbortSignal.timeout(8000) })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((value) => {
+        if (active && value && Number(value.central) > 0) {
           setCounts({ central: Number(value.central), states: Number(value.states) || FALLBACK.states, extras: Number(value.extras) || FALLBACK.extras })
         }
-      },
-      () => {},
-    )
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
   }, [])
   return counts
 }

@@ -218,3 +218,52 @@ describe('certificate OCR text', () => {
         });
     });
 });
+
+// The application pages of a full "Print Udyam Application" PDF, with made-up values
+const APPLICATION = `
+UDYAM REGISTRATION NUMBER UDYAM-MH-18-0000001
+NAME OF ENTERPRISE M/S SAMPLE WORKS PRIVATE LIMITED
+1 2024-25 Small 27/04/2024
+2 2023-24 Micro 09/06/2023
+1. District Industries Centre: MUMBAI SUBURBAN ( MAHARASHTRA )
+Do you have GSTIN Yes Mobile No. 9000000000
+Gender Female Yes
+Abled(DIVYANG)
+Employment Details
+Male Female Other Total
+7 5 0 12
+1 2023-24 Small 3,50,00,000.00 0.00 35000000.00 120000000.00 2500000.00 117500000.00 Yes I
+2 2022-23 Micro 169057.00 0.00 169057.00 2751151.00 0.00 2751151.00 No N
+MSME-DFO MUMBAI ( MAHARASHTRA )
+IEC Status Active
+IEC Registration Date 15/01/2024
+`;
+
+describe('application details', () => {
+    const r = parseCertificateText(APPLICATION);
+    it('reads the classification history with ISO dates', () => {
+        expect(r.classification_history).toEqual([
+            { serial_number: '1', classification_year: '2024-25', enterprise_type: 'Small', classification_date: '2024-04-27' },
+            { serial_number: '2', classification_year: '2023-24', enterprise_type: 'Micro', classification_date: '2023-06-09' },
+        ]);
+    });
+    it('reads investment and turnover by year, without commas', () => {
+        expect(r.financial_years[0]).toMatchObject({ financial_year: '2023-24', enterprise_type: 'Small', total_turnover: '120000000.00', export_turnover: '2500000.00', itr_filed: 'Yes' });
+        expect(r.financial_years[0].wdv).toBe('35000000.00');
+        expect(r.financial_years[1].itr_filed).toBe('No');
+    });
+    it('reads gender, specially abled, GST, employment, IEC and the offices', () => {
+        expect(r).toMatchObject({
+            owner_gender: 'Female', specially_abled: 'Yes', has_gstin: 'Yes',
+            employment: { male: '7', female: '5', other: '0', total: '12' },
+            iec_status: 'Active', iec_registration_date: '15/01/2024',
+            dic: 'MUMBAI SUBURBAN (MAHARASHTRA)', msme_di: 'MUMBAI (MAHARASHTRA)',
+        });
+    });
+    it('leaves them empty on a certificate without application pages', () => {
+        const plain = parseCertificateText('UDYAM REGISTRATION NUMBER UDYAM-MH-18-0000001\nNAME OF ENTERPRISE SAMPLE');
+        expect(plain.financial_years).toEqual([]);
+        expect(plain.owner_gender).toBe('');
+        expect(plain.employment.total).toBe('');
+    });
+});

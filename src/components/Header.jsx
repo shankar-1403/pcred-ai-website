@@ -55,6 +55,10 @@ function Header() {
   const [megaOpen, setMegaOpen] = useState(false)
   const [mobileCatsOpen, setMobileCatsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  // A category page can carry an offer strip above the menu bar (set in the CMS category editor)
+  const pageSlug = /^\/suits\/([^/]+)/.exec(pathname)?.[1]
+  const banner = suits.find((item) => item.slug === pageSlug)?.banner
+  const bannerText = banner?.enabled ? banner.text : ''
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -105,6 +109,12 @@ function Header() {
   return (
     <>
       <header ref={headerRef} className="fixed inset-x-0 top-0 z-50" onMouseLeave={() => setMegaOpen(false)}>
+        {bannerText ? (
+          <p className="relative overflow-hidden bg-[linear-gradient(90deg,#003BD9_0%,#00B2FC_50%,#003BD9_100%)] px-4 py-2 text-center text-[13px] leading-snug font-semibold text-white sm:text-sm">
+            <span aria-hidden="true" className="banner-shine pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_35%,rgba(255,255,255,0.28)_50%,transparent_65%)]" />
+            <span className="relative">{bannerText}</span>
+          </p>
+        ) : null}
         <div
           className={`relative mx-auto w-full px-3 transition-all duration-500 ease-out ${
             compact ? 'max-w-4xl pt-3' : 'max-w-screen-xl pt-5'

@@ -14,15 +14,19 @@ import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js'
 
 let engine = null;
 
-/** Wires the report into the page and returns its API. Rebuilt when the page was left and opened again. */
-export function initReport() {
-  if (!engine || !engine.isMounted()) engine = createEngine();
+/**
+ * Wires the report into the page and returns its API. Rebuilt when the page was left and opened
+ * again. `live` is the latest monthly import from Firebase (lib/live-schemes.js), or null to use
+ * the scheme data bundled with the site.
+ */
+export function initReport(live = null) {
+  if (!engine || !engine.isMounted()) engine = createEngine(live);
   return engine;
 }
 
 // Body intentionally not indented: it mirrors the original report page so monthly rule
 // updates can be copied across verbatim.
-function createEngine() {
+function createEngine(live) {
 
 /* ---------------------------------------------------------------- setup */
 const VERIFIED = '28 Sep 2026';
@@ -142,7 +146,10 @@ const CLUSTER_DISTRICTS = {
 /* ------------------------------------------------------- example + state */
 const FIELDS = ['name', 'urn', 'size', 'activity', 'social', 'state', 'district', 'orgType', 'commenced', 'nic'];
 const blankProfile = () => ({ name: '', urn: '', size: '', sizeYear: '', activity: '', social: '', state: '', district: '', city: '', pin: '', incorporated: '', commenced: '', registered: '', nic: [], dic: '', dfo: '', orgType: '', gender: '' });
-const blankAnswers = () => ({ women: null, goals: [], loan: null });
+const blankAnswers = () => ({
+  women: null, goals: [], loan: null, turnover: null,
+  exportNow: null, iec: null, staff: null, divyang: null, gst: null, project: null, priorLoan: null, dpiit: null, epfo: null,
+});
 const state = {
   mode: 'empty',
   profile: blankProfile(),
@@ -208,16 +215,47 @@ const ok = (text) => ({ ok: true, text });
 const bad = (text) => ({ ok: false, text });
 const info = (text) => ({ ok: null, text });
 const no = (text, hide = false) => ({ match: 'no', why: [bad(text)], hide });
+// A rupee amount from the Udyam record ("2751151.00"), or null when not given
+const num = (v) => { const s = String(v ?? '').replace(/,/g, '').trim(); const n = Number(s); return s && Number.isFinite(n) ? n : null; };
+// ₹27.51 lakh, ₹12 crore, ₹45,000
+function inr(n) {
+  const trim = (x) => x.toFixed(2).replace(/\.?0+$/, '');
+  if (n >= 1e7) return `₹${trim(n / 1e7)} crore`;
+  if (n >= 1e5) return `₹${trim(n / 1e5)} lakh`;
+  return `₹${Math.round(n).toLocaleString('en-IN')}`;
+}
+// "More details": quick optional questions some schemes depend on. `show` hides a question the
+// Udyam record already answers, or one that matters only for a goal not picked.
+const YN = [['yes', 'Yes'], ['no', 'No']];
+const MORE = [
+  { key: 'exportNow', label: 'Do you export now?', opts: YN, show: (p) => p.turnover == null },
+  { key: 'iec', label: 'Do you have an active import-export code (IEC)?', opts: YN, show: (p) => !p.iecStatus },
+  { key: 'staff', label: 'How many employees?', opts: [['under50', 'Under 50'], ['50plus', '50 or more']], show: (p) => p.employees == null },
+  { key: 'divyang', label: 'Is the owner specially abled (Divyang)?', opts: YN, show: (p) => !p.divyangKnown },
+  { key: 'gst', label: 'Registered for GST?', opts: YN, show: (p) => !p.gst },
+  { key: 'project', label: 'Is this for a new unit or an expansion?', opts: [['new', 'New unit'], ['expansion', 'Expansion'], ['none', 'Neither']], show: () => true },
+  { key: 'priorLoan', label: 'Taken a PMEGP, REGP or MUDRA loan before?', opts: YN, show: (p, a) => a.goals.includes('credit') || a.goals.includes('machinery') },
+  { key: 'dpiit', label: 'Already recognised by DPIIT as a startup?', opts: YN, show: (p, a) => a.goals.includes('startup') },
+  { key: 'epfo', label: 'Registered with EPFO?', opts: YN, show: (p, a) => a.goals.includes('hiring') },
+];
+// Yes/No answers are kept as true/false; the others as their option value
+const moreValue = (v) => (v === 'yes' ? true : v === 'no' ? false : v);
+// Bands for the optional turnover question, used when the record has no turnover
+const TURNOVERS = [['upto1cr', 'Up to ₹1 crore'], ['1to5cr', '₹1–5 crore'], ['5to25cr', '₹5–25 crore'], ['25to100cr', '₹25–100 crore'], ['above100cr', 'Above ₹100 crore']];
 
 function context(p, a) {
   const nic = (p.nic || []).filter((n) => /^\d{5}$/.test(n.code));
   const traderNic = nic.length > 0 && nic.every((n) => [45, 46, 47].includes(+n.code.slice(0, 2)) || n.act === 'trading');
   const trader = p.activity === 'trading' || traderNic;
-  const mfgNic = nic.some((n) => { const d = +n.code.slice(0, 2); return d >= 10 && d <= 33; });
-  const mfg = !trader && (mfgNic || (nic.length === 0 && p.activity === 'manufacturing'));
+  const mfgCode = (n) => { const d = +n.code.slice(0, 2); return d >= 10 && d <= 33; };
+  // The major activity decides. With no activity on the record, the main (first) NIC code does.
+  const mfg = !trader && (p.activity === 'manufacturing' || (!p.activity && nic.length > 0 && mfgCode(nic[0])));
+  // A manufacturing NIC behind a services or trading main activity: manufacturing schemes are
+  // worth checking for that part of the business, not a full match
+  const mfgSide = (!trader && !mfg && nic.find(mfgCode)?.code) || '';
   return {
     nic, nic5: nic.map((n) => n.code), nic4: nic.map((n) => n.code.slice(0, 4)), nic2: nic.map((n) => n.code.slice(0, 2)),
-    trader, mfg,
+    trader, mfg, mfgSide,
     women: a.women === true,
     scst: p.social === 'sc' || p.social === 'st',
     ner: NER.has(p.state), himalayan: HIMALAYAN.has(p.state), island: ISLAND.has(p.state),
@@ -227,6 +265,16 @@ function context(p, a) {
     firm: ['partnership', 'llp', 'pvt', 'public'].includes(p.orgType),
     goals: new Set(a.goals || []), loan: a.loan || null,
     sizeL: SIZE_L[p.size] || 'MSME',
+    // Turnover from the record (₹, latest year), else the band the visitor picked
+    turnover: p.turnover ?? null, maxTurnover: p.maxTurnover ?? null, turnoverBand: p.turnover == null ? (a.turnover || null) : null,
+    // The Udyam PDF wins where it has the fact; otherwise the "More details" answer is used
+    exporter: (p.exports || 0) > 0 || a.exportNow === true,
+    iecActive: p.iecStatus ? p.iecStatus === 'Active' : (a.iec ?? null),
+    employees: p.employees ?? null,
+    staff: p.employees != null ? (p.employees >= 50 ? '50plus' : 'under50') : (a.staff || null),
+    divyang: !!p.divyang || a.divyang === true,
+    gst: p.gst ? p.gst === 'Yes' : (a.gst ?? null),
+    project: a.project || null, priorLoan: a.priorLoan ?? null, dpiit: a.dpiit ?? null, epfo: a.epfo ?? null,
   };
 }
 function vishwakarmaMatch(codes) {
@@ -237,13 +285,54 @@ function vishwakarmaMatch(codes) {
 function adeetieSector(c) {
   return ADEETIE.find((s) => (s.nic4 && c.nic4.some((x) => s.nic4.includes(x))) || (s.nic2 && c.nic2.some((x) => s.nic2.includes(x)))) || null;
 }
+// Profile rows from a full Udyam PDF, plus units, registration date and the turnover answer
+function extraFacts(p, a) {
+  const rows = [];
+  if (p.turnover != null) rows.push(['Turnover', `${inr(p.turnover)} in FY ${p.finYear}${p.exports > 0 ? `, of which exports ${inr(p.exports)}` : ''}`]);
+  else if (a.turnover) rows.push(['Turnover', `${(TURNOVERS.find((t) => t[0] === a.turnover) || [0, ''])[1]} (your answer)`]);
+  if (p.investment != null && p.turnover != null) rows.push(['Investment in plant and machinery', inr(p.investment)]);
+  if (p.employees != null) rows.push(['Employees', `${p.employees}${p.womenEmployees ? ` (${p.womenEmployees} women)` : ''}`]);
+  if (p.gst) rows.push(['GST registered', p.gst]);
+  if (p.iecStatus) rows.push(['Import-export code', `${p.iecStatus}${p.iecSince ? ` since ${fmtD(p.iecSince)}` : ''}`]);
+  if ((p.units || []).length > 1) rows.push(['Units', `${p.units.length} on the Udyam record: ${unitPlaces(p)}`]);
+  if (p.registered) rows.push(['Udyam registered', fmtD(toDate(p.registered))]);
+  // "More details" answers, for what the record does not show
+  const said = MORE.filter((q) => a[q.key] != null && q.show(p, a)).map((q) => {
+    const opt = q.opts.find(([v]) => moreValue(v) === a[q.key]);
+    return `${q.label.replace(/\?$/, '')}: ${opt ? opt[1] : ''}`;
+  });
+  if (said.length) rows.push(['Your answers', said.join('; ')]);
+  return rows;
+}
+// "Your main activity is services, but NIC 25920 is manufacturing: …"
+function sideNote(p, c) {
+  return `Your main activity is ${ACT_L[p.activity]?.toLowerCase() || 'not manufacturing'}, but NIC ${c.mfgSide} is manufacturing: that part of the business may qualify`;
+}
+// What the Udyam record says about exporting: export turnover, and the IEC linked to it
+function exportFacts(p, c) {
+  const out = [];
+  if ((p.exports || 0) > 0) out.push(ok(`Already exporting: ${inr(p.exports)} of exports in FY ${p.finYear}`));
+  else if (c.exporter) out.push(ok('You export now'));
+  if (p.iecStatus === 'Active') out.push(ok(`Active IEC on your Udyam record${p.iecSince ? ` since ${fmtD(p.iecSince)}` : ''}`));
+  else if (p.iecStatus) out.push(info(`Your Udyam record shows the IEC as ${p.iecStatus.toLowerCase()}; you need an active IEC to export`));
+  else if (c.iecActive === true) out.push(ok('You have an active IEC'));
+  else if (c.iecActive === false) out.push(info('You need an active IEC (from DGFT) to export'));
+  return out;
+}
+// "Pune, Maharashtra; Chakan, Maharashtra" for the unit locations on the Udyam record
+function unitPlaces(p) {
+  return (p.units || []).map((u) => [u.city || u.district, u.state].filter(Boolean).join(', ')).join('; ');
+}
+// The main address first, then every other unit location from the Udyam record
 function adeetieCluster(sec, p) {
-  const d = String(p.district || '').toUpperCase().trim();
-  const city = String(p.city || '').toUpperCase().trim();
-  for (const cl of sec.clusters) {
-    for (const alias of CLUSTER_DISTRICTS[cl] || []) {
-      if (alias.startsWith('@')) { if (p.state === alias.slice(1)) return cl; }
-      else if (alias === d || alias === city) return cl;
+  for (const place of [p, ...(p.units || [])]) {
+    const d = String(place.district || '').toUpperCase().trim();
+    const city = String(place.city || '').toUpperCase().trim();
+    for (const cl of sec.clusters) {
+      for (const alias of CLUSTER_DISTRICTS[cl] || []) {
+        if (alias.startsWith('@')) { if (place.state === alias.slice(1)) return cl; }
+        else if (alias === d || alias === city) return cl;
+      }
     }
   }
   return null;
@@ -282,6 +371,8 @@ const SCHEMES = [
         'Term loans and working capital up to ₹10 crore with no collateral or third-party guarantee.',
         `Guarantee cover for you: ${cover}% (${basis}).${extra}`,
         `Annual guarantee fee of 0.37% to 1.20% of the loan, rising with loan size.${disc ? ` You qualify for a ${disc}% fee discount (up to 30% with other categories, such as ZED certification).` : ' Discounts of 10% per category (women, SC/ST, North-East, aspirational district, ZED-certified) up to 30%.'} Your lender decides whether to pass the fee on.`,
+        // RBI: for MSE fund-based limits up to ₹5 crore, working capital is at least 20% of projected turnover
+        ...(c.turnover > 0 && c.turnover * 0.2 <= 5e7 ? [`Working capital: for limits up to ₹5 crore, banks assess the need at a minimum of 20% of projected annual turnover (RBI). On your FY ${p.finYear} turnover of ${inr(c.turnover)}, that is about ${inr(c.turnover * 0.2)}.`] : []),
       ],
       checks: ['Your loan account must not have been restructured or in SMA-2 stress in the past year.', 'The lender can take only the promoter’s personal guarantee for the covered part.'] };
   },
@@ -348,15 +439,23 @@ const SCHEMES = [
   agency: 'Ministry of MSME, through KVIC, KVIBs and District Industries Centres', cat: 'Loans & credit', goals: ['credit', 'machinery'], weight: 5,
   prog: { s: 'open', note: 'Running in 2026-27 with ₹4,500 crore budgeted; formal approval for 2026–31 not yet published.' },
   apply: [['PMEGP e-portal', 'https://www.kviconline.gov.in/pmegpeportal/']],
+  // Applications go through KVIC, KVIB or the DIC; name the DIC on the Udyam record
+  applyFn: (p) => [[`PMEGP e-portal${p.dic ? ` (your District Industries Centre: DIC ${titleCase(p.dic)})` : ''}`, 'https://www.kviconline.gov.in/pmegpeportal/']],
   docs: 'Aadhaar, PAN, project report, caste or special-category certificate, education certificate, EDP training certificate.',
   src: [['KVIC: revised PMEGP guidelines, Dec 2023', 'https://www.kviconline.gov.in/pmegpeportal/dashboard/notification/Revised_PMEGP_Scheme_Guidelines_07122023_compressed.pdf']],
   eval(p, c) {
     if (p.size && p.size !== 'micro') return no(`PMEGP funds micro units only; you are ${c.sizeL}.`);
     if (c.firm) return no('PMEGP is for individuals (and SHGs, societies, co-operatives and trusts for new projects), not firms or companies.');
-    const special = c.women || c.scst || p.social === 'obc' || c.hill;
+    // PMEGP's special category includes physically handicapped (Divyang) applicants
+    const special = c.women || c.scst || p.social === 'obc' || c.hill || c.divyang;
     const up = c.hill ? 20 : 15;
-    const why = [ok('Micro enterprise'), info('Upgrade loan only if your unit was set up with a PMEGP, REGP or MUDRA loan')];
-    if (special) why.push(ok('Special category: higher subsidy on a new unit'));
+    // The upgrade loan needs an earlier PMEGP, REGP or MUDRA loan; otherwise only a new unit qualifies
+    if (c.priorLoan === false && c.project === 'none') return no('Without an earlier PMEGP, REGP or MUDRA loan, PMEGP funds only a new unit, and you are not planning one.');
+    const why = [ok('Micro enterprise'), c.priorLoan === true ? ok('Earlier PMEGP, REGP or MUDRA loan: the upgrade loan can apply')
+      : c.priorLoan === false ? info('No earlier PMEGP, REGP or MUDRA loan, so only a new-unit project qualifies')
+      : info('Upgrade loan only if your unit was set up with a PMEGP, REGP or MUDRA loan')];
+    if (c.project === 'new') why.push(ok('You plan a new unit'));
+    if (special) why.push(ok(c.divyang && !(c.women || c.scst || p.social === 'obc' || c.hill) ? 'Specially abled (Divyang) owner: special category, higher subsidy on a new unit' : 'Special category: higher subsidy on a new unit'));
     if (c.trader) why.push(info('Pure trading may not qualify'));
     return { match: 'check', why,
       headline: `Upgrade loan up to ₹1 crore with ${up}% subsidy, or ${special ? '25–35%' : '15–25%'} subsidy on a new unit`,
@@ -449,13 +548,13 @@ const SCHEMES = [
   src: [['ZED portal: subsidy on certification', 'https://zed.msme.gov.in'], ['PIB, 12 Mar 2026', 'https://www.pib.gov.in/PressReleasePage.aspx?PRID=2238978']],
   eval(p, c) {
     if (c.trader) return no('Traders are not covered; ZED is for manufacturing units.');
-    if (!c.mfg) return no('Covers manufacturing (NIC 10–33) only. A services version was announced in Aug 2026 but is not live yet.');
+    if (!c.mfg && !c.mfgSide) return no('Covers manufacturing (NIC 10–33) only. A services version was announced in Aug 2026 but is not live yet.');
     const base = { micro: 80, small: 60, medium: 50 }[p.size] || 80;
     let pct = base;
-    const why = [ok('Manufacturing unit'), ok(`${c.sizeL}: ${base}% subsidy`)];
+    const why = [c.mfg ? ok('Manufacturing unit') : info(sideNote(p, c)), ok(`${c.sizeL}: ${base}% subsidy`)];
     if (c.women) { pct = 100; why.push(ok('Woman-owned: 100% of certification cost')); }
     else if (c.scst || c.ner || c.himalayan || c.island) { pct = base + 10; why.push(ok(`Extra 10% for ${c.scst ? 'SC/ST ownership' : 'your region'}`)); }
-    return { match: 'yes', why,
+    return { match: c.mfg ? 'yes' : 'check', why,
       headline: `Government pays ${pct}% of ZED certification; Bronze is effectively free`,
       gets: [`Certification fee: Bronze ₹10,000, Silver ₹40,000, Gold ₹90,000. You get ${pct}% subsidy.`, '₹10,000 joining reward after taking the ZED Pledge (valid 1 year), which covers Bronze.', 'After Bronze: 75% support (up to ₹50,000) for one testing or product certification, and up to ₹5 lakh of handholding.', 'ZED-certified units get 85% CGTMSE cover and a guarantee-fee discount; 19 banks and 22 states add their own incentives.'],
       checks: ['Certificates are valid for 3 years.', 'The extra 10% also applies in LWE-affected and aspirational districts, which this report does not check.'] };
@@ -470,11 +569,11 @@ const SCHEMES = [
   src: [['PIB, 26 Jun 2026', 'https://www.pib.gov.in/PressReleasePage.aspx?PRID=2278107']],
   eval(p, c) {
     if (c.trader) return no('For manufacturing units; traders are not covered.');
-    if (!c.mfg) return no('Covers manufacturing (NIC 10–33) only; services are planned for a later phase.');
+    if (!c.mfg && !c.mfgSide) return no('Covers manufacturing (NIC 10–33) only; services are planned for a later phase.');
     const share = 90 + (c.women || c.scst || c.ner ? 5 : 0);
-    const why = [ok('Manufacturing unit')];
+    const why = [c.mfg ? ok('Manufacturing unit') : info(sideNote(p, c))];
     if (share > 90) why.push(ok('Extra 5% government share for your profile'));
-    return { match: 'yes', why,
+    return { match: c.mfg ? 'yes' : 'check', why,
       headline: `LEAN manufacturing consultancy with ${share}% paid by the government`,
       gets: ['Basic level: free, self-paced e-learning (about 2 months).', `Intermediate (fee cap ₹1.2 lakh + tax, 6 months) and Advanced (₹2.4 lakh + tax, 12 months): the government pays ${share}%.`, 'A LEAN consultant is assigned from the QCI and NPC panel.'],
       checks: ['Intermediate and Advanced need a group of enterprises, usually through an industry association or OEM.'] };
@@ -509,10 +608,14 @@ const SCHEMES = [
   eval(p, c) {
     if (p.size === 'medium') return no('Protection covers micro and small suppliers; you are Medium.');
     if (c.trader) return no('Traders are not covered by the delayed-payment rules.');
-    return { match: 'yes', why: [ok(`${c.sizeL} supplier of goods or services`)],
+    // The supplier must be registered when the contract is made (Supreme Court, Silpi Industries, 2021)
+    const reg = toDate(p.registered);
+    const why = [ok(`${c.sizeL} supplier of goods or services`)];
+    if (reg) why.push(ok(`Udyam-registered since ${fmtD(reg)}: covers supplies contracted after that date`));
+    return { match: 'yes', why,
       headline: 'Buyers must pay within 45 days or owe compound interest at 16.5% a year',
       gets: ['Buyers must pay by the agreed date, and no later than 45 days (15 days if there is no written agreement).', 'Late payments carry compound interest with monthly rests at 3× the RBI Bank Rate: 16.5% a year at today’s 5.50%.', 'Buyers can claim a tax deduction for dues to micro and small suppliers only in the year they actually pay (Income-tax Act 2025, s.37(2)(g), formerly s.43B(h)).', 'File a claim online; the council mediates and can pass an award.'],
-      checks: ['Keep purchase orders, invoices and delivery proof for every sale.'] };
+      checks: [`Only supplies contracted while you were Udyam-registered are covered${reg ? ` (from ${fmtD(reg)})` : ''}; earlier contracts are not.`, 'Keep purchase orders, invoices and delivery proof for every sale.'] };
   },
 },
 {
@@ -542,7 +645,8 @@ const SCHEMES = [
   eval(p, c) {
     if (p.size === 'medium') return no('For micro and small enterprises; you are Medium.');
     if (c.trader) return no('Traders are not covered.');
-    return { match: 'yes', why: [ok(`${c.sizeL} enterprise`), info('Only if you are not already selling on ONDC')],
+    const gstWhy = c.gst === true ? [ok('GST-registered: you can sell across states')] : c.gst === false ? [info('Without GST you can sell only within your state')] : [];
+    return { match: 'yes', why: [ok(`${c.sizeL} enterprise`), ...gstWhy, info('Only if you are not already selling on ONDC')],
       headline: 'Start selling on ONDC with catalogue, delivery and packaging costs covered',
       gets: ['Catalogue creation up to ₹2,500 and account management up to ₹5,000, paid to your ONDC seller app.', 'Delivery ₹50 (B2C) or ₹200 (B2B) per order and packaging ₹20 or ₹250 per order, for 10 orders each.', 'Packaging design 20% up to ₹2,000, and ₹450 for digital marketing.'],
       checks: ['Use the benefits within 6 months of your first ONDC order; at least 2 orders must be delivered before a claim.', 'Without GST you can sell only within your state.'] };
@@ -579,6 +683,13 @@ const SCHEMES = [
     const yrs = c.mfg ? 4 : 2;
     const why = [ok('Any sector and size'), info('Needs EPFO registration and net new hiring')];
     if (c.mfg) why.push(ok('Manufacturing: paid for 4 years instead of 2'));
+    else if (c.mfgSide) why.push(info(`Paid for 4 years only for manufacturing; your main activity is ${ACT_L[p.activity]?.toLowerCase() || 'not manufacturing'}`));
+    // The extra hires needed depend on headcount: 2 below 50 employees, 5 from 50 up
+    if (c.employees > 0) why.push(info(`Your Udyam record lists ${c.employees} employees, so you would need at least ${c.employees >= 50 ? 5 : 2} more hires above your EPFO baseline`));
+    else if (c.staff) why.push(info(`With ${c.staff === '50plus' ? '50 or more' : 'under 50'} employees you would need at least ${c.staff === '50plus' ? 5 : 2} more hires above your EPFO baseline`));
+    // The incentive is paid through EPFO, so the establishment must be registered there
+    if (c.epfo === true) why.push(ok('Registered with EPFO'));
+    else if (c.epfo === false) why.push(info('Register with EPFO first: the incentive is paid through it'));
     return { match: 'check', why,
       headline: `Up to ₹3,000 a month for each extra employee, for ${yrs} years`,
       gets: ['Per extra employee per month: up to ₹1,000 (EPF wage up to ₹10,000), ₹2,000 (₹10,001–20,000) or ₹3,000 (₹20,001 to ₹1 lakh).', c.mfg ? 'Paid for 48 months because you are in manufacturing.' : 'Paid for 24 months (48 months for manufacturing).'],
@@ -594,7 +705,7 @@ const SCHEMES = [
   src: [['PIB: mission approved, 12 Nov 2025', 'https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2189381']],
   eval(p, c) {
     const cover = p.size === 'medium' ? 65 : 85;
-    return { match: 'check', why: [ok('Micro, small and medium exporters'), info('Depends on your IEC and your product’s HS code being on the list')],
+    return { match: 'check', why: [ok('Micro, small and medium exporters'), ...exportFacts(p, c), info('Depends on your IEC and your product’s HS code being on the list')],
       headline: `2.75% interest subvention on export credit, and ${cover}% collateral-free cover`,
       gets: ['Interest subvention of 2.75% a year on pre- and post-shipment rupee export credit, passed on upfront by your bank (cap of ₹50 lakh per exporter in FY2025-26).', `Collateral support: a CGTMSE guarantee of ${cover}% on export working capital, up to ₹10 crore per exporter per year.`, 'Market access and branding support through export promotion councils.'],
       checks: ['You need a valid Importer-Exporter Code (IEC).', 'Your product must be on the notified list of about 4,139 HS lines.', 'Generate a unique ID on the DGFT portal for each credit facility.'] };
@@ -609,7 +720,10 @@ const SCHEMES = [
   src: [['CEPC: CBFTE reimbursement', 'https://cepc.co.in/cbfte-scheme-reimbursement-of-rcmc-fee']],
   eval(p, c) {
     if (p.size === 'medium') return no('For micro and small first-time exporters; you are Medium.');
-    return { match: 'check', why: [ok(`${c.sizeL} enterprise`), info('Only if your IEC is at most 3 years old on the shipment date')],
+    // First-time exporters only: the IEC must be at most 3 years old on the shipment date
+    const iecEnds = p.iecSince ? new Date(p.iecSince.getFullYear() + 3, p.iecSince.getMonth(), p.iecSince.getDate()) : null;
+    if (iecEnds && iecEnds < TODAY) return no(`For first-time exporters whose IEC is at most 3 years old; yours dates from ${fmtD(p.iecSince)}.`);
+    return { match: 'check', why: [ok(`${c.sizeL} enterprise`), ...exportFacts(p, c), iecEnds ? ok(`Your IEC (${fmtD(p.iecSince)}) counts as first-time until ${fmtD(iecEnds)}`) : info('Only if your IEC is at most 3 years old on the shipment date')],
       headline: 'Refunds on RCMC, export insurance and testing for first-time exporters',
       gets: ['RCMC fee: 75%, up to ₹20,000.', 'Export credit insurance premium: up to ₹10,000 a year.', 'Export testing and quality certification: 75%, up to ₹1 lakh (max 3 a year).'],
       checks: ['The export shipment must be in the same financial year as the claim.', 'The Ministry’s 2025-26 booklet quotes 80% for some items; confirm the current rate.'] };
@@ -648,6 +762,15 @@ const SCHEMES = [
   },
 },
 ];
+// The monthly import refreshes each central scheme's status, links and sources; the rules
+// (eval) stay as written above. Fields missing from the import keep their values here.
+for (const s of SCHEMES) {
+  const fresh = live?.central?.[s.id];
+  if (!fresh || typeof fresh !== 'object') continue;
+  for (const k of ['name', 'abbr', 'agency', 'cat', 'docs']) if (typeof fresh[k] === 'string' && fresh[k]) s[k] = fresh[k];
+  for (const k of ['apply', 'src']) if (Array.isArray(fresh[k]) && fresh[k].length && fresh[k].every((r) => Array.isArray(r) && r[1])) s[k] = fresh[k];
+  if (fresh.prog && typeof fresh.prog.note === 'string' && fresh.prog.s) s.prog = { ...s.prog, ...fresh.prog };
+}
 
 const WATCH = [
   { when: (p, c) => c.women || c.scst, name: 'Term loans up to ₹2 crore for first-time women, SC and ST entrepreneurs', status: 'Announced, not launched',
@@ -668,8 +791,9 @@ const WATCH = [
 /* ------------------------------------- state, sector, export and startup data */
 // Data lives in src/data/states.json and src/data/extras.json, so the monthly rule check can
 // update it without touching the code (see scripts/sync-from-artifact.mjs).
-const STATE_DATA = statesData && Array.isArray(statesData.states) ? statesData : { checked: VERIFIED, states: [] };
-const EXTRA_DATA = extrasData && Array.isArray(extrasData.items) ? extrasData : { checked: VERIFIED, items: [] };
+// The monthly import from Firebase when given, else the data bundled with the site
+const STATE_DATA = live?.states?.states?.length ? live.states : statesData && Array.isArray(statesData.states) ? statesData : { checked: VERIFIED, states: [] };
+const EXTRA_DATA = live?.extras?.items?.length ? live.extras : extrasData && Array.isArray(extrasData.items) ? extrasData : { checked: VERIFIED, items: [] };
 const CHECKED = STATE_DATA.checked || VERIFIED;
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const TODAY = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
@@ -737,8 +861,9 @@ function evalStateItem(it, rec, ss, p, c, a) {
   }
   const act = c.trader ? 'trading' : p.activity;
   if (act) {
-    if (!it.activities.includes(act)) return no(`Covers ${actList(it.activities)} only; your main activity is ${ACT_L[act].toLowerCase()}.`);
-    why.push(ok(`${ACT_L[act]} is covered`));
+    // A manufacturing NIC behind another main activity: worth checking for that part
+    if (!it.activities.includes(act) && !(c.mfgSide && it.activities.includes('manufacturing'))) return no(`Covers ${actList(it.activities)} only; your main activity is ${ACT_L[act].toLowerCase()}.`);
+    if (it.activities.includes(act)) why.push(ok(`${ACT_L[act]} is covered`)); else soft(info(sideNote(p, c)));
   } else soft(info('Main activity not set'));
   const on = onlyCheck(it, p, c, a);
   if (on) {
@@ -747,7 +872,22 @@ function evalStateItem(it, rec, ss, p, c, a) {
     else { soft(info(on[1])); if (it.only === 'other' || it.only === 'group') lowFit = true; }
   }
   const com = toDate(p.commenced), since = iso(rec.since);
-  if (it.unit === 'any') {
+  // The visitor's project ("More details"): a new unit set up now falls under the policy; an
+  // expansion qualifies where the policy covers expansion; no project leaves only units started
+  // after the policy began. Unanswered, the start date decides as before.
+  const startedUnder = since && com && com >= since;
+  const newKind = it.unit === 'new' || it.unit === 'newexp' || it.unit === '?';
+  if (newKind && c.project === 'new') {
+    why.push(ok('Your planned new unit can count as a new unit under this policy'));
+  } else if (newKind && c.project === 'expansion' && !startedUnder) {
+    if (it.unit === 'new') return no('Only for new units; an expansion of an existing unit does not qualify.');
+    if (it.unit === 'newexp') why.push(ok('Your expansion project can qualify'));
+    else soft(info('Unclear whether expansion projects qualify; ask the DIC'));
+  } else if (newKind && c.project === 'none' && !startedUnder && it.unit !== '?') {
+    return no(`For new units${it.unit === 'newexp' ? ' or expansion projects' : ''}; you are not planning one.`);
+  } else if (it.unit === 'existing' && c.gst === false) {
+    return no(`Only for units GST-registered in ${rec.state}.`);
+  } else if (it.unit === 'any') {
     if (it.minCommenced) {
       const md = iso(it.minCommenced);
       if (com && com < md) return no(`For enterprises started on or after ${fmtD(md)}; yours started in ${fmtM(com)}.`);
@@ -779,7 +919,11 @@ function evalStateItem(it, rec, ss, p, c, a) {
   return {
     match, why, lowFit, headline: it.summary,
     gets: [...it.details, ...(it.extraFor && !it.only ? [`Higher support: ${it.extraFor}`] : [])],
-    checks: it.conditions.length ? it.conditions : ['Your District Industries Centre confirms the conditions.'],
+    checks: [
+      ...(it.conditions.length ? it.conditions : ['The District Industries Centre confirms the conditions.']),
+      // The DIC named on the Udyam record handles state incentive claims
+      ...(p.dic && p.state === rec.state ? [`Your District Industries Centre on the Udyam record: DIC ${titleCase(p.dic)}.`] : []),
+    ],
   };
 }
 function stateAdapter(rec, it, i, ss) {
@@ -793,9 +937,11 @@ function stateAdapter(rec, it, i, ss) {
 function evalState(p, a, c) {
   const rec = ST_BY_NAME.get(p.state);
   if (!rec) return { rec: null, yes: [], check: [], nofit: [], ref: [] };
-  const ss = stateStatus(rec);
+  const st0 = stateStatus(rec);
+  // Only a policy in force now is listed: one that opens later counts as not open yet
+  const ss = st0.st === 'opens' ? { ...st0, live: false } : st0;
   const out = { rec, ss, yes: [], check: [], nofit: [], ref: [] };
-  if (!ss.live) { out.ref = rec.items; return out; }
+  if (!ss.live) return out;
   const pe = p.size ? p : { ...p, size: 'micro' };
   const ce = p.size ? c : context(pe, a);
   rec.items.forEach((it, i) => {
@@ -808,6 +954,7 @@ function evalState(p, a, c) {
   const rank = { high: 0, medium: 1, low: 2 };
   const order = (x, y) => (y.goalHit - x.goalHit) || ((x.r.lowFit ? 1 : 0) - (y.r.lowFit ? 1 : 0)) || (rank[x.conf] - rank[y.conf]);
   out.yes.sort(order); out.check.sort(order);
+  out.nofit = []; // the report lists only schemes that fit
   return out;
 }
 
@@ -847,7 +994,7 @@ function xGate(x, p, c) {
   const n = xNicHit(x, c);
   if (n.gated && !n.code) return 'drop';
   if (x.groupOnly && p.orgType !== 'other') return 'group';
-  if (x.strictGoal && !c.goals.has(x.strictGoal)) return x.strictGoal;
+  if (x.strictGoal && !c.goals.has(x.strictGoal) && !(x.strictGoal === 'exports' && c.exporter)) return x.strictGoal;
   return 'ok';
 }
 function xEval(x, p, c) {
@@ -860,7 +1007,11 @@ function xEval(x, p, c) {
     why.push(ok(`${c.sizeL} enterprise`));
   }
   const act = c.trader ? 'trading' : p.activity;
-  if (act && !x.activities.includes(act)) return no(`Covers ${actList(x.activities)} only; your main activity is ${ACT_L[act].toLowerCase()}.`, hide);
+  if (act && !x.activities.includes(act)) {
+    // A manufacturing NIC behind another main activity: worth checking for that part
+    if (!(c.mfgSide && x.activities.includes('manufacturing'))) return no(`Covers ${actList(x.activities)} only; your main activity is ${ACT_L[act].toLowerCase()}.`, hide);
+    soft(info(sideNote(p, c)));
+  }
   const n = xNicHit(x, c);
   if (n.code) why.push(ok(`Your NIC code ${n.code} is in this sector`));
   if (x.states && x.states.length) why.push(ok(`Available in ${p.state}`));
@@ -881,13 +1032,27 @@ function xEval(x, p, c) {
       why.push(ok(`Within the ${x.maxAgeYears}-year age limit (since ${d.getFullYear()})`));
     } else soft(info(`Only for businesses up to ${x.maxAgeYears} years old`));
   }
+  // DPIIT startup recognition: turnover must not have crossed ₹100 crore in any year since incorporation
+  if (x.kind === 'startup') {
+    if (c.maxTurnover > 1e9) return no(`Startup recognition needs turnover under ₹100 crore in every year; your Udyam record shows ${inr(c.maxTurnover)}.`, hide);
+    if (c.turnoverBand === 'above100cr') return no('Startup recognition needs turnover under ₹100 crore in every year.', hide);
+    if (c.turnover != null) why.push(ok(`Turnover ${inr(c.turnover)} in FY ${p.finYear}, under the ₹100 crore limit`));
+    // Already recognised: the recognition itself is done, and the other startup schemes are open to apply
+    if (c.dpiit === true && x.id === 'dpiit-recognition') return no('You are already recognised by DPIIT.', true);
+    if (c.dpiit === true) why.push(ok('Recognised by DPIIT'));
+  }
+  // Schemes that fund a new unit or an expansion project
+  if (x.newOrExpansion === true) {
+    if (c.project === 'none') return no('Funds a new unit or an expansion project; you are not planning one.', hide);
+    if (c.project) why.push(ok(c.project === 'new' ? 'For your new unit' : 'For your expansion project'));
+  }
   if (x.groupOnly) soft(info('For a group of units, cluster SPV or co-operative, not a single unit'));
   if (x.scope) soft(info(x.scope));
   if (x.confidence === 'low') soft(info('Details not fully confirmed; check with the agency'));
   if (x.fit === 'check' || x.kind !== 'sector' || !n.gated) { if (match === 'yes') match = 'check'; }
   const ex = extraMatch(x.extraFor, c);
   if (ex) why.push(ok(ex));
-  if (!why.some((w) => w.ok === null) && match === 'check') why.push(info(x.kind === 'export' ? 'Depends on your export plans and the paperwork listed below' : x.kind === 'startup' ? 'Needs DPIIT startup recognition first' : 'Depends on the project and conditions below'));
+  if (!why.some((w) => w.ok === null) && match === 'check') why.push(info(x.kind === 'export' ? 'Depends on your export plans and the paperwork listed below' : x.kind === 'startup' ? (c.dpiit === true ? 'Depends on the conditions below' : 'Needs DPIIT startup recognition first') : 'Depends on the project and conditions below'));
   return {
     match, why, lowFit: !!x.lowFit, headline: x.headline,
     gets: [...(x.gets || []), ...(x.extraFor ? [`Higher support: ${x.extraFor}`] : [])],
@@ -946,24 +1111,54 @@ function evaluate() {
     if (gate !== 'ok' && !state.showAll) { x.hid = gate; hidden.push(x); return; }
     (r.match === 'yes' ? yes : check).push(x);
   };
+  // Moved up a category in the last three years: a scheme closed to the new category is checked
+  // again with the earlier one, since its non-tax benefits carry over (tax schemes excepted)
+  const up = p.movedUp && p.movedUp.until > TODAY ? p.movedUp : null;
+  const pUp = up ? { ...pe, size: up.from } : null;
+  const cUp = up ? context(pUp, a) : null;
+  const carry = (s, r) => {
+    if (!up || r.match !== 'no' || /tax/i.test(s.id)) return r;
+    let r2;
+    try { r2 = s.eval(pUp, cUp); } catch { return r; }
+    if (r2.match === 'no') return r;
+    const was = SIZE_L[up.from];
+    return { ...r2, match: 'check', why: [
+      info(`You moved up from ${was} on ${fmtD(up.on)}. A ${was} enterprise's non-tax benefits continue until ${fmtD(up.until)}; confirm with the agency`),
+      ...r2.why.filter((w) => !w.text.startsWith(`${was} enterprise`)),
+    ] };
+  };
   for (const s of SCHEMES) {
+    // Only active schemes: a central scheme whose extension has ended is left out
+    if (s.prog?.s === 'deadline') continue;
     let r;
-    try { r = s.eval(pe, ce); } catch (e) { console.error(s.id, e); continue; }
-    add(s, r, c.goals.size && s.onlyGoal && !c.goals.has(s.onlyGoal) ? s.onlyGoal : 'ok');
+    try { r = carry(s, s.eval(pe, ce)); } catch (e) { console.error(s.id, e); continue; }
+    // Export schemes stay in for a business already exporting, even without the Export goal
+    const goalOff = c.goals.size && s.onlyGoal && !c.goals.has(s.onlyGoal) && !(s.onlyGoal === 'exports' && c.exporter);
+    add(s, r, goalOff ? s.onlyGoal : 'ok');
   }
   for (const s of EXTRAS) {
     if (!s.st.live) continue;
     const gate = s.gate(p, c);
     if (gate === 'drop') continue;
     let r;
-    try { r = s.eval(pe, ce); } catch (e) { console.error(s.id, e); continue; }
+    try { r = carry(s, s.eval(pe, ce)); } catch (e) { console.error(s.id, e); continue; }
     add(s, r, gate);
   }
   const order = (x, y) => (y.goalHit - x.goalHit) || (y.s.weight - x.s.weight);
   yes.sort(order); check.sort(order);
-  const watch = WATCH.filter((w) => { try { return w.when(p, c); } catch { return false; } }).concat(extraWatch(p, c));
   const st = evalState(p, a, c);
-  return { p, a, c, yes, check, nofit, hidden, watch, st };
+  // Units in other states: each of those states' incentives can apply to the unit there
+  const stMore = [...new Set((p.units || []).map((u) => u.state))].filter((s) => s !== p.state).map((s) => {
+    const q = { ...p, state: s, dic: '' }; // the DIC on the record serves the main address
+    const r = evalState(q, a, context(q, a));
+    r.unitIn = [...new Set(p.units.filter((u) => u.state === s).map((u) => u.city || u.district).filter(Boolean))];
+    return r;
+  }).filter((r) => r.rec);
+  // The report lists only active schemes that fit: no "Not a fit" list, and nothing that is
+  // announced but not open, or closed ("On the horizon"). Those stay computed (watchAll,
+  // nofitAll) for reference but are not shown.
+  const watchAll = WATCH.filter((w) => { try { return w.when(p, c); } catch { return false; } }).concat(extraWatch(p, c));
+  return { p, a, c, yes, check, nofit: [], hidden, watch: [], st, stMore, watchAll, nofitAll: nofit };
 }
 
 /* ------------------------------------------------------------- render */
@@ -991,8 +1186,11 @@ function renderReport() {
   const mainNic = (p.nic || [])[0];
   const owner = [SOCIAL_L[p.social] ? `${SOCIAL_L[p.social]} category` : '', a.women === true ? 'woman-owned' : a.women === false ? 'not woman-owned' : 'women ownership not answered'].filter(Boolean).map((t) => `<span class="nw">${esc(t)}</span>`).join(' · ');
   const start = R.yes.slice(0, 3);
-  const tY = R.yes.length + st.yes.length, tC = R.check.length + st.check.length, tN = R.nofit.length + st.nofit.length;
-  const stN = st.yes.length + st.check.length;
+  const allSt = [st, ...R.stMore];
+  const sum = (k) => allSt.reduce((n, x) => n + x[k].length, 0);
+  const tY = R.yes.length + sum('yes'), tC = R.check.length + sum('check');
+  const stN = sum('yes') + sum('check');
+  const stNames = allSt.filter((x) => x.rec).map((x) => x.rec.state).join(', ') || 'state';
 
   const card = (x) => {
     const { s, r } = x;
@@ -1024,19 +1222,22 @@ function renderReport() {
   const group = (title, list, desc) => list.length ? `<section class="group"><div class="group__head"><h3>${title}</h3><span class="count">${list.length}</span><p>${desc}</p></div>${list.map(card).join('')}</section>` : '';
   const fold = (title, list, name) => list.length ? `<details class="fold${name ? ' fold--sub' : ''}"><summary><h3>${title}</h3><span class="count">${list.length}</span><span class="toggle"><span class="o">Show why</span><span class="c">Hide</span></span></summary><ul class="nofit">${list.map((x) => `<li><b>${esc(name ? x.s.name : x.s.abbr)}</b><span>${esc(x.r.why[0].text)}</span></li>`).join('')}</ul></details>` : '';
 
-  const stateSection = () => {
+  // One section per state: the main address's state, then each other state the business has a unit in
+  const stateSection = (st, unitNote = '') => {
+    const stN = st.yes.length + st.check.length;
     const pin = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><defs><linearGradient id="g-pin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00B2FE"/><stop offset="1" stop-color="#0037D8"/></linearGradient></defs><path d="M12 2.5c-4 0-7 3-7 6.9 0 4.9 5.6 10.8 6.3 11.5a1 1 0 0 0 1.4 0C13.4 20.2 19 14.3 19 9.4c0-3.9-3-6.9-7-6.9z" fill="url(#g-pin)"/><circle cx="12" cy="9.4" r="2.6" fill="#fff"/></svg>';
     if (!st.rec) return `<section class="group" id="state-sec"><div class="group__head"><h3>State schemes</h3><p>Add your state or UT on the left to see its own MSME incentives.</p></div></section>`;
     const { rec, ss } = st;
     const desc = ss.st === 'none' ? `${rec.state} has no MSME incentive policy in force. The central schemes above still apply.`
-      : !ss.live ? `What ${rec.state}’s policy offers. Not open to new applications now.`
+      : !ss.live ? `${rec.state}’s policy is not open to applications now, so none of its incentives are listed. The central schemes above still apply.`
       : stN ? `Incentives under ${rec.state}’s own policy that fit your details. Where your unit is inside the state can change the rate.`
       : `None of ${rec.state}’s incentives fit the details above.`;
+    const lead = unitNote ? `${unitNote} ` : '';
     const refHead = { pending: 'What it offers', draft: 'What the draft proposes', notoperational: 'What it will offer', unverified: 'Items confirmed so far', none: 'Related', lapsed: 'What it offered' }[ss.st] || 'What it offers';
-    return `<section class="group stategrp" id="state-sec">
-      <div class="group__head"><h3>State schemes · ${esc(rec.state)}</h3>${ss.live ? `<span class="count">${stN}</span>` : ''}<p>${esc(desc)}</p></div>
+    return `<section class="group stategrp" id="${unitNote ? `state-sec-${esc(rec.code)}` : 'state-sec'}">
+      <div class="group__head"><h3>State schemes · ${esc(rec.state)}</h3>${ss.live ? `<span class="count">${stN}</span>` : ''}<p>${esc(lead + desc)}</p></div>
       <div class="policy">
-        <div class="policy__icon">${pin}</div>
+        <div class="policy__icon">${pin.replaceAll('g-pin', `g-pin-${rec.code}`)}</div>
         <div class="policy__body">
           <div class="policy__top"><span class="pchip pchip--${ss.st}">${esc(ss.label)}</span>${rec.period ? `<span class="policy__period">${esc(rec.period)}</span>` : ''}</div>
           <p class="policy__name">${esc(rec.short)}</p>
@@ -1065,25 +1266,26 @@ function renderReport() {
       <div class="tally">
         <div><b>${tY}</b><span><i class="dot dot--yes"></i>Strong matches</span></div>
         <div><b>${tC}</b><span><i class="dot dot--check"></i>Worth checking</span></div>
-        <div><b>${tN}</b><span><i class="dot dot--no"></i>Not a fit</span></div>
       </div>
-      <p class="tally__note">Central, sector${c.goals.has('exports') ? ', export' : ''}${c.goals.has('startup') ? ', startup' : ''} and ${esc(st.rec ? st.rec.state : 'state')} schemes${stN ? `, including ${stN} from the state’s own policy` : ''}.</p>
+      <p class="tally__note">Central, sector${c.goals.has('exports') ? ', export' : ''}${c.goals.has('startup') ? ', startup' : ''} and ${esc(stNames)} schemes${stN ? `, including ${stN} from ${allSt.filter((x) => x.rec).length > 1 ? 'the states’ own policies' : 'the state’s own policy'}` : ''}.</p>
     </div>
     <div class="rbody">
       ${missingKeys.length ? `<div class="banner banner--missing"><span><b>Missing details.</b> Add the ${esc(missingKeys.map((k) => lbl[k]).join(', '))} on the left for a complete check.</span></div>` : ''}
       <dl class="profile">
-        <div><dt>Category</dt><dd>${esc(SIZE_L[p.size] || 'Not set')}${p.sizeYear ? ` (${esc(p.sizeYear)})` : ''}</dd></div>
+        <div><dt>Category</dt><dd>${esc(SIZE_L[p.size] || 'Not set')}${p.sizeYear ? ` (${esc(p.sizeYear)})` : ''}${p.movedUp ? ` · up from ${esc(SIZE_L[p.movedUp.from])} in ${esc(fmtM(p.movedUp.on))}` : ''}</dd></div>
         <div><dt>Main activity</dt><dd>${esc(ACT_L[p.activity] || 'Not set')}${c.trader && p.activity !== 'trading' ? ' (trading NIC)' : ''}</dd></div>
         <div><dt>Main NIC code</dt><dd>${mainNic ? `<code>${esc(mainNic.code)}</code>${esc(mainNic.desc || '')}` : 'Not set'}</dd></div>
         <div><dt>Location</dt><dd>${esc(place || 'Not set')}</dd></div>
         <div><dt>Owner</dt><dd>${owner}</dd></div>
         <div><dt>Business type</dt><dd>${esc(ORG_L[p.orgType] || 'Not set')}</dd></div>
         <div><dt>In business since</dt><dd>${esc(sinceText(p.commenced) || 'Not set')}</dd></div>
+        ${extraFacts(p, a).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}
       </dl>
       ${start.length ? `<div class="start"><h3>Where to start</h3><ol>${start.map((x) => `<li><div><a href="#s-${x.s.id}" data-open="${x.s.id}">${esc(x.s.abbr || x.s.name)}</a> <span>${esc(x.r.headline)}</span></div></li>`).join('')}</ol></div>` : ''}
       ${group('Strong matches', R.yes, 'You meet the published criteria on the details above.')}
       ${group('Worth checking', R.check, 'Depends on something your Udyam record does not show, or on the scheme’s current status.')}
-      ${stateSection()}
+      ${stateSection(st)}
+      ${R.stMore.map((x) => stateSection(x, `You have a unit${x.unitIn.length ? ` in ${x.unitIn.join(', ')}` : ''} in ${x.rec.state}, so these can apply to that unit.`)).join('')}
       ${R.watch.length ? `<section class="group"><div class="group__head"><h3>On the horizon</h3><span class="count">${R.watch.length}</span><p>Announced, closed or awaiting notification. Not open to applications now.</p></div><ul class="watch">${R.watch.map((w) => `<li><strong>${esc(w.name)}</strong><span class="prog prog--renewal">${esc(w.status)}</span><p>${esc(w.text)}</p>${w.src ? `<a href="${esc(w.src[1])}" target="_blank" rel="noopener">${esc(w.src[0])}</a>` : ''}</li>`).join('')}</ul></section>` : ''}
       ${fold('Not a fit', R.nofit, false)}
       ${R.hidden.length || state.showAll ? `<div class="hiddenby">${state.showAll ? '<span>Showing every scheme, including ones outside your goals.</span>' : `<span>${c.goals.size ? `Not shown because they are outside your goals${hs.group ? ' or need a group of units' : ''}` : `Shown when you pick the matching goal${hs.group ? ', or for groups of units' : ''}`}: ${esc(hs.parts.join(', '))}.</span>`}<button class="btn btn--ghost btn--sm" type="button" id="toggle-all">${state.showAll ? 'Match my goals only' : 'Show all schemes'}</button></div>` : ''}
@@ -1135,6 +1337,18 @@ function syncQuestions() {
   for (const b of document.querySelectorAll('#goals .chip')) b.setAttribute('aria-pressed', String(a.goals.includes(b.dataset.v)));
   for (const b of document.querySelectorAll('#loans .chip')) b.setAttribute('aria-pressed', String(a.loan === b.dataset.v));
   $('#q-loan').hidden = !(a.goals.includes('credit') || a.goals.includes('machinery'));
+  for (const b of document.querySelectorAll('#turnovers .chip')) b.setAttribute('aria-pressed', String(a.turnover === b.dataset.v));
+  // Not asked when the uploaded Udyam PDF already gives the turnover
+  $('#q-turnover').hidden = state.profile.turnover != null;
+  let shown = 0;
+  for (const q of MORE) {
+    const row = document.querySelector(`[data-row="${q.key}"]`);
+    if (!row) continue;
+    row.hidden = !q.show(state.profile, a);
+    if (!row.hidden) shown++;
+    for (const b of row.querySelectorAll('.chip')) b.setAttribute('aria-pressed', String(a[q.key] === moreValue(b.dataset.v)));
+  }
+  $('#q-more').hidden = !shown;
 }
 function refresh() { syncFields(); syncQuestions(); renderReport(); }
 
@@ -1143,6 +1357,19 @@ function buildControls() {
   for (const [name] of STATES) { const o = document.createElement('option'); o.value = name; o.textContent = name; st.appendChild(o); }
   $('#goals').innerHTML = GOALS.map(([v, l]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${esc(l)}</button>`).join('');
   $('#loans').innerHTML = LOANS.map(([v, l]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${esc(l)}</button>`).join('');
+  $('#turnovers').innerHTML = TURNOVERS.map(([v, l]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${esc(l)}</button>`).join('');
+  $('#more-rows').innerHTML = MORE.map(({ key, label, opts }) => `<div class="q" data-row="${key}"><div class="q__label" id="qm-${key}">${esc(label)}</div><div class="chips" role="group" aria-labelledby="qm-${key}" data-a="${key}">${opts.map(([v, l]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${esc(l)}</button>`).join('')}</div></div>`).join('');
+  $('#more-rows').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const key = b.closest('[data-a]').dataset.a, v = moreValue(b.dataset.v);
+    state.answers[key] = state.answers[key] === v ? null : v;
+    syncQuestions(); renderReport();
+  });
+  $('#turnovers').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    state.answers.turnover = state.answers.turnover === b.dataset.v ? null : b.dataset.v;
+    syncQuestions(); renderReport();
+  });
   $('#goals').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
     const g = state.answers.goals; const i = g.indexOf(b.dataset.v);
@@ -1259,6 +1486,56 @@ function profileFromUdyam(d) {
   P.dic = String(d.dic ?? '').trim().slice(0, 80);
   P.dfo = String(d.msme_di ?? '').trim().slice(0, 80);
   set('orgType', orgTypeFrom(d.organization_type));
+
+  // Every unit location: a unit in another state can claim that state's incentives too, and any
+  // unit's district can put the business in an industry cluster
+  P.units = [];
+  for (const u of Array.isArray(d.unit_locations) ? d.unit_locations : []) {
+    if (!u || typeof u !== 'object') continue;
+    const s = normState(u.state) || findStateIn(u.state);
+    const district = titleCase(String(u.district || '').trim().slice(0, 60));
+    const city = titleCase(String(u.city || '').trim().slice(0, 60));
+    if (s && !P.units.some((x) => x.state === s && x.district === district && x.city === city)) P.units.push({ state: s, district, city });
+  }
+
+  // Moved up a category (say Micro to Small): the enterprise keeps the earlier category's non-tax
+  // benefits for three years from the change (Ministry of MSME notification S.O. 4926(E), 18 Oct 2022)
+  const RANK = { micro: 0, small: 1, medium: 2 };
+  const steps = (Array.isArray(d.classification_history) ? d.classification_history : [])
+    .filter((h) => h && sizeFrom(h.enterprise_type))
+    .map((h) => ({ size: sizeFrom(h.enterprise_type), year: String(h.classification_year ?? '').trim(), on: iso(String(h.classification_date ?? '').trim().slice(0, 10)) }))
+    .sort((x, y) => x.year.localeCompare(y.year));
+  const last = steps.length - 1;
+  if (last > 0 && steps[last].size === P.size) {
+    let i = last;
+    while (i > 0 && steps[i - 1].size === steps[i].size) i--;
+    if (i > 0 && RANK[steps[i].size] > RANK[steps[i - 1].size]) {
+      const on = steps[i].on || iso(`${steps[i].year.slice(0, 4)}-04-01`);
+      if (on) P.movedUp = { from: steps[i - 1].size, on, until: new Date(on.getFullYear() + 3, on.getMonth(), on.getDate()) };
+    }
+  }
+
+  // From the application pages of a full "Print Udyam Application" PDF. The Cashfree lookup
+  // returns none of these, so they stay unset for a Udyam number.
+  const years = (Array.isArray(d.financial_years) ? d.financial_years : [])
+    .filter((y) => y && /^\d{4}-\d{2,4}$/.test(String(y.financial_year ?? '')))
+    .map((y) => ({ year: String(y.financial_year), turnover: num(y.total_turnover), exports: num(y.export_turnover), investment: num(y.net_investment) }))
+    .sort((x, y) => y.year.localeCompare(x.year));
+  // The latest year with a turnover filed (a new unit's first year is often all zeros)
+  const latest = years.find((y) => y.turnover > 0) || years.find((y) => y.turnover != null);
+  if (latest) {
+    P.turnover = latest.turnover; P.exports = latest.exports || 0; P.investment = latest.investment; P.finYear = latest.year;
+    P.maxTurnover = Math.max(...years.map((y) => y.turnover || 0));
+    src.turnover = 'udyam';
+  }
+  const jobs = d.employment && typeof d.employment === 'object' ? d.employment : {};
+  if (num(jobs.total) != null) { P.employees = num(jobs.total); P.womenEmployees = num(jobs.female); }
+  P.gender = String(d.owner_gender ?? '').trim().toLowerCase();
+  P.divyang = String(d.specially_abled ?? '').trim().toLowerCase() === 'yes';
+  P.divyangKnown = /^(yes|no)$/i.test(String(d.specially_abled ?? '').trim());
+  P.gst = String(d.has_gstin ?? '').trim();
+  P.iecStatus = String(d.iec_status ?? '').trim();
+  P.iecSince = toDate(d.iec_registration_date);
   return { profile: P, src };
 }
 function applyUdyam(d, opts = {}) {
@@ -1323,6 +1600,7 @@ async function buildPdf() {
   };
   const today = fmtD(new Date());
   const S = R.st;
+  const allSt = [R.st, ...R.stMore];
   const place = [p.district, p.state].filter(Boolean).join(', ');
   let y = M;
   const lh = (size) => size * 0.3528 * 1.38;
@@ -1408,8 +1686,8 @@ async function buildPdf() {
   let mx = M;
   if (p.urn) { font(9, 'normal', C.white, 'courier'); doc.text(p.urn, mx, 48.8); mx += doc.getTextWidth(p.urn) + 4; }
   font(9, 'normal', C.steel); doc.text(pdfSafe([SIZE_L[p.size], ACT_L[p.activity], place].filter(Boolean).join('   |   ')), mx, 48.8);
-  const tw = (CW - 8) / 3, ty = 54;
-  [[R.yes.length + S.yes.length, 'Strong matches', [61, 220, 151]], [R.check.length + S.check.length, 'Worth checking', [245, 192, 78]], [R.nofit.length + S.nofit.length, 'Not a fit', [159, 176, 204]]].forEach(([n, t, col], i) => {
+  const tw = (CW - 4) / 2, ty = 54;
+  [[R.yes.length + allSt.reduce((n, x) => n + x.yes.length, 0), 'Strong matches', [61, 220, 151]], [R.check.length + allSt.reduce((n, x) => n + x.check.length, 0), 'Worth checking', [245, 192, 78]]].forEach(([n, t, col], i) => {
     const x = M + i * (tw + 4);
     doc.setFillColor(...C.tile); doc.roundedRect(x, ty, tw, 11.5, 2, 2, 'F');
     font(14, 'bold', C.white); const nw = doc.getTextWidth(String(n)); doc.text(String(n), x + 4.2, ty + 8.2);
@@ -1417,14 +1695,17 @@ async function buildPdf() {
     font(8.3, 'normal', C.steel); doc.text(t, x + 4.2 + nw + 5.6, ty + 7.35);
   });
   y = coverH + 8;
-  { const stN = S.yes.length + S.check.length; para(`Central, sector${R.c.goals.has('exports') ? ', export' : ''}${R.c.goals.has('startup') ? ', startup' : ''} and ${S.rec ? S.rec.state : 'state'} schemes${stN ? `, including ${stN} from the state's own policy` : ''}.`, { size: 8.4, color: C.ink3, after: 2.4 }); }
+  { const stN = allSt.reduce((n, x) => n + x.yes.length + x.check.length, 0); para(`Central, sector${R.c.goals.has('exports') ? ', export' : ''}${R.c.goals.has('startup') ? ', startup' : ''} and ${allSt.filter((x) => x.rec).map((x) => x.rec.state).join(', ') || 'state'} schemes${stN ? `, including ${stN} from the state's own policy` : ''}.`, { size: 8.4, color: C.ink3, after: 2.4 }); }
   // Business profile
   const mainNic = (p.nic || [])[0];
   const prof = [
-    ['Category', `${SIZE_L[p.size] || 'Not set'}${p.sizeYear ? ` (${p.sizeYear})` : ''}`], ['Main activity', ACT_L[p.activity] || 'Not set'],
+    ['Category', `${SIZE_L[p.size] || 'Not set'}${p.sizeYear ? ` (${p.sizeYear})` : ''}${p.movedUp ? `, up from ${SIZE_L[p.movedUp.from]} in ${fmtM(p.movedUp.on)}` : ''}`], ['Main activity', ACT_L[p.activity] || 'Not set'],
     ['Location', place || 'Not set'], ['Owner', `${SOCIAL_L[p.social] || '-'} category${a.women === true ? ', woman-owned' : ''}`],
     ['Business type', ORG_L[p.orgType] || 'Not set'], ['In business since', sinceText(p.commenced) || 'Not set'],
-    ['Main NIC code', mainNic ? `${mainNic.code} ${mainNic.desc || ''}` : 'Not set'], ['Goals', (a.goals || []).map((g) => (GOALS.find((x) => x[0] === g) || [0, g])[1]).join(', ') || 'Not given'],
+    ['Main NIC code', mainNic ? `${mainNic.code} ${mainNic.desc || ''}` : 'Not set'],
+    // Goals are no longer asked on the page; shown only if set
+    ...((a.goals || []).length ? [['Goals', a.goals.map((g) => (GOALS.find((x) => x[0] === g) || [0, g])[1]).join(', ')]] : []),
+    ...extraFacts(p, a),
   ];
   const colW = CW / 2 - 4;
   for (let i = 0; i < prof.length; i += 2) {
@@ -1480,11 +1761,13 @@ async function buildPdf() {
     para(`Status: ${s.prog.note} Source: ${s.src.map(([l, u]) => `${l} (${u})`).join('; ')}. Checked ${s.checked || VERIFIED}.`, { size: 7.6, color: C.ink3, after: 2.4 });
     rule(); y += 1;
   };
-  function stateBlock() {
+  // One block per state: the main address's state, then each other state with a unit
+  function stateBlock(S, unitNote = '') {
     if (!S.rec) { sectionHead('State schemes', '', ''); para('Add the state or UT to see its own MSME incentives.', { size: 9, color: C.ink2, after: 2 }); return; }
     const { rec, ss } = S;
     const stN = S.yes.length + S.check.length;
     sectionHead(`State schemes: ${rec.state}`, ss.live ? stN : '', '');
+    if (unitNote) para(unitNote, { size: 9, color: C.ink2, after: 2 });
     // policy box
     const inner = CW - 10;
     const parts = [
@@ -1517,7 +1800,8 @@ async function buildPdf() {
   }
   if (R.yes.length) { sectionHead('Strong matches', R.yes.length, 'You meet the published criteria on the details above.'); R.yes.forEach(block); }
   if (R.check.length) { sectionHead('Worth checking', R.check.length, "Depends on something your Udyam record does not show, or on the scheme's current status."); R.check.forEach(block); }
-  stateBlock();
+  stateBlock(S);
+  for (const x of R.stMore) stateBlock(x, `You have a unit${x.unitIn.length ? ` in ${x.unitIn.join(', ')}` : ''} in ${x.rec.state}, so these can apply to that unit.`);
   if (R.watch.length) {
     sectionHead('On the horizon', R.watch.length, 'Announced, closed or awaiting notification. Not open to applications now.');
     for (const w of R.watch) {

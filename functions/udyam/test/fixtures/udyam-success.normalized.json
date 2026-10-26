@@ -111,5 +111,17 @@
     }
   ],
   "dic": "PUNE",
-  "msme_di": "MUMBAI"
+  "msme_di": "MUMBAI",
+  "financial_years": [],
+  "employment": {
+    "male": "",
+    "female": "",
+    "other": "",
+    "total": ""
+  },
+  "owner_gender": "",
+  "specially_abled": "",
+  "has_gstin": "",
+  "iec_status": "",
+  "iec_registration_date": ""
 }

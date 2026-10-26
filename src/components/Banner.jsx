@@ -152,13 +152,6 @@ function Banner() {
       <div className="mx-auto grid w-full grid-cols-1 max-w-screen-xl items-center gap-8 px-6 pt-24 pb-8 sm:pt-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-12 lg:pt-22 lg:pb-4">
         {/* Copy + form */}
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <p className="inline-flex items-center gap-2 rounded-full border border-[#00245A]/10 bg-white/80 py-1 pr-3.5 pl-1 shadow-[0_8px_24px_-16px_rgba(0,36,90,0.5)] backdrop-blur">
-            <span className="rounded-full bg-[#00245A] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-[0.16em] text-[#00B2FC] uppercase">
-              New
-            </span>
-            <span className="text-xs font-medium text-[#00245A]/80">Scheme discovery for Udyam businesses</span>
-          </p>
-
           <h1 className="mt-4 text-[2.9rem] leading-[0.95] font-semibold tracking-[-0.06em] sm:text-7xl lg:text-[3.5rem] xl:text-[3.75rem]">
             Scheme{' '}
             <span className="block">

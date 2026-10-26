@@ -17,6 +17,18 @@
         "order": {
           ".validate": "newData.isNumber()"
         },
+        "banner": {
+          ".validate": "newData.hasChildren(['text', 'enabled'])",
+          "text": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+          },
+          "enabled": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
         "products": {
           "$productId": {
             ".validate": "newData.hasChildren(['name', 'price'])",

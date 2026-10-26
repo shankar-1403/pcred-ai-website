@@ -219,6 +219,8 @@ function Suit() {
   return (
     <main className={pageBackground}>
       <Backdrop />
+      {/* Room for the offer strip the header shows above the menu bar (two lines on phones) */}
+      {suit.banner?.enabled ? <div aria-hidden="true" className="h-12 sm:h-9" /> : null}
 
       {/* Hero */}
       <section className="mx-auto w-full max-w-screen-xl px-6 pt-8 pb-12 sm:pt-12">
@@ -290,7 +292,8 @@ function Suit() {
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#00245A]/8 pt-4">
                 <span>
                   <span className="block font-mono text-[10px] tracking-[0.2em] text-[#00245A]/45 uppercase">Price</span>
-                  <span className="block text-xl font-semibold tracking-tight">{formatPrice(product.price)}</span>
+                  {/* A price of 0 in the CMS means the price is not set yet: enquire only */}
+                  <span className="block text-xl font-semibold tracking-tight">{product.price > 0 ? formatPrice(product.price) : 'Price on request'}</span>
                 </span>
                 <span className="flex items-center gap-4">
                   <a
@@ -302,7 +305,7 @@ function Suit() {
                     Enquire
                     <span className="sr-only"> about {product.name}</span>
                   </a>
-                  <AddToCart suit={suit} product={product} />
+                  {product.price > 0 ? <AddToCart suit={suit} product={product} /> : null}
                 </span>
               </div>
             </article>

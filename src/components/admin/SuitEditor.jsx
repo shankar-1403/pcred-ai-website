@@ -30,6 +30,8 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     slug: current.slug,
     summary: current.summary,
     icon: current.icon,
+    bannerText: current.banner?.text ?? '',
+    bannerOn: current.banner?.enabled ?? false,
   }))
   const [slugTouched, setSlugTouched] = useState(false)
   const [status, setStatus] = useState(null)
@@ -54,11 +56,16 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
       }
     }
 
-    const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon }
+    const bannerText = form.bannerText.trim()
+    if (form.bannerOn && !bannerText) return setStatus({ tone: 'error', text: 'Write the banner message, or switch the banner off.' })
+    if (bannerText.length > 200) return setStatus({ tone: 'error', text: 'Keep the banner message to 200 characters.' })
+    // No message removes the banner; a message with the switch off is kept for later
+    const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon, banner: bannerText ? { text: bannerText, enabled: form.bannerOn } : null }
     setSaving(true)
     try {
       if (isNew) {
-        await set(ref(db, `suits/${slug}`), { ...data, order: suits.length + 1 })
+        const { banner, ...rest } = data
+        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), order: suits.length + 1 })
         onSaved(`Created ${data.name}. Add its bundles in the Bundles tab.`)
       } else {
         await update(ref(db, `suits/${current.slug}`), data)
@@ -123,6 +130,35 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
               {icon.label}
             </label>
           ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-5 rounded-2xl border border-[#00245A]/10 p-4">
+        <legend className="px-1 text-xs font-semibold">Top banner</legend>
+        <p className="text-xs text-[#00245A]/55">A strip above the menu bar on this category&apos;s page, for an offer or announcement.</p>
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={form.bannerOn}
+            onChange={(event) => {
+              setForm((previous) => ({ ...previous, bannerOn: event.target.checked }))
+              setStatus(null)
+            }}
+            className="h-4 w-4 accent-[#003BD9]"
+          />
+          Show the banner
+        </label>
+        <div className="mt-3">
+          <Field label="Banner message" htmlFor="suit-banner" hint={`${form.bannerText.trim().length}/200 characters. Clear it to remove the banner.`}>
+            <input
+              id="suit-banner"
+              value={form.bannerText}
+              onChange={setField('bannerText')}
+              maxLength={200}
+              placeholder="Free Udyam registration with any Startup bundle or product"
+              className={inputClass}
+            />
+          </Field>
         </div>
       </fieldset>
 

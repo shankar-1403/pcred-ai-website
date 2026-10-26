@@ -162,7 +162,7 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
         <Field label="Bundle name" htmlFor={`${idPrefix}-name`}>
           <input id={`${idPrefix}-name`} value={form.name} onChange={setField('name')} className={inputClass} />
         </Field>
-        <Field label="Price (₹)" htmlFor={`${idPrefix}-price`}>
+        <Field label="Price (₹)" htmlFor={`${idPrefix}-price`} hint='0 shows "Price on request" with Enquire only (no Add to cart).'>
           <input
             id={`${idPrefix}-price`}
             value={form.price}

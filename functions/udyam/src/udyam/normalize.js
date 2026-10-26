@@ -40,6 +40,9 @@ const ADDRESS_KEYS = ['flat', 'building', 'village', 'block', 'street', 'city', 
 const UNIT_KEYS = ['serial_number', 'unit_name', 'flat', 'building', 'village', 'block', 'street', 'city', 'district', 'state', 'pincode'];
 const NIC_KEYS = ['serial_number', 'nic_2_digit', 'nic_2_description', 'nic_4_digit', 'nic_4_description', 'nic_5_digit', 'nic_5_description', 'activity', 'date'];
 const CLASS_KEYS = ['serial_number', 'classification_year', 'enterprise_type', 'classification_date'];
+// Only on a full "Print Udyam Application" PDF; the Cashfree lookup does not return these
+const YEAR_KEYS = ['financial_year', 'enterprise_type', 'wdv', 'exclusion', 'net_investment', 'total_turnover', 'export_turnover', 'net_turnover', 'itr_filed'];
+const JOB_KEYS = ['male', 'female', 'other', 'total'];
 /**
  * Returns the cleaned record, or null when the body is not a usable SUCCESS response
  * (wrong status, or neither a Udyam number nor an enterprise name).
@@ -74,6 +77,13 @@ export function normalizeUdyamSuccess(body, fallbackUdyam = '') {
         classification_history: rows(body.classification_history, CLASS_KEYS),
         dic: text(body.dic),
         msme_di: text(body.msme_di),
+        financial_years: rows(body.financial_years, YEAR_KEYS),
+        employment: pick(body.employment, JOB_KEYS),
+        owner_gender: text(body.owner_gender),
+        specially_abled: text(body.specially_abled),
+        has_gstin: text(body.has_gstin),
+        iec_status: text(body.iec_status),
+        iec_registration_date: text(body.iec_registration_date),
     };
     return record;
 }

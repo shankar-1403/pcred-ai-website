@@ -137,7 +137,7 @@
 .udyam-app .rmeta{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
 .udyam-app .urn{font:500 12.5px/1 var(--f-mono);letter-spacing:.02em;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:7px 7px 7px 2px;padding:6px 9px}
 .udyam-app .tag{font:500 12px/1 var(--f-display);color:var(--cover-ink-2);background:rgba(255,255,255,.06);border:1px solid var(--cover-line);border-radius:7px 7px 7px 2px;padding:6px 9px}
-.udyam-app .tally{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:26px}
+.udyam-app .tally{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:26px}
 .udyam-app .tally div{background:var(--cover-tile);border:1px solid var(--cover-line);border-radius:14px 14px 14px 4px;padding:14px 15px 13px;backdrop-filter:blur(2px)}
 .udyam-app .tally b{display:block;font:600 31px/1 var(--f-display);color:#fff;font-variant-numeric:tabular-nums}
 .udyam-app .tally span{display:flex;align-items:center;gap:7px;margin-top:8px;font:500 12.5px/1.25 var(--f-display);color:var(--cover-ink-2)}

@@ -7,6 +7,15 @@ function clip(v) {
         return '';
     return v.replace(/\s+/g, ' ').trim().slice(0, TEXT);
 }
+// These come from the visitor's browser: keep only the shapes the reader produces
+const pickOne = (v, allowed) => (allowed.includes(clip(v)) ? clip(v) : '');
+const year = (v) => (/^\d{4}-\d{2,4}$/.test(clip(v)) ? clip(v) : '');
+const money = (v) => (/^\d{1,13}(\.\d{1,2})?$/.test(clip(v)) ? clip(v) : '');
+const count = (v) => (/^\d{1,7}$/.test(clip(v)) ? clip(v) : '');
+const ymd = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(clip(v)) ? clip(v) : '');
+const dmy = (v) => (/^\d{2}\/\d{2}\/\d{4}$/.test(clip(v)) ? clip(v) : '');
+const SIZES = ['Micro', 'Small', 'Medium'];
+const list = (v, max) => (Array.isArray(v) ? v.slice(0, max).filter((r) => r && typeof r === 'object') : []);
 
 /**
  * Builds a Cashfree-shaped SUCCESS body from fields read off a certificate.
@@ -66,9 +75,34 @@ export function certificateBody(input) {
                 activity: clip(n && typeof n === 'object' ? n.activity : ''),
                 date: '',
             })).filter((n) => n.nic_5_digit.length === 5),
-            classification_history: [],
-            dic: '',
-            msme_di: '',
+            classification_history: list(input.classification_history, 20).map((h, i) => ({
+                serial_number: String(i + 1),
+                classification_year: year(h.classification_year),
+                enterprise_type: pickOne(h.enterprise_type, SIZES),
+                classification_date: ymd(h.classification_date),
+            })).filter((h) => h.classification_year && h.enterprise_type),
+            dic: clip(input.dic).slice(0, 80),
+            msme_di: clip(input.msme_di).slice(0, 80),
+            financial_years: list(input.financial_years, 10).map((y) => ({
+                financial_year: year(y.financial_year),
+                enterprise_type: pickOne(y.enterprise_type, SIZES),
+                wdv: money(y.wdv),
+                exclusion: money(y.exclusion),
+                net_investment: money(y.net_investment),
+                total_turnover: money(y.total_turnover),
+                export_turnover: money(y.export_turnover),
+                net_turnover: money(y.net_turnover),
+                itr_filed: pickOne(y.itr_filed, ['Yes', 'No']),
+            })).filter((y) => y.financial_year),
+            employment: (() => {
+                const e = input.employment && typeof input.employment === 'object' ? input.employment : {};
+                return { male: count(e.male), female: count(e.female), other: count(e.other), total: count(e.total) };
+            })(),
+            owner_gender: pickOne(input.owner_gender, ['Male', 'Female', 'Other', 'Others', 'Transgender']),
+            specially_abled: pickOne(input.specially_abled, ['Yes', 'No']),
+            has_gstin: pickOne(input.has_gstin, ['Yes', 'No', 'Exempted']),
+            iec_status: pickOne(input.iec_status, ['Active', 'Inactive', 'Cancelled', 'Suspended']),
+            iec_registration_date: dmy(input.iec_registration_date),
         },
     };
 }
