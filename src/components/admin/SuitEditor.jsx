@@ -32,6 +32,13 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     icon: current.icon,
     bannerText: current.banner?.text ?? '',
     bannerOn: current.banner?.enabled ?? false,
+    promoOn: current.promo?.enabled ?? false,
+    promoTitle: current.promo?.title ?? '',
+    promoHighlight: current.promo?.highlight ?? '',
+    promoText: current.promo?.text ?? '',
+    promoImage: current.promo?.image ?? '',
+    layout: current.layout ?? 'grid',
+    heroProduct: current.heroProduct ?? '',
   }))
   const [slugTouched, setSlugTouched] = useState(false)
   const [status, setStatus] = useState(null)
@@ -59,13 +66,31 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     const bannerText = form.bannerText.trim()
     if (form.bannerOn && !bannerText) return setStatus({ tone: 'error', text: 'Write the banner message, or switch the banner off.' })
     if (bannerText.length > 200) return setStatus({ tone: 'error', text: 'Keep the banner message to 200 characters.' })
+    const promoTitle = form.promoTitle.trim()
+    if (form.promoOn && !promoTitle) return setStatus({ tone: 'error', text: 'Write the offer card heading, or switch the offer card off.' })
+    const promoImage = form.promoImage.trim()
+    if (promoImage && !/^https?:\/\//.test(promoImage)) return setStatus({ tone: 'error', text: 'The background image must be a web address starting with https://.' })
+    // No heading removes the offer card; one with the switch off is kept for later
+    const promo = promoTitle
+      ? {
+          enabled: form.promoOn,
+          title: promoTitle,
+          highlight: form.promoHighlight.trim(),
+          text: form.promoText.trim(),
+          image: promoImage,
+        }
+      : null
     // No message removes the banner; a message with the switch off is kept for later
-    const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon, banner: bannerText ? { text: bannerText, enabled: form.bannerOn } : null }
+    const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon, banner: bannerText ? { text: bannerText, enabled: form.bannerOn } : null,
+      promo,
+      layout: form.layout,
+      heroProduct: form.layout === 'bento' && form.heroProduct ? form.heroProduct : null,
+    }
     setSaving(true)
     try {
       if (isNew) {
-        const { banner, ...rest } = data
-        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), order: suits.length + 1 })
+        const { banner, promo: promoData, heroProduct, ...rest } = data
+        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), order: suits.length + 1 })
         onSaved(`Created ${data.name}. Add its bundles in the Bundles tab.`)
       } else {
         await update(ref(db, `suits/${current.slug}`), data)
@@ -160,6 +185,77 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
             />
           </Field>
         </div>
+      </fieldset>
+
+      <fieldset className="mt-5 rounded-2xl border border-[#00245A]/10 p-4">
+        <legend className="px-1 text-xs font-semibold">Offer card</legend>
+        <p className="text-xs text-[#00245A]/55">A large dark card under the breadcrumb on this category&apos;s page, separate from the top banner.</p>
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={form.promoOn}
+            onChange={(event) => {
+              setForm((previous) => ({ ...previous, promoOn: event.target.checked }))
+              setStatus(null)
+            }}
+            className="h-4 w-4 accent-[#003BD9]"
+          />
+          Show the offer card
+        </label>
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Heading" htmlFor="suit-promo-title" hint="Clear it to remove the offer card.">
+            <input id="suit-promo-title" value={form.promoTitle} onChange={setField('promoTitle')} placeholder="FREE Udyam / MSME Registration" className={inputClass} />
+          </Field>
+          <Field label="Highlighted line" htmlFor="suit-promo-highlight" hint="Second heading line, in light blue.">
+            <input id="suit-promo-highlight" value={form.promoHighlight} onChange={setField('promoHighlight')} placeholder="Worth ₹399, on us" className={inputClass} />
+          </Field>
+        </div>
+        <div className="mt-4">
+          <Field label="Text" htmlFor="suit-promo-text">
+            <textarea id="suit-promo-text" value={form.promoText} onChange={setField('promoText')} rows={2} className={`${inputClass} resize-y`} />
+          </Field>
+        </div>
+        <div className="mt-4">
+          <Field label="Background image (optional)" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
+            <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} className={inputClass} />
+          </Field>
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-5 rounded-2xl border border-[#00245A]/10 p-4">
+        <legend className="px-1 text-xs font-semibold">Page layout</legend>
+        <p className="text-xs text-[#00245A]/55">How this category&apos;s bundles are arranged on its page.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            ['grid', 'Grid', 'Equal cards, three per row'],
+            ['bento', 'Bento', 'One large tile with smaller tiles around it'],
+          ].map(([key, label, hint]) => (
+            <label
+              key={key}
+              className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2 text-sm font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#00B2FC] ${
+                form.layout === key ? 'border-[#00B2FC] bg-[#EAF6FF]' : 'border-[#00245A]/10 hover:border-[#00B2FC]/50'
+              }`}
+            >
+              <input type="radio" name="suit-layout" value={key} checked={form.layout === key} onChange={setField('layout')} className="sr-only" />
+              {label}
+              <span className="text-xs font-normal text-[#00245A]/55">{hint}</span>
+            </label>
+          ))}
+        </div>
+        {form.layout === 'bento' ? (
+          <div className="mt-3">
+            <Field label="Large tile" htmlFor="suit-hero" hint="Left on automatic, the bundle with the most included products is the large tile.">
+              <select id="suit-hero" value={form.heroProduct} onChange={setField('heroProduct')} className={`${inputClass} cursor-pointer`}>
+                <option value="">Automatic (largest bundle)</option>
+                {(current.products ?? []).map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        ) : null}
       </fieldset>
 
       {status ? (

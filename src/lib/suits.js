@@ -41,31 +41,50 @@ export const starterSuits = [
     icon: 'rocket',
     order: 2,
     name: 'Startup Suite',
-    summary: 'Scheme, guarantee, and structuring products for a new company.',
+    summary:
+      'Startup Suite provides guidance on business registration, funding opportunities, government schemes, and startup growth.',
+    layout: 'bento',
+    banner: { text: 'FREE Udyam / MSME Registration (worth ₹399) with any Startup Suite bundle or product', enabled: false },
+    promo: {
+      enabled: true,
+      title: 'FREE Udyam / MSME Registration',
+      highlight: 'Worth ₹399, on us',
+      text: 'With any Startup Suite bundle or product.',
+    },
     products: [
       {
-        name: 'Startup Scheme Report',
-        price: 499, // placeholder
-        description: 'Schemes built for a new company, matched to stage and sector.',
-        points: ['Stage match', 'Sector fit', 'Eligibility first'],
+        name: 'Startup Advisory Kit',
+        price: 0,
+        description: 'Research, financial projections and investor-ready documents for an early-stage business, in one engagement.',
+        documents: [
+          'Market Research Report',
+          'Competitor Analysis',
+          'SWOT Analysis',
+          'CMA / Financial Projection Report',
+          'Investor Pitch Deck',
+          'Professional Company Profile',
+        ],
       },
       {
-        name: 'CGSS Advisory',
-        price: 2999, // placeholder
-        description: 'How the startup credit guarantee can support a loan without heavy collateral.',
-        points: ['Guarantee cover', 'Eligibility', 'Lender path'],
+        name: 'DPIIT Startup Recognition Certificate',
+        price: 14599,
+        description:
+          'Eligibility assessment, documentation support, application filing and tracking, and responses to departmental queries. Government fee: nil.',
+        documents: [],
       },
       {
-        name: 'Funding Readiness',
-        price: 1999, // placeholder
-        description: 'What a lender or investor will ask for, set out before the first meeting.',
-        points: ['Numbers', 'Documents', 'Open questions'],
+        name: 'Website / Landing Page',
+        price: 0,
+        description:
+          'Responsive landing page designed around your brand and message. Larger websites are quoted on request. Starting price; domain and hosting are extra.',
+        documents: [],
       },
       {
-        name: 'Business Structuring',
-        price: 2499, // placeholder
-        description: 'Entity and ownership choices that keep a funding round straightforward.',
-        points: ['Entity type', 'Ownership', 'Next filing'],
+        name: 'Logo + Brand Kit',
+        price: 0,
+        description:
+          'Custom logo with usable files for ₹1,499, or logo with a complete brand kit (logo variants, colours, typography and usage guidelines) for ₹3,499.',
+        documents: [],
       },
     ],
   },

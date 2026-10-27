@@ -24,7 +24,7 @@ export function slugify(text) {
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
 
-// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, products: { {id}: { name, description, price, documents[], order } } }
+// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, layout?: 'grid' | 'bento', promo?: { enabled, title, highlight, text, image }, heroProduct?, products: { {id}: { name, description, price, documents[], order } } }
 export function normalizeSuits(snapshotValue) {
   if (!snapshotValue) return []
   return Object.entries(snapshotValue)
@@ -36,6 +36,19 @@ export function normalizeSuits(snapshotValue) {
       order: Number(suit.order ?? 0),
       // Strip shown above the header on this category's page (edited in the CMS category editor)
       banner: suit.banner?.text ? { text: String(suit.banner.text), enabled: suit.banner.enabled === true } : null,
+      // Offer card shown under the breadcrumb on this category's page (edited in the CMS category editor)
+      promo: suit.promo?.title
+        ? {
+            enabled: suit.promo.enabled === true,
+            title: String(suit.promo.title),
+            highlight: String(suit.promo.highlight ?? ''),
+            text: String(suit.promo.text ?? ''),
+            image: String(suit.promo.image ?? ''),
+          }
+        : null,
+      // How the category page arranges its products; 'bento' shows one large tile (heroProduct) among smaller ones
+      layout: suit.layout === 'bento' ? 'bento' : 'grid',
+      heroProduct: suit.heroProduct ?? null,
       products: Object.entries(suit.products ?? {})
         .map(([id, product]) => ({
           id,
@@ -61,6 +74,9 @@ export function starterToDatabase(starterSuits) {
         summary: suit.summary,
         icon: suit.icon ?? DEFAULT_ICON,
         order: suit.order ?? suitIndex + 1,
+        ...(suit.layout ? { layout: suit.layout } : {}),
+        ...(suit.promo ? { promo: suit.promo } : {}),
+        ...(suit.banner ? { banner: suit.banner } : {}),
         products: Object.fromEntries(
           suit.products.map((product, index) => [
             slugify(product.name),

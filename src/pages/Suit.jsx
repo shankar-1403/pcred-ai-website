@@ -158,6 +158,160 @@ function BundleProducts({ products }) {
   )
 }
 
+// One bundle's card: picture, name, number, description, included products, price and actions
+function ProductCard({ suit, product, index, previews, previewsLoading, large = false, className = 'bg-white/85' }) {
+  return (
+    <article
+      id={product.id}
+      className={`group relative flex scroll-mt-28 flex-col ${large ? 'lg:flex-row lg:gap-8' : ''} overflow-hidden rounded-[1.5rem] border border-white ${className} p-4 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_60px_-34px_rgba(0,59,217,0.5)] target:ring-2 target:ring-[#00B2FC] sm:p-5`}
+    >
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-8 top-0 h-px origin-left scale-x-0 bg-gradient-to-r from-[#00B2FC] to-transparent transition-transform duration-500 group-hover:scale-x-100"
+      />
+      {/* On wide screens the large bento tile sits its picture beside the details */}
+      <div className={large ? 'lg:w-[46%] lg:shrink-0 lg:[&>div]:h-full lg:[&>div]:min-h-64 lg:[&>div]:aspect-auto' : undefined}>
+        <BundlePreview image={previews[product.id]} loading={previewsLoading} name={product.name} count={product.documents.length} />
+      </div>
+      <div className="flex flex-1 flex-col">
+        <div className={`mt-4 flex items-start justify-between gap-3 ${large ? 'lg:mt-1' : ''}`}>
+          <h2 className={`font-semibold tracking-tight ${large ? 'text-xl sm:text-3xl' : 'text-lg sm:text-xl'}`}>{product.name}</h2>
+          <span
+            aria-hidden="true"
+            className="bg-gradient-to-b from-[#00B2FC]/50 to-[#00B2FC]/0 bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent"
+          >
+            {String(index + 1).padStart(2, '0')}
+          </span>
+        </div>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-[#00245A]/65">{product.description}</p>
+        <div className="flex-1">
+          <BundleProducts products={product.documents} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#00245A]/8 pt-4">
+          <span>
+            <span className="block font-mono text-[10px] tracking-[0.2em] text-[#00245A]/45 uppercase">Price</span>
+            {/* A price of 0 in the CMS means the price is not set yet: enquire only */}
+            <span className="block text-xl font-semibold tracking-tight">{product.price > 0 ? formatPrice(product.price) : 'Price on request'}</span>
+          </span>
+          <span className="flex items-center gap-4">
+            <a href={productEnquireHref(product.name)} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[#003BD9] transition hover:text-[#00245A]">
+              Enquire
+              <span className="sr-only"> about {product.name}</span>
+            </a>
+            {product.price > 0 ? <AddToCart suit={suit} product={product} /> : null}
+          </span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+// Bento tile backgrounds, in brand blues, cycled across the small tiles
+const bentoTones = ['bg-[linear-gradient(160deg,#FFFFFF_0%,#EAF6FF_100%)]', 'bg-[linear-gradient(160deg,#EAF6FF_0%,#D6ECFF_100%)]', 'bg-white/90']
+
+// Bento arrangement: one large tile across the top (picture beside its details on wide screens)
+// with equal small tiles in rows of three below. One column on phones.
+function BentoProducts({ suit, previews, previewsLoading }) {
+  const { products } = suit
+  const chosen = products.find((product) => product.id === suit.heroProduct)
+  // Default large tile: the bundle with the most included products
+  const hero = chosen ?? products.reduce((best, product) => (product.documents.length > best.documents.length ? product : best), products[0])
+  const rest = products.filter((product) => product !== hero)
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <ProductCard
+        suit={suit}
+        product={hero}
+        index={products.indexOf(hero)}
+        previews={previews}
+        previewsLoading={previewsLoading}
+        large
+        className={`bg-[linear-gradient(150deg,#FFFFFF_0%,#EAF6FF_55%,#D6ECFF_100%)] md:col-span-2 lg:col-span-3`}
+      />
+      {rest.map((product, position) => (
+        <ProductCard
+          key={product.id}
+          suit={suit}
+          product={product}
+          index={products.indexOf(product)}
+          previews={previews}
+          previewsLoading={previewsLoading}
+          className={bentoTones[position % bentoTones.length]}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Offer card under the breadcrumb: text only, on navy, with a drawn certificate (or a CMS photo) for the picture
+function PromoBanner({ promo }) {
+  return (
+    <aside
+      aria-label="Offer"
+      className="relative isolate mt-6 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(115deg,#00245A_0%,#002E74_45%,#003BD9_100%)] px-6 py-8 text-white shadow-[0_30px_60px_-36px_rgba(0,36,90,0.8)] ring-1 ring-white/10 sm:px-12 sm:py-11"
+    >
+      {promo.image ? (
+        <>
+          <img src={promo.image} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(0,36,90,0.95)_0%,rgba(0,36,90,0.8)_50%,rgba(0,36,90,0.55)_100%)]" />
+        </>
+      ) : (
+        <div aria-hidden="true" className="absolute inset-0 -z-10">
+          <div className="banner-shine absolute -top-24 right-[12%] h-72 w-72 rounded-full bg-[#00B2FC]/30 blur-3xl" />
+          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-[#003BD9]/40 blur-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:linear-gradient(90deg,transparent_35%,black)]" />
+          {/* Thin arcs behind the certificate */}
+          <div className="absolute top-1/2 right-[6%] h-[30rem] w-[30rem] -translate-y-1/2 rounded-full border border-white/10" />
+          <div className="absolute top-1/2 right-[12%] h-[20rem] w-[20rem] -translate-y-1/2 rounded-full border border-white/10" />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-10">
+        <div className="max-w-2xl">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 font-mono text-[10px] font-semibold tracking-[0.2em] text-[#7FD8FF] uppercase ring-1 ring-white/15 backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00B2FC] shadow-[0_0_10px_#00B2FC]" />
+            Special offer
+          </span>
+          <p className="mt-4 text-[1.75rem] leading-[1.08] font-semibold tracking-[-0.035em] sm:text-[2.6rem]">
+            {promo.title}
+            {promo.highlight ? (
+              <span className="block bg-gradient-to-r from-[#00B2FC] to-[#7FD8FF] bg-clip-text text-transparent">{promo.highlight}</span>
+            ) : null}
+          </p>
+          {promo.text ? <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">{promo.text}</p> : null}
+        </div>
+
+        {promo.image ? null : (
+          <div aria-hidden="true" className="relative mr-4 hidden h-44 w-64 shrink-0 md:block">
+            <div className="absolute inset-0 translate-x-6 -translate-y-2 rotate-6 rounded-2xl bg-white/15 ring-1 ring-white/20 backdrop-blur" />
+            <div className="absolute inset-0 -rotate-3 rounded-2xl bg-white p-5 text-[#00245A] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)]">
+              <span className="block h-1.5 w-12 rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9]" />
+              <span className="mt-3 block text-sm font-semibold tracking-tight">Udyam Registration</span>
+              <span className="block font-mono text-[9px] tracking-[0.18em] text-[#00245A]/45 uppercase">Certificate</span>
+              <span className="mt-4 block space-y-1.5">
+                <span className="block h-1 w-full rounded-full bg-[#00245A]/8" />
+                <span className="block h-1 w-5/6 rounded-full bg-[#00245A]/8" />
+                <span className="block h-1 w-2/3 rounded-full bg-[#00245A]/8" />
+              </span>
+              <span className="absolute right-4 bottom-4 grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#00B2FC] to-[#003BD9] text-white shadow-[0_10px_20px_-8px_rgba(0,59,217,0.8)]">
+                <svg viewBox="0 0 16 16" className="h-5 w-5">
+                  <path d="m3.5 8.5 3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </div>
+            {/* Price tag: the fee, struck through, and FREE */}
+            <div className="absolute -top-5 -left-8 rotate-[-8deg] rounded-xl bg-[#00B2FC] px-3 py-1.5 text-center shadow-[0_14px_30px_-12px_rgba(0,178,252,0.9)]">
+              <span className="block text-[11px] font-semibold text-white/80 line-through">₹399</span>
+              <span className="block text-lg leading-none font-bold tracking-tight">FREE</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
+  )
+}
+
 function Backdrop() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
@@ -234,6 +388,8 @@ function Suit() {
           </ol>
         </nav>
 
+        {suit.promo?.enabled ? <PromoBanner promo={suit.promo} /> : null}
+
         <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
             <SuitBadge icon={suit.icon} className="h-14 w-14 rounded-2xl shadow-[0_16px_30px_-14px_rgba(0,59,217,0.8)]" />
@@ -262,55 +418,15 @@ function Suit() {
 
       {/* Products */}
       <section aria-label="Bundles" className="mx-auto w-full max-w-screen-xl px-6 pb-20">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {suit.products.map((product, index) => (
-            <article
-              key={product.id}
-              id={product.id}
-              className="group relative flex scroll-mt-28 flex-col overflow-hidden rounded-[1.5rem] border border-white bg-white/85 p-4 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_60px_-34px_rgba(0,59,217,0.5)] target:ring-2 target:ring-[#00B2FC] sm:p-5"
-            >
-              <span
-                aria-hidden="true"
-                className="absolute inset-x-8 top-0 h-px origin-left scale-x-0 bg-gradient-to-r from-[#00B2FC] to-transparent transition-transform duration-500 group-hover:scale-x-100"
-              />
-              <BundlePreview image={previews[product.id]} loading={previewsLoading} name={product.name} count={product.documents.length} />
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{product.name}</h2>
-                <span
-                  aria-hidden="true"
-                  className="bg-gradient-to-b from-[#00B2FC]/50 to-[#00B2FC]/0 bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent"
-                >
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-              </div>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-[#00245A]/65">{product.description}</p>
-              <div className="flex-1">
-                <BundleProducts products={product.documents} />
-              </div>
-
-
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#00245A]/8 pt-4">
-                <span>
-                  <span className="block font-mono text-[10px] tracking-[0.2em] text-[#00245A]/45 uppercase">Price</span>
-                  {/* A price of 0 in the CMS means the price is not set yet: enquire only */}
-                  <span className="block text-xl font-semibold tracking-tight">{product.price > 0 ? formatPrice(product.price) : 'Price on request'}</span>
-                </span>
-                <span className="flex items-center gap-4">
-                  <a
-                    href={productEnquireHref(product.name)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-[#003BD9] transition hover:text-[#00245A]"
-                  >
-                    Enquire
-                    <span className="sr-only"> about {product.name}</span>
-                  </a>
-                  {product.price > 0 ? <AddToCart suit={suit} product={product} /> : null}
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
+        {suit.layout === 'bento' && suit.products.length > 1 ? (
+          <BentoProducts suit={suit} previews={previews} previewsLoading={previewsLoading} />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {suit.products.map((product, index) => (
+              <ProductCard key={product.id} suit={suit} product={product} index={index} previews={previews} previewsLoading={previewsLoading} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Other suits */}
