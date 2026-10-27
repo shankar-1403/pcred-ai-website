@@ -39,13 +39,13 @@ function Login() {
 
     return (
         <>
-            <section className="relative isolate overflow-hidden h-screen bg-slate-50 p-12">
+            <section className="relative isolate min-h-svh overflow-hidden bg-slate-50 p-4 sm:p-12">
                 <HexagonPattern
                     className="text-[#003DD9]"
                     radius={35}
                     gap={4}
                 />
-                <div className="relative h-full flex items-center justify-center px-4 py-12">
+                <div className="relative flex min-h-[calc(100svh-2rem)] items-center justify-center py-8 sm:min-h-[calc(100svh-6rem)] sm:px-4 sm:py-12">
 
                     <div className="w-full max-w-md">
                         {/* Login Card */}
@@ -78,7 +78,7 @@ function Login() {
                                                 <label htmlFor="otp" className="block text-sm font-medium text-slate-700">OTP</label>
                                             </div>
 
-                                            <input name="otp" id="otp" value={otp} inputMode="numeric" pattern="[0-6]{6}" onChange={(e) => setOtp(e.target.value)} placeholder="Enter your OTP" className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#00245A] focus:ring-4 focus:ring-[#00245A]/10 " required />
+                                            <input name="otp" id="otp" value={otp} inputMode="numeric" pattern="[0-9]{6}" onChange={(e) => setOtp(e.target.value)} placeholder="Enter your OTP" className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#00245A] focus:ring-4 focus:ring-[#00245A]/10 " required />
                                         </div>
                                     </>
                                 }

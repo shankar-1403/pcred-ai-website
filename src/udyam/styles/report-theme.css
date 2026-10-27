@@ -185,6 +185,8 @@
 .udyam-app .field>label{font-size:12px}
 .udyam-app #card-details .card__sub{margin-bottom:10px;font-size:12.5px}
 .udyam-app .field{grid-template-columns:minmax(0,1fr);gap:4px;align-items:start}
+/* Fields side by side keep their inputs level when one label wraps to two lines */
+.udyam-app .fields .field{align-content:end}
 .udyam-app .field .src,.udyam-app .nic-list{grid-column:1}
 .udyam-app .field[data-f="name"],.udyam-app .field[data-f="urn"],.udyam-app .field[data-f="nic"]{grid-column:1/-1}
 .udyam-app .field .src:empty{display:none}

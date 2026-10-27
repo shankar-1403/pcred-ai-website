@@ -107,7 +107,7 @@ function CartDrawer() {
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-[#00245A]/8 overflow-y-auto px-6">
+            <ul className="flex-1 divide-y divide-[#00245A]/8 overflow-y-auto overscroll-contain px-6">
               {items.map((item) => {
                 const icon = suitIcon(item.suitIcon)
                 const products = bundleProducts(suits, item)
@@ -121,7 +121,7 @@ function CartDrawer() {
                         </svg>
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold">{item.name}</span>
+                        <span className="block text-sm leading-snug font-semibold break-words">{item.name}</span>
                         <span className="block truncate text-xs text-[#00245A]/50">{item.suitName}</span>
                       </span>
                       <span className="text-sm font-semibold">{formatPrice(item.price)}</span>

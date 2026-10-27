@@ -101,7 +101,7 @@ function SchemeStats() {
             <li
               key={card.label}
               title={card.note}
-              className={`group relative flex items-center gap-2.5 rounded-[1.25rem] px-3 py-3 transition hover:bg-[#F4F9FF] sm:gap-3.5 sm:px-5 sm:py-4 ${
+              className={`group relative flex items-center gap-2.5 rounded-[1.25rem] px-3 py-3 max-[360px]:flex-col max-[360px]:items-start transition hover:bg-[#F4F9FF] sm:gap-3.5 sm:px-5 sm:py-4 ${
                 index > 0 ? 'lg:before:absolute lg:before:inset-y-4 lg:before:left-0 lg:before:w-px lg:before:bg-[#00245A]/8 lg:hover:before:opacity-0' : ''
               }`}
             >

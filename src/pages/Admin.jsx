@@ -47,7 +47,7 @@ function AdminNav({ className = '' }) {
             key={item.id}
             to={item.to}
             aria-current={active ? 'page' : undefined}
-            className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-[#00B2FC] ${
+            className={`relative inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-[#00B2FC] ${
               active ? 'bg-[#00245A] text-white' : 'text-[#00245A]/65 hover:bg-[#EAF6FF] hover:text-[#00245A]'
             }`}
           >
@@ -70,13 +70,13 @@ function Shell({ children, user, admin }) {
               CMS
             </span>
           </div>
-          {admin ? <AdminNav className="hidden md:flex" /> : null}
+          {admin ? <AdminNav className="hidden lg:flex" /> : null}
           <div className="flex items-center gap-2">
             <Link to="/" target="_blank" rel="noopener noreferrer" className="rounded-full px-3 py-2 text-sm font-semibold text-[#003BD9] hover:bg-[#EAF6FF]">
               View site
             </Link>
             {admin ? (
-              <span className="hidden min-w-0 border-l border-[#00245A]/10 pl-3 text-right leading-tight md:block">
+              <span className="hidden min-w-0 border-l border-[#00245A]/10 pl-3 text-right leading-tight xl:block">
                 <span className="block truncate text-sm font-semibold">{admin.name || 'Admin'}</span>
                 <span className="block truncate text-xs text-[#00245A]/50">{admin.email}</span>
               </span>
@@ -89,8 +89,9 @@ function Shell({ children, user, admin }) {
           </div>
         </div>
         {admin ? (
-          <div className="border-t border-[#00245A]/6 px-4 py-2 md:hidden">
-            <AdminNav className="flex" />
+          <div className="border-t border-[#00245A]/6 py-2 lg:hidden">
+            {/* Sections scroll sideways on narrow screens instead of pushing the page wider */}
+            <AdminNav className="flex overflow-x-auto overscroll-x-contain px-4 [scrollbar-width:none] sm:px-6" />
           </div>
         ) : null}
       </header>

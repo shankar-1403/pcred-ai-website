@@ -34,7 +34,7 @@ function Modal({ label, onClose, children }) {
       }}
       className="m-auto max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-visible bg-transparent p-0 text-[#00245A] backdrop:bg-[#00245A]/45 backdrop:backdrop-blur-sm"
     >
-      <div className="relative max-h-[calc(100svh-2rem)] overflow-y-auto rounded-[1.75rem] bg-white shadow-[0_40px_100px_-30px_rgba(0,36,90,0.6)]">
+      <div className="relative max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain rounded-[1.75rem] bg-white shadow-[0_40px_100px_-30px_rgba(0,36,90,0.6)]">
         <button
           type="button"
           onClick={onClose}

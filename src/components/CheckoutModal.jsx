@@ -362,7 +362,7 @@ function Overlay({ label, onClose, children }) {
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="relative max-h-[calc(100svh-2rem)] w-full max-w-lg overflow-y-auto rounded-[1.75rem] bg-white text-[#00245A] shadow-[0_40px_100px_-30px_rgba(0,36,90,0.6)]"
+        className="relative max-h-[calc(100svh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[1.75rem] bg-white text-[#00245A] shadow-[0_40px_100px_-30px_rgba(0,36,90,0.6)]"
       >
         <button
           type="button"

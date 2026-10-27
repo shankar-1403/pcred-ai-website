@@ -27,6 +27,33 @@ body {
   min-height: 100%;
 }
 
+/* Headings break into even lines instead of leaving one word on the last line */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Taps register straight away, without the double-tap-to-zoom delay */
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary {
+  touch-action: manipulation;
+}
+
+/* iPhones zoom the page into any field whose text is under 16px; phone-sized screens get 16px fields */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 ::selection {
   background: #c5dbfa;
   color: #00245a;
