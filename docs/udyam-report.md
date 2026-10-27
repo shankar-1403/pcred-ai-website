@@ -61,7 +61,8 @@ response, so no SMS is sent.
 ## Mobile OTP switch
 
 `functions/udyam/src/udyam/features.js` has `OTP_ENABLED`, read by both the website and the function.
-It is currently **off**: the pop-up asks for name, email and mobile (not verified) and fetches the
-record straight away, and the certificate route accepts a valid 10-digit mobile without a code.
-To turn the one-time code back on, set it to `true` and deploy both:
+It is currently **on**: the pop-up asks for name, email and mobile, texts a 6-digit code through
+Fast2SMS, and fetches the record only after the code is verified (for a Udyam number too, even with
+payment off). The certificate route refuses requests without that proof.
+To turn it off, set it to `false`; after any change deploy both:
 `npm run build && firebase deploy --only functions:udyamVerify,hosting` (needs the `FAST2SMS_API_KEY` secret).

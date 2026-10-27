@@ -123,8 +123,8 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     };
 
     function openModal() {
-        // Payment off: a typed number is fetched first, before the ownership question
-        if (!PAYMENT_ENABLED && method === 'number' && !fetched) {
+        // Payment and OTP off: a typed number is fetched first, before the ownership question
+        if (!PAYMENT_ENABLED && !OTP_ENABLED && method === 'number' && !fetched) {
             setError({ message: '', reference: '' });
             finish('');
             return;
@@ -187,8 +187,9 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         setValue(check.value);
         setFetched(null);
         setStep('ready');
-        // Payment off: fetch the record now, so Business details fill in straight away
-        if (!PAYMENT_ENABLED) {
+        // Payment and OTP off: fetch the record now, so Business details fill in straight away.
+        // With OTP on, the record is fetched only after the mobile is verified.
+        if (!PAYMENT_ENABLED && !OTP_ENABLED) {
             finish('', { method: 'number', udyam: check.value });
             return;
         }
