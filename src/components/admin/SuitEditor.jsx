@@ -204,20 +204,20 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
         </label>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Heading" htmlFor="suit-promo-title" hint="Clear it to remove the offer card.">
-            <input id="suit-promo-title" value={form.promoTitle} onChange={setField('promoTitle')} placeholder="FREE Udyam / MSME Registration" className={inputClass} />
+            <input id="suit-promo-title" value={form.promoTitle} onChange={setField('promoTitle')} maxLength={120} placeholder="FREE Udyam / MSME Registration" className={inputClass} />
           </Field>
           <Field label="Highlighted line" htmlFor="suit-promo-highlight" hint="Second heading line, in light blue.">
-            <input id="suit-promo-highlight" value={form.promoHighlight} onChange={setField('promoHighlight')} placeholder="Worth ₹399, on us" className={inputClass} />
+            <input id="suit-promo-highlight" value={form.promoHighlight} onChange={setField('promoHighlight')} maxLength={120} placeholder="Worth ₹399, on us" className={inputClass} />
           </Field>
         </div>
         <div className="mt-4">
           <Field label="Text" htmlFor="suit-promo-text">
-            <textarea id="suit-promo-text" value={form.promoText} onChange={setField('promoText')} rows={2} className={`${inputClass} resize-y`} />
+            <textarea id="suit-promo-text" value={form.promoText} onChange={setField('promoText')} maxLength={400} rows={2} className={`${inputClass} resize-y`} />
           </Field>
         </div>
         <div className="mt-4">
           <Field label="Background image (optional)" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
-            <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} className={inputClass} />
+            <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} maxLength={2000} className={inputClass} />
           </Field>
         </div>
       </fieldset>

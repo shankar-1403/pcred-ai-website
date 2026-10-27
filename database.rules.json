@@ -29,6 +29,33 @@
             ".validate": false
           }
         },
+        "layout": {
+          ".validate": "newData.isString() && (newData.val() === 'grid' || newData.val() === 'bento')"
+        },
+        "heroProduct": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+        },
+        "promo": {
+          ".validate": "newData.hasChildren(['title', 'enabled'])",
+          "title": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+          },
+          "highlight": {
+            ".validate": "newData.isString() && newData.val().length <= 120"
+          },
+          "text": {
+            ".validate": "newData.isString() && newData.val().length <= 400"
+          },
+          "image": {
+            ".validate": "newData.isString() && newData.val().length <= 2000 && (newData.val() === '' || newData.val().beginsWith('https://') || newData.val().beginsWith('http://'))"
+          },
+          "enabled": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
         "products": {
           "$productId": {
             ".validate": "newData.hasChildren(['name', 'price'])",
