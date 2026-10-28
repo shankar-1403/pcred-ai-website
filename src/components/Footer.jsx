@@ -97,7 +97,13 @@ function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 py-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} PCRED. All rights reserved.</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <p>© {new Date().getFullYear()} PCRED. All rights reserved.</p>
+            <nav aria-label="Legal" className="flex gap-5">
+              <Link to="/privacy" className="transition hover:text-white">Privacy Policy</Link>
+              <Link to="/terms" className="transition hover:text-white">Terms &amp; Conditions</Link>
+            </nav>
+          </div>
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
