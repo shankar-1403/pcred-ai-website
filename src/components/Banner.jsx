@@ -18,7 +18,6 @@ const MODES = [
 
 const SCHEME_TYPES = ['Central schemes', 'State schemes', 'Subsidies', 'Credit-linked schemes']
 
-const STEPS = ['Add Udyam details', 'We match schemes', 'Get the report']
 
 
 function formatUdyam(value) {
@@ -311,7 +310,7 @@ function Banner() {
           </form>
         </div>
 
-        {/* Video + steps */}
+        {/* Video */}
         <div className="flex w-full max-w-xl flex-col gap-2 justify-self-center lg:justify-self-end">
           <figure className="relative overflow-hidden rounded-[2rem] border border-white bg-white/70 p-2 shadow-[0_40px_80px_-40px_rgba(0,36,90,0.55)] backdrop-blur">
             <div className="flex items-center gap-3 px-3 pt-1 pb-2.5">
@@ -328,21 +327,10 @@ function Banner() {
                 Video
               </span>
             </div>
-            <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-[#00245A]">
+            <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-[#00245A] lg:aspect-[16/10]">
               <YouTubeVideo videoId={YOUTUBE_VIDEO_ID} title="PCRED Foundation Day 2025" />
             </div>
           </figure>
-          <ol className="grid grid-cols-3 gap-2" aria-label="How it works">
-            {STEPS.map((step, index) => (
-              <li
-                key={step}
-                className="flex flex-col items-center gap-1 rounded-2xl border border-[#00245A]/6 bg-white/60 px-2 py-2 text-center backdrop-blur sm:items-start sm:px-4 sm:text-left"
-              >
-                <span className="font-mono text-[10px] font-semibold text-[#00B2FC]">{String(index + 1).padStart(2, '0')}</span>
-                <span className="text-xs leading-tight font-semibold text-[#00245A]/80">{step}</span>
-              </li>
-            ))}
-          </ol>
         </div>
       </div>
     </section>
