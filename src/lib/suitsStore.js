@@ -24,7 +24,7 @@ export function slugify(text) {
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
 
-// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, cardImage?, layout?: 'grid' | 'bento', promo?: { enabled, title, highlight, text, image }, heroProduct?, products: { {id}: { name, description, price, documents[], order, badge?, badgeHidden? } } }
+// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, cardImage?, setOffer?: { enabled, percent }, layout?: 'grid' | 'bento', promo?: { enabled, title, highlight, text, image }, heroProduct?, products: { {id}: { name, description, price, documents[], order, badge?, badgeHidden? } } }
 export function normalizeSuits(snapshotValue) {
   if (!snapshotValue) return []
   return Object.entries(snapshotValue)
@@ -49,6 +49,8 @@ export function normalizeSuits(snapshotValue) {
       // How the category page arranges its products; 'bento' shows one large tile (heroProduct) among smaller ones
       // Photo on this category's home page card (edited in the CMS category editor)
       cardImage: suit.cardImage ? String(suit.cardImage) : '',
+      // Percent off when the cart holds every bundle of this category (edited in the CMS category editor)
+      setOffer: Number(suit.setOffer?.percent) > 0 ? { enabled: suit.setOffer.enabled === true, percent: Number(suit.setOffer.percent) } : null,
       layout: suit.layout === 'bento' ? 'bento' : 'grid',
       heroProduct: suit.heroProduct ?? null,
       products: Object.entries(suit.products ?? {})

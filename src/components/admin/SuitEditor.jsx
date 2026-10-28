@@ -38,6 +38,8 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     promoText: current.promo?.text ?? '',
     promoImage: current.promo?.image ?? '',
     cardImage: current.cardImage ?? '',
+    setOfferOn: current.setOffer?.enabled ?? false,
+    setOfferPercent: current.setOffer ? String(current.setOffer.percent) : '',
     layout: current.layout ?? 'grid',
     heroProduct: current.heroProduct ?? '',
   }))
@@ -71,6 +73,10 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     if (form.promoOn && !promoTitle) return setStatus({ tone: 'error', text: 'Write the offer card heading, or switch the offer card off.' })
     const promoImage = form.promoImage.trim()
     if (promoImage && !/^https?:\/\//.test(promoImage)) return setStatus({ tone: 'error', text: 'The background image must be a web address starting with https://.' })
+    const setOfferPercent = Number(form.setOfferPercent)
+    if (form.setOfferOn && !(Number.isInteger(setOfferPercent) && setOfferPercent >= 1 && setOfferPercent <= 90)) {
+      return setStatus({ tone: 'error', text: 'The complete set offer needs a whole percent from 1 to 90, or switch it off.' })
+    }
     const cardImage = form.cardImage.trim()
     if (cardImage && !/^https?:\/\//.test(cardImage)) return setStatus({ tone: 'error', text: 'The home card image must be a web address starting with https://.' })
     // No heading removes the offer card; one with the switch off is kept for later
@@ -87,14 +93,16 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon, banner: bannerText ? { text: bannerText, enabled: form.bannerOn } : null,
       promo,
       cardImage: cardImage || null,
+      // No percent removes the offer; one with the switch off is kept for later
+      setOffer: setOfferPercent > 0 ? { enabled: form.setOfferOn, percent: setOfferPercent } : null,
       layout: form.layout,
       heroProduct: form.layout === 'bento' && form.heroProduct ? form.heroProduct : null,
     }
     setSaving(true)
     try {
       if (isNew) {
-        const { banner, promo: promoData, heroProduct, cardImage: image, ...rest } = data
-        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), ...(image ? { cardImage: image } : {}), order: suits.length + 1 })
+        const { banner, promo: promoData, heroProduct, cardImage: image, setOffer, ...rest } = data
+        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), ...(image ? { cardImage: image } : {}), ...(setOffer ? { setOffer } : {}), order: suits.length + 1 })
         onSaved(`Created ${data.name}. Add its bundles in the Bundles tab.`)
       } else {
         await update(ref(db, `suits/${current.slug}`), data)
@@ -222,6 +230,28 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
         <div className="mt-4">
           <Field label="Background image (optional)" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
             <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} maxLength={2000} className={inputClass} />
+          </Field>
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-5 rounded-2xl border border-[#00245A]/10 p-4">
+        <legend className="px-1 text-xs font-semibold">Complete set offer</legend>
+        <p className="text-xs text-[#00245A]/55">A percent off when the cart holds every bundle in this category. The cart uses it instead of a spend discount when it saves more; they never add up.</p>
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={form.setOfferOn}
+            onChange={(event) => {
+              setForm((previous) => ({ ...previous, setOfferOn: event.target.checked }))
+              setStatus(null)
+            }}
+            className="h-4 w-4 accent-[#003BD9]"
+          />
+          Offer a discount on the complete set
+        </label>
+        <div className="mt-3 max-w-[12rem]">
+          <Field label="Percent off" htmlFor="suit-set-percent" hint="Whole number, 1 to 90.">
+            <input id="suit-set-percent" value={form.setOfferPercent} onChange={setField('setOfferPercent')} inputMode="numeric" placeholder="20" className={inputClass} />
           </Field>
         </div>
       </fieldset>

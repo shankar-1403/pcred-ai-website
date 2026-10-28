@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { checkoutHref, formatPrice, useCart } from '../lib/cart'
 import { suitIcon } from '../lib/suitIcons'
-import { cartPricing, useDiscounts } from '../lib/discounts'
+import { cartPricing, completeSetDeal, useDiscounts } from '../lib/discounts'
 import { isFirebaseConfigured } from '../lib/firebase'
 import { findSuit, useSuits } from '../lib/suitsStore'
 
@@ -31,7 +31,7 @@ function CartDrawer() {
   const { items, total, count, remove, clear, isOpen, close } = useCart()
   const { suits } = useSuits()
   const { tiers } = useDiscounts()
-  const pricing = cartPricing(total, tiers)
+  const pricing = cartPricing(total, tiers, completeSetDeal(items, suits))
   const [checkoutOpen, setCheckoutOpen] = useState(false)
 
   useEffect(() => {
@@ -195,7 +195,7 @@ function CartDrawer() {
                     <dd>{formatPrice(pricing.subtotal)}</dd>
                   </div>
                   <div className="flex justify-between font-semibold text-[#128C4A]">
-                    <dt>Discount ({pricing.percent}%)</dt>
+                    <dt>{pricing.dealName ? `${pricing.dealName} (${pricing.percent}% off)` : `Discount (${pricing.percent}%)`}</dt>
                     <dd>−{formatPrice(pricing.discount)}</dd>
                   </div>
                 </dl>

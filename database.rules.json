@@ -32,6 +32,18 @@
         "cardImage": {
           ".validate": "newData.isString() && newData.val().length <= 2000 && (newData.val().beginsWith('https://') || newData.val().beginsWith('http://'))"
         },
+        "setOffer": {
+          ".validate": "newData.hasChildren(['enabled', 'percent'])",
+          "enabled": {
+            ".validate": "newData.isBoolean()"
+          },
+          "percent": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 90"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
         "layout": {
           ".validate": "newData.isString() && (newData.val() === 'grid' || newData.val() === 'bento')"
         },

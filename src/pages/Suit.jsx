@@ -409,6 +409,13 @@ function Suit() {
             <SuitBadge icon={suit.icon} className="h-14 w-14 rounded-2xl shadow-[0_16px_30px_-14px_rgba(0,59,217,0.8)]" />
             <h1 className="mt-6 text-4xl leading-[1.02] font-semibold tracking-[-0.045em] sm:text-6xl">{suit.name}</h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-[#00245A]/65 sm:text-lg">{suit.summary}</p>
+            {/* The complete set offer from the CMS, applied in the cart */}
+            {suit.setOffer?.enabled ? (
+              <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#E7F8EE] px-3.5 py-1.5 text-sm font-semibold text-[#128C4A] ring-1 ring-[#128C4A]/15">
+                <span aria-hidden="true">★</span>
+                Add all {suit.products.length} bundles to your cart and save {suit.setOffer.percent}%
+              </p>
+            ) : null}
           </div>
 
           {/* Jumps down to the "How it works" steps at the bottom of the page */}
