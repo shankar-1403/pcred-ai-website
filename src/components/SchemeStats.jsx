@@ -94,30 +94,46 @@ function SchemeStats() {
       <div className="mx-auto w-full max-w-screen-xl px-6">
         {/* The strip speaks for itself on screen; the heading keeps the page outline complete */}
         <h2 id="scheme-coverage" className="sr-only">Scheme coverage</h2>
-        {/* One glass strip, four segments */}
-        <ul className="relative grid grid-cols-2 gap-1 overflow-hidden rounded-[1.75rem] border border-white bg-white/75 p-1.5 shadow-[0_24px_50px_-34px_rgba(0,36,90,0.55)] backdrop-blur lg:grid-cols-4 lg:gap-0">
-          <span aria-hidden="true" className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#00B2FC]/60 to-transparent" />
-          {cards.map((card, index) => (
-            <li
-              key={card.label}
-              title={card.note}
-              className={`group relative flex items-center gap-2.5 rounded-[1.25rem] px-3 py-3 max-[360px]:flex-col max-[360px]:items-start transition hover:bg-[#F4F9FF] sm:gap-3.5 sm:px-5 sm:py-4 ${
-                index > 0 ? 'lg:before:absolute lg:before:inset-y-4 lg:before:left-0 lg:before:w-px lg:before:bg-[#00245A]/8 lg:hover:before:opacity-0' : ''
-              }`}
-            >
-              <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#EAF6FF] sm:h-10 sm:w-10 sm:rounded-2xl text-[#003BD9] ring-1 ring-[#00B2FC]/15 transition group-hover:bg-gradient-to-br group-hover:from-[#00B2FC] group-hover:to-[#003BD9] group-hover:text-white">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                  <path d={ICONS[card.icon]} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              <span className="min-w-0">
-                <span className="block bg-gradient-to-r from-[#00245A] to-[#003BD9] bg-clip-text text-2xl leading-none font-semibold tracking-[-0.04em] text-transparent max-[380px]:text-xl sm:text-[1.75rem]">
+        {/* Four tiles: the total leads in navy, the rest in light glass */}
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {cards.map((card, index) => {
+            const lead = index === 0
+            return (
+              <li
+                key={card.label}
+                className={`group relative flex flex-col overflow-hidden rounded-[1.5rem] p-4 transition duration-300 hover:-translate-y-0.5 sm:rounded-[1.75rem] sm:p-5 ${
+                  lead
+                    ? 'bg-gradient-to-br from-[#00245A] via-[#002E7A] to-[#003BD9] text-white shadow-[0_28px_60px_-30px_rgba(0,36,90,0.85)]'
+                    : 'border border-white bg-white/80 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.55)] backdrop-blur hover:shadow-[0_30px_60px_-34px_rgba(0,36,90,0.6)]'
+                }`}
+              >
+                {/* Soft glow in the corner and a hairline along the top */}
+                <span aria-hidden="true" className={`pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-2xl transition duration-500 group-hover:scale-125 ${lead ? 'bg-[#00B2FC]/40' : 'bg-[#00B2FC]/15'}`} />
+                <span aria-hidden="true" className={`pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent to-transparent ${lead ? 'via-white/50' : 'via-[#00B2FC]/60'}`} />
+
+                <span className="relative flex items-center justify-between">
+                  <span aria-hidden="true" className={`grid h-9 w-9 place-items-center rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl ${
+                    lead ? 'bg-white/12 text-white ring-1 ring-white/20' : 'bg-[#EAF6FF] text-[#003BD9] ring-1 ring-[#00B2FC]/15 transition group-hover:bg-gradient-to-br group-hover:from-[#00B2FC] group-hover:to-[#003BD9] group-hover:text-white'
+                  }`}>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+                      <path d={ICONS[card.icon]} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span aria-hidden="true" className={`font-mono text-[10px] font-semibold tracking-[0.2em] ${lead ? 'text-white/50' : 'text-[#00245A]/30'}`}>
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </span>
+
+                <span className={`relative mt-5 block text-[1.75rem] leading-none font-semibold tracking-[-0.04em] max-[380px]:text-2xl sm:mt-6 sm:text-4xl ${
+                  lead ? 'text-white' : 'bg-gradient-to-r from-[#00245A] to-[#003BD9] bg-clip-text text-transparent'
+                }`}>
                   {card.text ?? <CountUp value={card.value} suffix={card.suffix} />}
                 </span>
-                <span className="mt-1 block text-xs leading-tight font-medium text-[#00245A]/60 sm:text-[13px]">{card.label}</span>
-              </span>
-            </li>
-          ))}
+                <span className={`relative mt-2 block text-[13px] leading-tight font-semibold sm:text-sm ${lead ? 'text-white' : 'text-[#00245A]'}`}>{card.label}</span>
+                <span className={`relative mt-1 block text-[11.5px] leading-snug max-sm:hidden ${lead ? 'text-white/65' : 'text-[#00245A]/55'}`}>{card.note}</span>
+              </li>
+            )
+          })}
         </ul>
       </div>
     </section>
