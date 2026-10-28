@@ -92,8 +92,26 @@ function PreviewImage({ image, name }) {
 
 // The bundle's picture: the preview image uploaded in the CMS. While the images load a shimmer
 // shows; only a bundle with no image gets the drawn report cover with its name.
-function BundlePreview({ image, loading, name, count }) {
-  if (image) return <PreviewImage key={image.length} image={image} name={name} />
+// The corner badge: the CMS text, else the number of products (a single product shows "1 product")
+function badgeText(product) {
+  if (product.badgeHidden) return ''
+  if (product.badge) return product.badge
+  const count = product.documents.length || 1
+  return `${count} ${count === 1 ? 'product' : 'products'}`
+}
+
+function BadgeChip({ text }) {
+  return <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[#003BD9] backdrop-blur">{text}</span>
+}
+
+function BundlePreview({ image, loading, name, badge }) {
+  if (image)
+    return (
+      <div className="relative">
+        <PreviewImage key={image.length} image={image} name={name} />
+        {badge ? <BadgeChip text={badge} /> : null}
+      </div>
+    )
   if (loading) return <PreviewSkeleton />
   return (
     <div
@@ -117,11 +135,7 @@ function BundlePreview({ image, loading, name, count }) {
           <span className="h-6 w-2 rounded-sm bg-[#003BD9]/70" />
         </span>
       </div>
-      {count ? (
-        <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[#003BD9] backdrop-blur">
-          {count} {count === 1 ? 'product' : 'products'}
-        </span>
-      ) : null}
+      {badge ? <BadgeChip text={badge} /> : null}
     </div>
   )
 }
@@ -171,7 +185,7 @@ function ProductCard({ suit, product, index, previews, previewsLoading, large = 
       />
       {/* On wide screens the large bento tile sits its picture beside the details */}
       <div className={large ? 'lg:w-[46%] lg:shrink-0 lg:[&>div]:h-full lg:[&>div]:min-h-64 lg:[&>div]:aspect-auto' : undefined}>
-        <BundlePreview image={previews[product.id]} loading={previewsLoading} name={product.name} count={product.documents.length} />
+        <BundlePreview image={previews[product.id]} loading={previewsLoading} name={product.name} badge={badgeText(product)} />
       </div>
       <div className="flex flex-1 flex-col">
         <div className={`mt-4 flex items-start justify-between gap-3 ${large ? 'lg:mt-1' : ''}`}>

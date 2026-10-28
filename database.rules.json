@@ -29,6 +29,9 @@
             ".validate": false
           }
         },
+        "cardImage": {
+          ".validate": "newData.isString() && newData.val().length <= 2000 && (newData.val().beginsWith('https://') || newData.val().beginsWith('http://'))"
+        },
         "layout": {
           ".validate": "newData.isString() && (newData.val() === 'grid' || newData.val() === 'bento')"
         },
@@ -80,6 +83,12 @@
               "$index": {
                 ".validate": "newData.isString() && newData.val().length <= 60"
               }
+            },
+            "badge": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "badgeHidden": {
+              ".validate": "newData.isBoolean()"
             },
             "$other": {
               ".validate": false

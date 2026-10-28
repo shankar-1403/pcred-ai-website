@@ -24,7 +24,7 @@ export function slugify(text) {
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
 
-// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, layout?: 'grid' | 'bento', promo?: { enabled, title, highlight, text, image }, heroProduct?, products: { {id}: { name, description, price, documents[], order } } }
+// Database shape: suits/{slug} = { name, summary, icon, order, banner?: { text, enabled }, cardImage?, layout?: 'grid' | 'bento', promo?: { enabled, title, highlight, text, image }, heroProduct?, products: { {id}: { name, description, price, documents[], order, badge?, badgeHidden? } } }
 export function normalizeSuits(snapshotValue) {
   if (!snapshotValue) return []
   return Object.entries(snapshotValue)
@@ -47,6 +47,8 @@ export function normalizeSuits(snapshotValue) {
           }
         : null,
       // How the category page arranges its products; 'bento' shows one large tile (heroProduct) among smaller ones
+      // Photo on this category's home page card (edited in the CMS category editor)
+      cardImage: suit.cardImage ? String(suit.cardImage) : '',
       layout: suit.layout === 'bento' ? 'bento' : 'grid',
       heroProduct: suit.heroProduct ?? null,
       products: Object.entries(suit.products ?? {})
@@ -58,6 +60,9 @@ export function normalizeSuits(snapshotValue) {
           // `points` is the older name for this list; products move to `documents` when next saved
           documents: Object.values(product.documents ?? product.points ?? {}).filter(Boolean),
           order: Number(product.order ?? 0),
+          // Corner badge on the product card: custom text, or hidden; empty text means automatic
+          badge: product.badge ? String(product.badge) : '',
+          badgeHidden: product.badgeHidden === true,
         }))
         .sort(byOrder),
     }))

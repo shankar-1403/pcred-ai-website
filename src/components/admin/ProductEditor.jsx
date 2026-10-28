@@ -22,6 +22,8 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
     description: initial.description,
     price: initial.price === '' ? '' : String(initial.price),
     documents: toRows(initial.documents),
+    badge: initial.badge ?? '',
+    badgeHidden: initial.badgeHidden ?? false,
   }))
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -105,6 +107,8 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
       documents: form.documents.map((row) => row.value.trim()).filter(Boolean),
       // Clears the older `points` list now that it lives in `documents`
       points: null,
+      badge: form.badge.trim() || null,
+      badgeHidden: form.badgeHidden || null,
     }
     const target = form.suitSlug
 
@@ -172,6 +176,36 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
             className={inputClass}
           />
         </Field>
+      </div>
+
+      <div className="mt-4">
+        <Field
+          label="Card badge"
+          htmlFor={`${idPrefix}-badge`}
+          hint={`The label in the top corner of the card. Left empty it shows "${(() => {
+            const count = form.documents.filter((row) => row.value.trim()).length || 1
+            return `${count} ${count === 1 ? 'product' : 'products'}`
+          })()}".`}
+        >
+          <input
+            id={`${idPrefix}-badge`}
+            value={form.badge}
+            onChange={setField('badge')}
+            maxLength={40}
+            disabled={form.badgeHidden}
+            placeholder="Automatic"
+            className={`${inputClass} disabled:opacity-50`}
+          />
+        </Field>
+        <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={form.badgeHidden}
+            onChange={(event) => setForm((current) => ({ ...current, badgeHidden: event.target.checked }))}
+            className="h-4 w-4 accent-[#003BD9]"
+          />
+          Hide the badge
+        </label>
       </div>
 
       <div>

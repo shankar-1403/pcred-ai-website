@@ -37,6 +37,7 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     promoHighlight: current.promo?.highlight ?? '',
     promoText: current.promo?.text ?? '',
     promoImage: current.promo?.image ?? '',
+    cardImage: current.cardImage ?? '',
     layout: current.layout ?? 'grid',
     heroProduct: current.heroProduct ?? '',
   }))
@@ -70,6 +71,8 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     if (form.promoOn && !promoTitle) return setStatus({ tone: 'error', text: 'Write the offer card heading, or switch the offer card off.' })
     const promoImage = form.promoImage.trim()
     if (promoImage && !/^https?:\/\//.test(promoImage)) return setStatus({ tone: 'error', text: 'The background image must be a web address starting with https://.' })
+    const cardImage = form.cardImage.trim()
+    if (cardImage && !/^https?:\/\//.test(cardImage)) return setStatus({ tone: 'error', text: 'The home card image must be a web address starting with https://.' })
     // No heading removes the offer card; one with the switch off is kept for later
     const promo = promoTitle
       ? {
@@ -83,14 +86,15 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
     // No message removes the banner; a message with the switch off is kept for later
     const data = { name: form.name.trim(), summary: form.summary.trim(), icon: form.icon, banner: bannerText ? { text: bannerText, enabled: form.bannerOn } : null,
       promo,
+      cardImage: cardImage || null,
       layout: form.layout,
       heroProduct: form.layout === 'bento' && form.heroProduct ? form.heroProduct : null,
     }
     setSaving(true)
     try {
       if (isNew) {
-        const { banner, promo: promoData, heroProduct, ...rest } = data
-        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), order: suits.length + 1 })
+        const { banner, promo: promoData, heroProduct, cardImage: image, ...rest } = data
+        await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), ...(image ? { cardImage: image } : {}), order: suits.length + 1 })
         onSaved(`Created ${data.name}. Add its bundles in the Bundles tab.`)
       } else {
         await update(ref(db, `suits/${current.slug}`), data)
@@ -218,6 +222,16 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
         <div className="mt-4">
           <Field label="Background image (optional)" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
             <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} maxLength={2000} className={inputClass} />
+          </Field>
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-5 rounded-2xl border border-[#00245A]/10 p-4">
+        <legend className="px-1 text-xs font-semibold">Home card</legend>
+        <p className="text-xs text-[#00245A]/55">This category&apos;s card in the Categories section of the home page.</p>
+        <div className="mt-3">
+          <Field label="Image (optional)" htmlFor="suit-card-image" hint="An https:// image address, shown on the right of the card behind a navy fade. Without one, the card shows its icon instead.">
+            <input id="suit-card-image" value={form.cardImage} onChange={setField('cardImage')} maxLength={2000} className={inputClass} />
           </Field>
         </div>
       </fieldset>

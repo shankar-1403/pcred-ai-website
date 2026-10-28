@@ -3,13 +3,6 @@ import { useSuits } from '../lib/suitsStore'
 import { suitIcon } from '../lib/suitIcons'
 
 
-// Feeds the cursor position to the tile's spotlight layer
-function trackSpotlight(event) {
-  const rect = event.currentTarget.getBoundingClientRect()
-  event.currentTarget.style.setProperty('--x', `${event.clientX - rect.left}px`)
-  event.currentTarget.style.setProperty('--y', `${event.clientY - rect.top}px`)
-}
-
 function ArrowIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -62,43 +55,38 @@ function Categories() {
               <li key={suit.slug}>
                 <Link
                   to={`/suits/${suit.slug}`}
-                  onMouseMove={trackSpotlight}
-                  className="group relative isolate flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 transition duration-300 hover:-translate-y-1 hover:border-[#00B2FC]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00B2FC]"
+                  className="group relative isolate flex h-full min-h-[15rem] flex-col overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#0A2A6B] p-6 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition duration-300 hover:-translate-y-1 hover:border-[#00B2FC]/50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00B2FC] sm:min-h-[16rem]"
                 >
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(320px_circle_at_var(--x,50%)_var(--y,0%),rgba(0,178,252,0.2),transparent_60%)] opacity-0 transition duration-300 group-hover:opacity-100"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-x-6 top-0 h-px origin-left scale-x-0 bg-gradient-to-r from-[#00B2FC] to-transparent transition-transform duration-500 group-hover:scale-x-100"
-                  />
+                  {/* Right side: the category's photo (or its icon, drawn large) behind a navy fade */}
+                  <span aria-hidden="true" className="absolute inset-y-0 right-0 -z-10 w-[62%] overflow-hidden">
+                    {suit.cardImage ? (
+                      <img src={suit.cardImage} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                    ) : (
+                      <span className="block h-full w-full bg-gradient-to-br from-[#003BD9] via-[#0A4FD9] to-[#00B2FC]">
+                        <svg viewBox="0 0 24 24" className="absolute right-[-12%] bottom-[-10%] h-[85%] w-auto text-white/15 transition duration-700 group-hover:-rotate-6" fill="none">
+                          <path d={icon.path} stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    )}
+                  </span>
+                  <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0A2A6B] from-40% via-[#0A2A6B]/70 via-55% to-transparent" />
 
                   <span className="flex items-start justify-between gap-4">
-                    <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-[0_12px_24px_-12px_rgba(0,178,252,0.8)] transition duration-300 group-hover:scale-105 group-hover:-rotate-6 ${icon.badge}`}
-                    >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#4FB3FF] text-white shadow-[0_12px_24px_-12px_rgba(0,178,252,0.8)] transition duration-300 group-hover:scale-105 group-hover:-rotate-6">
                       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
                         <path d={icon.path} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </span>
-                    <span
-                      aria-hidden="true"
-                      className="bg-gradient-to-b from-white/30 to-white/0 bg-clip-text text-5xl leading-none font-semibold tracking-[-0.06em] text-transparent"
-                    >
+                    <span aria-hidden="true" className="font-mono text-4xl leading-none font-semibold tracking-[-0.04em] text-white/35 sm:text-5xl">
                       {String(index + 1).padStart(2, '0')}
                     </span>
                   </span>
 
-                  <h3 className="mt-6 text-xl font-semibold tracking-tight">{suit.name}</h3>
-                  <span className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-white/55">{suit.summary}</span>
+                  <h3 className="mt-auto max-w-[62%] pt-8 font-serif text-2xl leading-[1.2] font-semibold tracking-tight text-balance sm:text-[1.75rem]">{suit.name}</h3>
 
-                  <span className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-                    <span className="font-mono text-[11px] tracking-wide text-white/60">{suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}</span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 transition duration-300 group-hover:border-[#00B2FC] group-hover:bg-[#00B2FC] group-hover:text-[#00245A]">
-                      <span className="sr-only">View bundles</span>
-                      <ArrowIcon className="h-4 w-4 -rotate-45 transition duration-300 group-hover:rotate-0" />
-                    </span>
+                  <span className="mt-5 inline-flex items-center gap-2 text-[15px] font-medium text-white">
+                    View {suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}
+                    <ArrowIcon className="h-4 w-4 text-[#4FB3FF] transition group-hover:translate-x-1" />
                   </span>
                 </Link>
               </li>
