@@ -99,6 +99,7 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
     if (!form.name.trim()) return setError('Add a bundle name.')
     if (form.price === '' || !Number.isInteger(price) || price < 0) return setError('Price must be a whole number of rupees, 0 or more.')
     if (preview.busy || preview.loading) return setError('Wait for the preview image to finish loading.')
+    if (preview.value && !/^(data:image\/|https?:\/\/)/.test(preview.value)) return setError('The preview image address must start with https://.')
 
     const data = {
       name: form.name.trim(),
@@ -234,6 +235,18 @@ function ProductEditor({ suitSlug = '', product, nextOrder = 1, suits, onDone, o
           </div>
         </div>
         {preview.error ? <p className="mt-1.5 text-xs font-medium text-[#C2261C]">{preview.error}</p> : null}
+        <div className="mt-3">
+          <Field label="Or image address" htmlFor={`${idPrefix}-preview-url`} hint="An https:// image address, used instead of an upload.">
+            <input
+              id={`${idPrefix}-preview-url`}
+              value={preview.value.startsWith('data:') ? '' : preview.value}
+              onChange={(event) => setPreview({ value: event.target.value.trim(), changed: true, loading: false, busy: false, error: '' })}
+              maxLength={2000}
+              placeholder={preview.value.startsWith('data:') ? 'Using the uploaded image' : 'https://…'}
+              className={inputClass}
+            />
+          </Field>
+        </div>
       </div>
 
       <Field label="Description" htmlFor={`${idPrefix}-description`}>

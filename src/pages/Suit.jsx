@@ -7,6 +7,7 @@ import { cartItemId, formatPrice, useCart } from '../lib/cart'
 import { CartIcon } from '../components/CartDrawer'
 import { useBundlePreviews } from '../lib/bundlePreviews'
 import HowItWorks from '../components/HowItWorks'
+import { useSuitImages } from '../lib/suitImages'
 
 function ArrowIcon({ className = 'h-4 w-4' }) {
   return (
@@ -340,6 +341,7 @@ function Suit() {
   const { suits, loading } = useSuits()
   const suit = findSuit(suits, slug)
   const { previews, loading: previewsLoading } = useBundlePreviews(slug)
+  const uploadedImages = useSuitImages()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -402,7 +404,7 @@ function Suit() {
           </ol>
         </nav>
 
-        {suit.promo?.enabled ? <PromoBanner promo={suit.promo} /> : null}
+        {suit.promo?.enabled ? <PromoBanner promo={{ ...suit.promo, image: uploadedImages[suit.slug]?.promo || suit.promo.image }} /> : null}
 
         <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">

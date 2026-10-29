@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useSuits } from '../lib/suitsStore'
 import { suitIcon } from '../lib/suitIcons'
+import { useSuitImages } from '../lib/suitImages'
 
 
 function ArrowIcon({ className }) {
@@ -13,6 +14,7 @@ function ArrowIcon({ className }) {
 
 function Categories() {
   const { suits, loading } = useSuits()
+  const uploaded = useSuitImages()
   const productCount = suits.reduce((total, suit) => total + suit.products.length, 0)
   return (
     <section id="categories" className="relative isolate scroll-mt-24 overflow-hidden bg-[#00245A] py-16 text-white sm:py-20">
@@ -59,8 +61,9 @@ function Categories() {
                 >
                   {/* Right side: the category's photo (or its icon, drawn large) behind a navy fade */}
                   <span aria-hidden="true" className="absolute inset-y-0 right-0 -z-10 w-[62%] overflow-hidden">
-                    {suit.cardImage ? (
-                      <img src={suit.cardImage} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                    {/* An image uploaded in the CMS wins over an image address */}
+                    {uploaded[suit.slug]?.card || suit.cardImage ? (
+                      <img src={uploaded[suit.slug]?.card || suit.cardImage} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                     ) : (
                       <span className="block h-full w-full bg-gradient-to-br from-[#003BD9] via-[#0A4FD9] to-[#00B2FC]">
                         <svg viewBox="0 0 24 24" className="absolute right-[-12%] bottom-[-10%] h-[85%] w-auto text-white/15 transition duration-700 group-hover:-rotate-6" fill="none">

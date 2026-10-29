@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { ref, set, update } from 'firebase/database'
+import { useEffect, useState } from 'react'
+import { get, ref, set, update } from 'firebase/database'
 import { db } from '../../lib/firebase'
 import { DEFAULT_ICON, SUIT_ICONS, suitIcon } from '../../lib/suitIcons'
 import { slugify } from '../../lib/suitsStore'
+import { compressPreview } from '../../lib/bundlePreviews'
+import { suitImagePath } from '../../lib/suitImages'
 import { Button, Field, Notice, inputClass } from './ui'
 
 function IconBadge({ iconKey, className = 'h-10 w-10 rounded-xl' }) {
@@ -21,6 +23,52 @@ function IconBadge({ iconKey, className = 'h-10 w-10 rounded-xl' }) {
 const EMPTY_SUIT = { name: '', slug: '', summary: '', icon: DEFAULT_ICON }
 
 // Edits a category's own details; its products are managed in the Products tab
+// Upload control for one category image. value: data URL or '' (none); shows the address image when nothing is uploaded
+function ImageUpload({ upload, setUpload, fallback, label }) {
+  const onFile = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setUpload((current) => ({ ...current, busy: true, error: '' }))
+    try {
+      const value = await compressPreview(file)
+      setUpload({ value, changed: true, loading: false, busy: false, error: '' })
+    } catch (uploadError) {
+      setUpload((current) => ({ ...current, busy: false, error: uploadError.message }))
+    }
+  }
+  const shown = upload.value || fallback
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-dashed border-[#00245A]/15 bg-[#F8FBFF] p-3">
+      <div className="grid aspect-[4/3] w-36 shrink-0 place-items-center overflow-hidden rounded-xl bg-white ring-1 ring-[#00245A]/8">
+        {shown ? (
+          <img src={shown} alt={label} className="h-full w-full object-cover" />
+        ) : (
+          <span className="px-2 text-center text-[11px] text-[#00245A]/40">{upload.loading ? 'Loading…' : 'No image yet'}</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-xs text-[#00245A]/55">PNG, JPG or WEBP; resized automatically. An uploaded image is used instead of the address below.</p>
+        <div className="flex flex-wrap gap-2">
+          <label className={`inline-flex cursor-pointer items-center rounded-full bg-[#00245A] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#003BD9] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#00B2FC] ${upload.busy ? 'pointer-events-none opacity-60' : ''}`}>
+            {upload.busy ? 'Processing…' : upload.value ? 'Replace image' : 'Upload image'}
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onFile} className="sr-only" disabled={upload.busy} />
+          </label>
+          {upload.value ? (
+            <Button tone="ghost" onClick={() => setUpload({ value: '', changed: true, loading: false, busy: false, error: '' })}>
+              Remove
+            </Button>
+          ) : null}
+        </div>
+        {upload.error ? <p className="text-xs text-[#C2261C]">{upload.error}</p> : null}
+      </div>
+    </div>
+  )
+}
+
+const EMPTY_UPLOAD = { value: '', changed: false, loading: false, busy: false, error: '' }
+
 function SuitEditor({ suit, suits, onSaved, onCancel }) {
   // Always work from `current`, never `suit`, below this line
   const isNew = !suit
@@ -46,6 +94,23 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
   const [slugTouched, setSlugTouched] = useState(false)
   const [status, setStatus] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [cardUpload, setCardUpload] = useState(() => ({ ...EMPTY_UPLOAD, loading: !isNew }))
+  const [promoUpload, setPromoUpload] = useState(() => ({ ...EMPTY_UPLOAD, loading: !isNew }))
+
+  // Loads the category's uploaded images (kept apart from the category data)
+  useEffect(() => {
+    if (isNew) return undefined
+    let active = true
+    const load = (kind, setUpload) =>
+      get(ref(db, suitImagePath(current.slug, kind)))
+        .then((snapshot) => active && setUpload((value) => (value.changed ? value : { ...value, value: snapshot.val() ?? '', loading: false })))
+        .catch(() => active && setUpload((value) => ({ ...value, loading: false })))
+    load('card', setCardUpload)
+    load('promo', setPromoUpload)
+    return () => {
+      active = false
+    }
+  }, [isNew, current.slug])
 
   const slug = isNew && !slugTouched ? slugify(form.name) : form.slug
 
@@ -98,14 +163,22 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
       layout: form.layout,
       heroProduct: form.layout === 'bento' && form.heroProduct ? form.heroProduct : null,
     }
+    if (cardUpload.busy || promoUpload.busy || cardUpload.loading || promoUpload.loading) return setStatus({ tone: 'error', text: 'Wait for the images to finish loading.' })
     setSaving(true)
+    // Uploaded images save to their own place, once the category exists
+    const saveImages = async (target) => {
+      if (cardUpload.changed) await set(ref(db, suitImagePath(target, 'card')), cardUpload.value || null)
+      if (promoUpload.changed) await set(ref(db, suitImagePath(target, 'promo')), promoUpload.value || null)
+    }
     try {
       if (isNew) {
         const { banner, promo: promoData, heroProduct, cardImage: image, setOffer, ...rest } = data
         await set(ref(db, `suits/${slug}`), { ...rest, ...(banner ? { banner } : {}), ...(promoData ? { promo: promoData } : {}), ...(heroProduct ? { heroProduct } : {}), ...(image ? { cardImage: image } : {}), ...(setOffer ? { setOffer } : {}), order: suits.length + 1 })
+        await saveImages(slug)
         onSaved(`Created ${data.name}. Add its bundles in the Bundles tab.`)
       } else {
         await update(ref(db, `suits/${current.slug}`), data)
+        await saveImages(current.slug)
         onSaved(`Saved ${data.name}. The site has updated.`)
       }
     } catch (error) {
@@ -228,7 +301,11 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
           </Field>
         </div>
         <div className="mt-4">
-          <Field label="Background image (optional)" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
+          <p className="mb-1.5 text-xs font-semibold text-[#00245A]">Background image (optional)</p>
+          <ImageUpload upload={promoUpload} setUpload={setPromoUpload} fallback={form.promoImage.trim()} label="Offer card background" />
+        </div>
+        <div className="mt-3">
+          <Field label="Or image address" htmlFor="suit-promo-image" hint="An https:// image address. It is tinted navy behind the text.">
             <input id="suit-promo-image" value={form.promoImage} onChange={setField('promoImage')} maxLength={2000} className={inputClass} />
           </Field>
         </div>
@@ -260,7 +337,11 @@ function SuitEditor({ suit, suits, onSaved, onCancel }) {
         <legend className="px-1 text-xs font-semibold">Home card</legend>
         <p className="text-xs text-[#00245A]/55">This category&apos;s card in the Categories section of the home page.</p>
         <div className="mt-3">
-          <Field label="Image (optional)" htmlFor="suit-card-image" hint="An https:// image address, shown on the right of the card behind a navy fade. Without one, the card shows its icon instead.">
+          <p className="mb-1.5 text-xs font-semibold text-[#00245A]">Image (optional)</p>
+          <ImageUpload upload={cardUpload} setUpload={setCardUpload} fallback={form.cardImage.trim()} label="Home card image" />
+        </div>
+        <div className="mt-3">
+          <Field label="Or image address" htmlFor="suit-card-image" hint="An https:// image address, shown on the right of the card behind a navy fade. Without one, the card shows its icon instead.">
             <input id="suit-card-image" value={form.cardImage} onChange={setField('cardImage')} maxLength={2000} className={inputClass} />
           </Field>
         </div>

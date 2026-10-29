@@ -214,7 +214,16 @@
       "$slug": {
         "$productId": {
           ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
-          ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length <= 400000"
+          ".validate": "newData.isString() && (newData.val().beginsWith('data:image/') && newData.val().length <= 400000 || (newData.val().beginsWith('https://') || newData.val().beginsWith('http://')) && newData.val().length <= 2000)"
+        }
+      }
+    },
+    "suitImages": {
+      ".read": true,
+      "$slug": {
+        "$kind": {
+          ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+          ".validate": "($kind === 'card' || $kind === 'promo') && newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length <= 400000"
         }
       }
     }
