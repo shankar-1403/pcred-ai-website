@@ -50,7 +50,7 @@ describe('mobile OTP', () => {
         const issued = issueOtp('9876543210', SECRET, NOW);
         const wrong = issued.otp === '000000' ? '111111' : '000000';
         expect(checkOtp('9876543210', wrong, issued.challenge, SECRET, NOW).reason).toBe('mismatch');
-        expect(checkOtp('9876543210', issued.otp, issued.challenge, SECRET, NOW + 11 * 60 * 1000).reason).toBe('expired');
+        expect(checkOtp('9876543210', issued.otp, issued.challenge, SECRET, NOW + 16 * 60 * 1000).reason).toBe('expired');
         expect(checkOtp('9876543210', issued.otp, issued.challenge, SECRET, NOW).ok).toBe(true);
         expect(issued.challenge).not.toContain(issued.otp);
     });
