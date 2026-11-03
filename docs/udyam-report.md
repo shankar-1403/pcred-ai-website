@@ -61,7 +61,7 @@ response, so no SMS is sent.
 ## Mobile OTP switch
 
 `functions/udyam/src/udyam/features.js` has `OTP_ENABLED`, read by both the website and the function.
-It is currently **on**: the pop-up asks for name, email and mobile, texts a 6-digit code through
+It is currently **off** (payment is on instead). When on, the pop-up asks for name, email and mobile, texts a 6-digit code through
 Fast2SMS, and fetches the record only after the code is verified (for a Udyam number too, even with
 payment off). The certificate route refuses requests without that proof.
 To turn it off, set it to `false`; after any change deploy both:

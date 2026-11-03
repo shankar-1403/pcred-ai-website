@@ -6,7 +6,7 @@
  * When false, the mobile number is collected but not verified. Turn it back on here, then
  * rebuild and deploy both: npm run build && firebase deploy --only functions:udyamVerify,hosting
  */
-export const OTP_ENABLED = true;
+export const OTP_ENABLED = false;
 
 /**
  * PAYMENT_ENABLED: when true, the fetched record is sealed and the report opens only after a
@@ -14,4 +14,4 @@ export const OTP_ENABLED = true;
  * payment step). Turn it back on here once Cashfree payments are activated, then rebuild and
  * deploy both: npm run build && firebase deploy --only functions:udyamVerify,hosting
  */
-export const PAYMENT_ENABLED = false;
+export const PAYMENT_ENABLED = true;
