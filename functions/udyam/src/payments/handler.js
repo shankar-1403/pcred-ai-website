@@ -29,8 +29,10 @@ function corsHeaders(headers, allowed) {
 // Where Cashfree sends the visitor back after paying. Cashfree only accepts return URLs on
 // whitelisted domains, so this is always one of the site's own addresses: never the function's
 // own host (which local testing goes through) or anything a request claims.
-export const SITE_URL = (process.env.UDYAM_SITE_URL || 'https://pcred-ai-website.web.app').replace(/\/+$/, '');
-const SITE_ORIGINS = [SITE_URL, 'https://pcred-ai-website.web.app', 'https://pcred-ai-website.firebaseapp.com'];
+// A visitor paying on pcred.ai comes back to pcred.ai: the unpaid preview is kept in that
+// address's browser storage, so returning anywhere else would lose it.
+export const SITE_URL = (process.env.UDYAM_SITE_URL || 'https://pcred.ai').replace(/\/+$/, '');
+const SITE_ORIGINS = [SITE_URL, 'https://pcred.ai', 'https://www.pcred.ai', 'https://pcred-ai-website.web.app', 'https://pcred-ai-website.firebaseapp.com'];
 
 function siteOrigin(headers) {
     const origin = (headers.get('origin') || '').trim().toLowerCase().replace(/\/+$/, '');

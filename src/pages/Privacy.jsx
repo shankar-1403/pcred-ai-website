@@ -1,5 +1,5 @@
 import LegalPage from '../components/LegalPage'
-import { COMPANY } from '../lib/company'
+import { COMPANY, CONTACT_SENTENCE, companyLines } from '../lib/company'
 
 const sections = [
   {
@@ -7,12 +7,12 @@ const sections = [
     body: [
       `PCRED (${COMPANY.website}, the "Platform") is owned and operated by ${COMPANY.name} (the "Company"). In this policy, "PCRED", "we", "us" and "our" mean the Company.`,
       'Through this website we provide scheme discovery reports, credit and advisory services for Indian businesses.',
-      'If you have a question about this policy or your information, message us on WhatsApp at +91 22 3512 0060.',
+      `If you have a question about this policy or your information, ${CONTACT_SENTENCE}.`
     ],
   },
   {
     heading: 'Company information',
-    body: [[`${COMPANY.name}`, `GSTIN: ${COMPANY.gstin}`, `Registered office: ${COMPANY.address}`]],
+    body: [companyLines()],
   },
   {
     heading: 'Information we collect',
@@ -76,7 +76,7 @@ const sections = [
         'Delete your information, where we are not required to keep it.',
         'Withdraw a consent you have given, for the future.',
       ],
-      'To make a request or a complaint, message us on WhatsApp at +91 22 3512 0060. We will respond within a reasonable time.',
+      `To make a request or a complaint, ${CONTACT_SENTENCE}. We will respond within a reasonable time.`
     ],
   },
   {

@@ -50,7 +50,7 @@ test('rejects oversize bodies and non-objects', () => {
 })
 
 test('counts collections and files history by India-time month', () => {
-  assert.deepEqual(countsOf(samplePayload()), { central: 21, states: 36, extras: 63, watch: 1 })
+  assert.deepEqual(countsOf(samplePayload()), { central: 21, states: 36, stateItems: 36, extras: 63, watch: 1 })
   // 31 Oct 2026 20:00 UTC is already 1 Nov in India
   assert.equal(historyMonth(new Date('2026-10-31T20:00:00Z')), '2026-11')
   assert.equal(historyMonth(new Date('2026-11-01T03:22:00Z')), '2026-11')

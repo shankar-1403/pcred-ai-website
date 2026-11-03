@@ -3,6 +3,7 @@ import Logo from '../assets/favicon.svg'
 import { useSuits } from '../lib/suitsStore'
 import { WHATSAPP_NUMBER, generalEnquireHref, whatsappHref } from '../lib/whatsapp'
 import WhatsAppIcon from '../components/WhatsAppIcon'
+import { COMPANY } from '../lib/company'
 
 const GENERAL_TOPIC = 'General enquiry'
 
@@ -131,6 +132,38 @@ function Contact() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* The registered business behind the site, with every way to reach it */}
+            <div className="rounded-[2rem] border border-white bg-white/80 p-6 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur md:col-span-2 sm:p-8">
+              <p className="font-mono text-[10px] tracking-[0.22em] text-[#003BD9] uppercase">Company details</p>
+              <p className="mt-4 text-sm font-semibold">{COMPANY.name}</p>
+              <dl className="mt-3 space-y-3 text-sm text-[#00245A]/75">
+                <div>
+                  <dt className="text-xs font-semibold text-[#00245A]/50">Address</dt>
+                  <dd className="mt-0.5 leading-relaxed">{COMPANY.address}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-[#00245A]/50">Phone and WhatsApp</dt>
+                  <dd className="mt-0.5">
+                    <a href={`tel:+${WHATSAPP_NUMBER}`} className="transition hover:text-[#003BD9]">{COMPANY.phone}</a>
+                  </dd>
+                </div>
+                {COMPANY.email ? (
+                  <div>
+                    <dt className="text-xs font-semibold text-[#00245A]/50">Email</dt>
+                    <dd className="mt-0.5 break-all">
+                      <a href={`mailto:${COMPANY.email}`} className="transition hover:text-[#003BD9]">{COMPANY.email}</a>
+                    </dd>
+                  </div>
+                ) : null}
+                {COMPANY.gstin ? (
+                  <div>
+                    <dt className="text-xs font-semibold text-[#00245A]/50">GSTIN</dt>
+                    <dd className="mt-0.5 font-mono text-[13px]">{COMPANY.gstin}</dd>
+                  </div>
+                ) : null}
+              </dl>
             </div>
           </aside>
 

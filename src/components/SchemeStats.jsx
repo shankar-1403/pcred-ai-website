@@ -3,8 +3,9 @@ import { db } from '../lib/firebase'
 
 // Counts from the last monthly scheme import (schemes/current/meta/counts, written by the
 // importSchemes function). These are the counts of the 24 Oct 2026 import, used if the
-// database cannot be reached.
-const FALLBACK = { central: 21, states: 36, extras: 211 }
+// database cannot be reached. `stateItems` (every incentive in every state's own policy) is
+// stored from the November 2026 import on; until then the October figure stands in.
+const FALLBACK = { central: 21, states: 36, stateItems: 543, extras: 211 }
 
 function useSchemeCounts() {
   const [counts, setCounts] = useState(FALLBACK)
@@ -17,7 +18,12 @@ function useSchemeCounts() {
       .then((res) => (res.ok ? res.json() : null))
       .then((value) => {
         if (active && value && Number(value.central) > 0) {
-          setCounts({ central: Number(value.central), states: Number(value.states) || FALLBACK.states, extras: Number(value.extras) || FALLBACK.extras })
+          setCounts({
+            central: Number(value.central),
+            states: Number(value.states) || FALLBACK.states,
+            stateItems: Number(value.stateItems) || FALLBACK.stateItems,
+            extras: Number(value.extras) || FALLBACK.extras,
+          })
         }
       })
       .catch(() => {})
@@ -67,7 +73,7 @@ function CountUp({ value, suffix = '' }) {
   }, [value, still])
   return (
     <span ref={node} className="tabular-nums">
-      {still ? value : shown}
+      {(still ? value : shown).toLocaleString('en-IN')}
       {suffix}
     </span>
   )
@@ -77,16 +83,17 @@ const ICONS = {
   total: 'M4 6h16M4 12h16M4 18h10',
   map: 'M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Zm0 0v13m6-10.5v13',
   central: 'M3 10h18M5 10v8m4.67-8v8m4.66-8v8M19 10v8M3 20h18M12 3l9 5H3l9-5Z',
-  calendar: 'M7 3v3m10-3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 8h3v3H8z',
+  msme: 'M3 21h18M5 21V9l5 3V9l5 3V6l4 2v13M8 17h1m3 0h1m3 0h1',
 }
 
 function SchemeStats() {
-  const { central, states, extras } = useSchemeCounts()
+  const { central, states, stateItems, extras } = useSchemeCounts()
   const cards = [
-    { icon: 'total', value: central + states + extras, suffix: '+', label: 'Schemes tracked', note: 'Central, state, sector, export and startup' },
+    // Every scheme and state incentive the report checks: central, each state's own policy items, and the rest
+    { icon: 'total', value: central + stateItems + extras, suffix: '+', label: 'Schemes tracked', note: 'Central, state, sector, export and startup' },
     { icon: 'map', value: states, label: 'States & UTs covered', note: 'Each state’s own MSME policy' },
     { icon: 'central', value: central, label: 'Central MSME schemes', note: 'Credit guarantees, subsidies and loans' },
-    { icon: 'calendar', text: 'Monthly', label: 'Rules re-checked', note: 'Every rule is re-checked against the source on the 1st' },
+    { icon: 'msme', value: 10000, suffix: '+', label: 'MSMEs benefited', note: 'Businesses helped across India' },
   ]
 
   return (

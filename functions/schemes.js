@@ -64,9 +64,12 @@ export function validatePayload(payload, { previousCounts = null, force = false,
 }
 
 export function countsOf(payload) {
+  const items = (state) => (Array.isArray(state?.items) ? state.items.length : isPlainObject(state?.items) ? Object.keys(state.items).length : 0)
   return {
     central: Object.keys(payload.central).length,
     states: Object.keys(payload.states).length,
+    // Every incentive in every state's own MSME policy, for the "Schemes tracked" total
+    stateItems: Object.values(payload.states).reduce((sum, state) => sum + items(state), 0),
     extras: Object.keys(payload.extras).length,
     watch: Array.isArray(payload.watch) ? payload.watch.length : 0,
   }

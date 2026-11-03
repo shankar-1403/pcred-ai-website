@@ -13,6 +13,9 @@ import Login from './pages/Login'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import About from './pages/About'
+import Refund from './pages/Refund'
+import Shipping from './pages/Shipping'
 
 // The CMS (and Firebase Auth) loads only when /admin is opened
 const Admin = lazy(() => import('./pages/Admin'))
@@ -42,6 +45,9 @@ function App() {
               <Route element={<><Header /><Contact /><Footer /><CartDrawer /></>} path="/contact" />
               <Route element={<><Header /><Privacy /><Footer /><CartDrawer /></>} path="/privacy" />
               <Route element={<><Header /><Terms /><Footer /><CartDrawer /></>} path="/terms" />
+              <Route element={<><Header /><About /><Footer /><CartDrawer /></>} path="/about" />
+              <Route element={<><Header /><Refund /><Footer /><CartDrawer /></>} path="/refund-policy" />
+              <Route element={<><Header /><Shipping /><Footer /><CartDrawer /></>} path="/shipping-policy" />
               <Route element={<><Header /><Suspense fallback={<ReportLoading />}><Report /></Suspense><Footer /><CartDrawer /></>} path="/report" />
             </Routes>
 

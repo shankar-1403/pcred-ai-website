@@ -6,7 +6,16 @@ import { WHATSAPP_NUMBER, generalEnquireHref } from '../lib/whatsapp'
 
 const explore = [
   { to: '/', label: 'Home' },
-  { to: '/contact', label: 'Talk to us' },
+  { to: '/about', label: 'About us' },
+  { to: '/contact', label: 'Contact us' },
+]
+
+// Every policy page; Cashfree's website review looks for each of these
+const legal = [
+  { to: '/privacy', label: 'Privacy Policy' },
+  { to: '/terms', label: 'Terms & Conditions' },
+  { to: '/refund-policy', label: 'Refund & Cancellation' },
+  { to: '/shipping-policy', label: 'Shipping & Delivery' },
 ]
 
 // More than this many categories collapses into a "View all" link
@@ -93,22 +102,33 @@ function Footer() {
                 </a>
               </li>
               <li className="text-white/50">WhatsApp enquiries</li>
+              {COMPANY.email ? (
+                <li>
+                  <a href={`mailto:${COMPANY.email}`} className="break-all text-white/70 transition hover:text-white">
+                    {COMPANY.email}
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>
 
         <div className="mt-14 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/50">
           <p>
-            PCRED ({COMPANY.website}) is owned and operated by <span className="text-white/70">{COMPANY.name}</span> · GSTIN {COMPANY.gstin}
+            PCRED ({COMPANY.website}) is owned and operated by <span className="text-white/70">{COMPANY.name}</span>
+            {COMPANY.gstin ? ` · GSTIN ${COMPANY.gstin}` : ''}
           </p>
-          <p className="mt-1">Registered office: {COMPANY.address}</p>
+          <p className="mt-1">Address: {COMPANY.address}</p>
         </div>
         <div className="mt-4 flex flex-col gap-4 pb-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
             <p>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved.</p>
-            <nav aria-label="Legal" className="flex gap-5">
-              <Link to="/privacy" className="transition hover:text-white">Privacy Policy</Link>
-              <Link to="/terms" className="transition hover:text-white">Terms &amp; Conditions</Link>
+            <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
+              {legal.map((item) => (
+                <Link key={item.to} to={item.to} className="transition hover:text-white">
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
           <button

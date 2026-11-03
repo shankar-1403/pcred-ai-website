@@ -1,5 +1,5 @@
 import LegalPage from '../components/LegalPage'
-import { COMPANY } from '../lib/company'
+import { COMPANY, CONTACT_SENTENCE, companyLines } from '../lib/company'
 
 const sections = [
   {
@@ -11,7 +11,7 @@ const sections = [
   },
   {
     heading: 'Company information',
-    body: [[`${COMPANY.name}`, `GSTIN: ${COMPANY.gstin}`, `Registered office: ${COMPANY.address}`]],
+    body: [companyLines()],
   },
   {
     heading: 'Our services',
@@ -48,7 +48,7 @@ const sections = [
     heading: 'Cancellations and refunds',
     body: [
       'Because reports are prepared and delivered digitally, a report cannot be cancelled or refunded once it has been delivered. For other services, you may cancel before work starts for a full refund. Once work has started, any refund will reflect the work already done and fees already paid to third parties.',
-      'If a payment fails but money is taken from your account, it is normally returned automatically by your bank or our payment partner. If you are charged twice, or charged without receiving your report, message us on WhatsApp with the payment details and we will refund that amount to your original payment method within 5–7 working days.',
+      'If a payment fails but money is taken from your account, it is normally returned automatically by your bank or our payment partner. If you are charged twice, or charged without receiving your report, message us with the payment details and we will refund that amount to your original payment method within 5–7 working days. Our Refund & Cancellation Policy has the details.',
     ],
   },
   {
@@ -73,7 +73,7 @@ const sections = [
     heading: 'Changes, law and contact',
     body: [
       'We may update these terms; the latest version will always be on this page. These terms are governed by the laws of India, and the courts of Mumbai, Maharashtra have jurisdiction.',
-      'For any question about these terms, message us on WhatsApp at +91 22 3512 0060.',
+      `For any question about these terms, ${CONTACT_SENTENCE}.`
     ],
   },
 ]

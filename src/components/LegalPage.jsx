@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router'
 
-// Shared layout for the Privacy Policy and Terms & Conditions pages: title, date, and numbered sections
+// Shared layout for About and the legal pages (Privacy, Terms, Refund, Shipping): title, date, and numbered sections
 function LegalPage({ eyebrow, title, updated, intro, sections }) {
   useEffect(() => {
     window.scrollTo(0, 0)

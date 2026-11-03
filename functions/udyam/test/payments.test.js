@@ -122,9 +122,25 @@ describe('payment handlers', () => {
         expect(sent.customer_details.customer_phone).toBe('9876543210');
         expect(sent.order_tags.seal).toBe(sealHash(sealed));
         // A request from another site never sets the return address; it is always the site's own
-        expect(sent.order_meta.return_url).toBe('https://pcred-ai-website.web.app/report?order_id={order_id}');
+        expect(sent.order_meta.return_url).toBe('https://pcred.ai/report?order_id={order_id}');
         expect(JSON.stringify(sent)).not.toContain(record.udyam_number);
         expect(JSON.stringify(sent)).not.toContain('Shed No. 12');
+    });
+
+    it('sends the visitor back to the address they paid on', async () => {
+        const sealed = sealRecord(record, SECRET, Date.now(), UDYAM_NUMBER_PRICE_INR);
+        const returnFor = async (origin) => {
+            let sent;
+            const fetchImpl = async (_url, init) => {
+                sent = JSON.parse(init.body);
+                return new Response(JSON.stringify({ payment_session_id: 'session_1' }), { status: 200 });
+            };
+            await handleCheckoutRequest(request('/api/udyam/checkout', { sealed }, { origin, 'x-forwarded-host': new URL(origin).host }), { ...deps, fetchImpl });
+            return sent.order_meta.return_url;
+        };
+        expect(await returnFor('https://pcred.ai')).toBe('https://pcred.ai/report?order_id={order_id}');
+        expect(await returnFor('https://www.pcred.ai')).toBe('https://www.pcred.ai/report?order_id={order_id}');
+        expect(await returnFor('https://pcred-ai-website.web.app')).toBe('https://pcred-ai-website.web.app/report?order_id={order_id}');
     });
 
     it('sends a placeholder phone when none is given, and rejects an expired preview', async () => {
