@@ -14,5 +14,7 @@ export function apiRoute(req) {
         return 'checkout';
     if (path.endsWith('/unlock'))
         return 'unlock';
+    if (path.endsWith('/coupon'))
+        return 'coupon';
     return 'verify';
 }

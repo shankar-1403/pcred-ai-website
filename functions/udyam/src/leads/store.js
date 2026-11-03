@@ -155,7 +155,7 @@ function jsonValue(value) {
     return value;
 }
 
-function database() {
+export function database() {
     if (!db) {
         if (!getApps().length) {
             const url = databaseUrl();

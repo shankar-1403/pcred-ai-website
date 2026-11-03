@@ -57,6 +57,11 @@ export default function LockedPreview({ pack, onPaid }) {
     const [phone, setPhone] = useState(() => (typeof pack.phone === 'string' ? pack.phone.replace(/\D/g, '').slice(0, 10) : ''));
     const [phase, setPhase] = useState('idle');
     const [message, setMessage] = useState('');
+    const [couponInput, setCouponInput] = useState('');
+    const [coupon, setCoupon] = useState(null); // { code, amount, discount } once applied
+    const [couponState, setCouponState] = useState({ phase: 'idle', message: '' });
+    const payable = coupon ? coupon.amount : pack.price?.amount;
+    const payLabel = rupees(payable);
     const rows = [
         ['Enterprise type', preview.enterprise_type],
         ['Activity', preview.major_activity],
@@ -64,6 +69,32 @@ export default function LockedPreview({ pack, onPaid }) {
         ['District', preview.district],
         ['State', preview.state],
     ].filter(([, value]) => typeof value === 'string' && value.trim());
+
+    async function applyCouponCode() {
+        const code = couponInput.replace(/\s+/g, '').toUpperCase();
+        if (!code || couponState.phase === 'checking')
+            return;
+        setCouponState({ phase: 'checking', message: '' });
+        try {
+            const checked = await postJson('/api/udyam/coupon', { sealed: pack.sealed, coupon: code });
+            if (!checked.payload?.ok) {
+                setCoupon(null);
+                setCouponState({ phase: 'error', message: checked.payload?.error?.message || 'This coupon code is not valid.' });
+                return;
+            }
+            setCoupon({ code, amount: checked.payload.price.amount, discount: checked.payload.price.discount });
+            setCouponState({ phase: 'idle', message: '' });
+        }
+        catch {
+            setCouponState({ phase: 'error', message: 'The coupon could not be checked. Check your connection and try again.' });
+        }
+    }
+
+    function removeCoupon() {
+        setCoupon(null);
+        setCouponInput('');
+        setCouponState({ phase: 'idle', message: '' });
+    }
 
     async function pay(e) {
         e.preventDefault();
@@ -78,7 +109,12 @@ export default function LockedPreview({ pack, onPaid }) {
         setPhase('paying');
         setMessage('');
         try {
-            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, phone: mobile });
+            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, phone: mobile, ...(coupon ? { coupon: coupon.code } : {}) });
+            if (started.payload?.ok && started.payload.free && started.payload.data) {
+                setPhase('idle');
+                onPaid(started.payload.data);
+                return;
+            }
             if (!started.payload?.ok || !started.payload.payment_session_id || !started.payload.order_id) {
                 setPhase('error');
                 setMessage(started.payload?.error?.message || 'Payment could not be started. Please try again.');
@@ -150,8 +186,25 @@ export default function LockedPreview({ pack, onPaid }) {
       <form className="ud-lock__pay" onSubmit={pay} noValidate>
         <label className="uv__label" htmlFor="pay-phone">Mobile number</label>
         <input id="pay-phone" name="phone" className="uv__input" type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} disabled={paying}/>
+        <label className="uv__label" htmlFor="pay-coupon">Coupon code (optional)</label>
+        {coupon ? (<p className="uv__msg" role="status">
+            <strong>{coupon.code}</strong> applied: {rupees(coupon.discount)} off{' '}
+            <button type="button" className="ud-lock__coupon-remove" onClick={removeCoupon} disabled={paying}>Remove</button>
+          </p>) : (<div className="ud-lock__coupon">
+            <input id="pay-coupon" name="coupon" className="uv__input" type="text" autoComplete="off" autoCapitalize="characters" maxLength={20} placeholder="Enter code" value={couponInput} onChange={(e) => setCouponInput(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())} onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyCouponCode();
+                }
+            }} disabled={paying}/>
+            <button type="button" className="btn btn--ghost" onClick={applyCouponCode} disabled={paying || !couponInput || couponState.phase === 'checking'}>
+              {couponState.phase === 'checking' ? 'Checking…' : 'Apply'}
+            </button>
+          </div>)}
+        {couponState.phase === 'error' ? <p className="uv__msg uv__msg--err" role="alert">{couponState.message}</p> : null}
         <button className="btn" type="submit" id="pay-preview" disabled={paying}>
-          {paying ? (<><span className="spinner" aria-hidden="true"/>Opening payment…</>) : `Pay ${priceLabel} to view and download`}
+          {paying ? (<><span className="spinner" aria-hidden="true"/>{payable === 0 ? 'Opening report…' : 'Opening payment…'}</>)
+            : payable === 0 ? 'Open the free report' : coupon ? `Pay ${payLabel} (was ${priceLabel}) to view and download` : `Pay ${priceLabel} to view and download`}
         </button>
         {message ? <p className="uv__msg uv__msg--err" role="alert">{message}</p> : null}
         <p className="ud-lock__note">{fromCertificate

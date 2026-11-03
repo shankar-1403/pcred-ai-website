@@ -41,7 +41,7 @@ export async function createPaymentOrder(config, order, fetchImpl = fetch) {
                     customer_phone: order.phone,
                 },
                 order_meta: { return_url: order.returnUrl },
-                order_tags: { seal: order.sealTag },
+                order_tags: order.coupon ? { seal: order.sealTag, coupon: order.coupon } : { seal: order.sealTag },
                 order_note: 'PCRED Udyam scheme report',
             }),
             signal: AbortSignal.timeout(15000),

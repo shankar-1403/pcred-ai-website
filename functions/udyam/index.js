@@ -2,7 +2,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import { handleVerifyRequest } from './src/handler.js';
-import { handleCheckoutRequest, handleUnlockRequest } from './src/payments/handler.js';
+import { handleCheckoutRequest, handleCouponRequest, handleUnlockRequest } from './src/payments/handler.js';
+import { realtimeCouponLookup, realtimeCouponRedemption } from './src/payments/coupon.js';
 import { handleCertificateRequest, handleLeadRequest, handleOtpSendRequest, handleOtpVerifyRequest } from './src/intake/handler.js';
 import { readCashfreeConfig } from './src/cashfree/config.js';
 import { apiRoute } from './src/server/route.js';
@@ -86,12 +87,16 @@ export const udyamVerify = onRequest({
         loadSmsConfig,
         saveLead: realtimeLeadStore(),
         findLead: realtimeLeadLookup(),
+        findCoupon: realtimeCouponLookup(),
+        redeemCoupon: realtimeCouponRedemption(),
     };
     const route = apiRoute(incoming);
     const result = route === 'checkout'
         ? await handleCheckoutRequest(incoming, deps)
         : route === 'unlock'
             ? await handleUnlockRequest(incoming, deps)
+            : route === 'coupon'
+            ? await handleCouponRequest(incoming, deps)
             : route === 'otp-send'
                 ? await handleOtpSendRequest(incoming, deps)
                 : route === 'otp-verify'

@@ -225,3 +225,7 @@
 .udyam-app .qmore[open]>summary::after{transform:rotate(-135deg)}
 .udyam-app .qmore>summary span{font-size:12px;font-weight:500;color:var(--ink-3)}
 .udyam-app .qmore .q:first-child{border-top:0}
+.udyam-app .ud-lock__coupon{display:flex;gap:8px}
+.udyam-app .ud-lock__coupon .uv__input{flex:1;min-width:0;text-transform:uppercase}
+.udyam-app .ud-lock__coupon .btn{justify-self:auto;flex:none}
+.udyam-app .ud-lock__coupon-remove{background:none;border:0;padding:0;color:var(--navy);text-decoration:underline;cursor:pointer;font:inherit}

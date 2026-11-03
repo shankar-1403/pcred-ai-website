@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { isReportPrice } from './price.js';
 import { openRecord, sealHash, sealTagMatches } from './seal.js';
 import { createPaymentOrder, readPaymentOrder } from './gateway.js';
+import { COUPON_CODE, MIN_PAYABLE_INR, applyCoupon, cleanCouponCode } from './coupon.js';
 import { RateLimiter } from '../server/rate-limit.js';
 import { allowedOriginList, clientIp, isAllowedOrigin } from '../server/request.js';
 import { logEvent } from '../server/log.js';
@@ -93,6 +94,47 @@ function newOrderId() {
     return `pcred_pay_${randomBytes(8).toString('hex')}`;
 }
 
+/** The price for this seal after the coupon in the request, if any. */
+async function priceWithCoupon(body, amount, deps, failure) {
+    const code = cleanCouponCode(body.coupon);
+    if (!code)
+        return { amount, discount: 0, code: '' };
+    if (!COUPON_CODE.test(code))
+        return { error: failure('INVALID_COUPON', 'This coupon code is not valid.', 400) };
+    let coupon;
+    try {
+        coupon = await deps.findCoupon(code);
+    }
+    catch (e) {
+        logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_lookup_failed', detail: e instanceof Error ? e.name : 'unknown' });
+        return { error: failure('SERVICE_UNAVAILABLE', 'The coupon could not be checked. Please try again.', 503) };
+    }
+    const applied = applyCoupon(coupon, { amount, now: deps.now?.() ?? Date.now() });
+    if (!applied.ok)
+        return { error: failure('INVALID_COUPON', applied.message, 400) };
+    return { amount: applied.amount, discount: applied.discount, code };
+}
+
+/** Checks a coupon against the sealed price, so the page can show the new price before paying. */
+export async function handleCouponRequest(req, deps) {
+    const gated = guard(req, deps);
+    if (gated.done)
+        return gated.done;
+    const { reply, failure, body } = gated;
+    const loaded = loadPg(deps, failure);
+    if (loaded.error)
+        return loaded.error;
+    const opened = openRecord(typeof body.sealed === 'string' ? body.sealed : '', loaded.sealSecret, deps.now?.() ?? Date.now());
+    if (!opened.ok || !isReportPrice(opened.amount))
+        return failure(opened.reason === 'expired' ? 'PREVIEW_EXPIRED' : 'BAD_REQUEST', 'Start again, then pay.', 400);
+    if (!cleanCouponCode(body.coupon))
+        return failure('INVALID_COUPON', 'Enter a coupon code.', 400);
+    const priced = await priceWithCoupon(body, opened.amount, deps, failure);
+    if (priced.error)
+        return priced.error;
+    return reply(200, { ok: true, coupon: priced.code, price: { amount: priced.amount, original: opened.amount, discount: priced.discount, currency: 'INR' } });
+}
+
 export async function handleCheckoutRequest(req, deps) {
     const gated = guard(req, deps);
     if (gated.done)
@@ -113,14 +155,31 @@ export async function handleCheckoutRequest(req, deps) {
     }
     if (!isReportPrice(opened.amount))
         return failure('BAD_REQUEST', 'Start again, then pay.', 400);
+    const priced = await priceWithCoupon(body, opened.amount, deps, failure);
+    if (priced.error)
+        return priced.error;
     const orderId = newOrderId();
+    if (priced.amount === 0) {
+        // A 100% coupon: nothing to pay, so the report opens now. The use is counted first, so a
+        // limited coupon cannot be reused while the count fails to save.
+        try {
+            await deps.redeemCoupon(priced.code, orderId, 0);
+        }
+        catch (e) {
+            logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_redeem_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
+            return failure('SERVICE_UNAVAILABLE', 'The coupon could not be applied. Please try again.', 503);
+        }
+        logEvent('info', 'udyam_pay', { outcome: 'unlocked_free', order_id: orderId, coupon: priced.code });
+        return reply(200, { ok: true, free: true, data: opened.record, price: { amount: 0, currency: 'INR' } });
+    }
     const created = await createPaymentOrder(loaded.pg, {
         orderId,
-        amount: opened.amount,
+        amount: priced.amount,
         phone,
         customerId: `cust_${createHash('sha256').update(phone).digest('hex').slice(0, 12)}`,
         returnUrl: `${siteOrigin(req.headers)}/report?order_id={order_id}`,
         sealTag: sealHash(sealed),
+        coupon: priced.code,
     }, deps.fetchImpl);
     if (!created.ok) {
         logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'order_rejected', cf_http: created.httpStatus, cf_code: created.code, cf_message: created.message });
@@ -128,8 +187,8 @@ export async function handleCheckoutRequest(req, deps) {
         const reason = `${created.code}: ${created.message}`.replace(/\s+/g, ' ').slice(0, 160);
         return failure('SERVICE_UNAVAILABLE', `Payment could not be started. Please try again later. (Cashfree ${reason})`, created.httpStatus === 504 ? 504 : 503);
     }
-    logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId });
-    return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: opened.amount, currency: 'INR' } });
+    logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId, ...(priced.code ? { coupon: priced.code } : {}) });
+    return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: priced.amount, currency: 'INR' } });
 }
 
 export async function handleUnlockRequest(req, deps) {
@@ -159,13 +218,27 @@ export async function handleUnlockRequest(req, deps) {
     const tag = tags && typeof tags === 'object' ? tags.seal : '';
     const amount = Number(payment.order?.order_amount);
     const currency = payment.order?.order_currency;
-    if (!sealTagMatches(sealed, tag) || currency !== 'INR' || !isReportPrice(opened.amount) || Math.abs(amount - opened.amount) > 0.001) {
+    // Only this server creates orders (with the secret keys), so a coupon tag means it priced the
+    // order lower itself: the amount may then be anything from ₹1 up to the full price.
+    const coupon = tags && typeof tags === 'object' ? cleanCouponCode(tags.coupon) : '';
+    const amountOk = Math.abs(amount - opened.amount) <= 0.001
+        || (COUPON_CODE.test(coupon) && amount >= MIN_PAYABLE_INR && amount < opened.amount);
+    if (!sealTagMatches(sealed, tag) || currency !== 'INR' || !isReportPrice(opened.amount) || !amountOk) {
         logEvent('warn', 'udyam_pay', { outcome: 'rejected', reason: 'order_mismatch', order_id: orderId });
         return failure('BAD_REQUEST', 'This payment does not match the fetched record. Please pay again.', 400);
     }
     if (!payment.paid) {
         logEvent('info', 'udyam_pay', { outcome: 'unpaid', order_id: orderId, order_status: payment.order?.order_status ?? '' });
         return failure('PAYMENT_PENDING', 'Payment is not complete yet. Finish the payment to view the report.', 402);
+    }
+    if (coupon && typeof deps.redeemCoupon === 'function') {
+        try {
+            await deps.redeemCoupon(coupon, orderId, amount);
+        }
+        catch (e) {
+            // The visitor paid: open the report even if the usage count could not be saved
+            logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_redeem_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
+        }
     }
     logEvent('info', 'udyam_pay', { outcome: 'unlocked', order_id: orderId });
     return reply(200, { ok: true, data: opened.record });

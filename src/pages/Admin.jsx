@@ -9,6 +9,7 @@ import { useSuits } from '../lib/suitsStore'
 import CategoriesPanel from '../components/admin/CategoriesPanel'
 import ProductsPanel from '../components/admin/ProductsPanel'
 import DiscountsPanel from '../components/admin/DiscountsPanel'
+import CouponsPanel from '../components/admin/CouponsPanel'
 import EnquiriesPanel from '../components/admin/EnquiriesPanel'
 import SchemesPanel from '../components/admin/SchemesPanel'
 import { useDiscounts } from '../lib/discounts'
@@ -25,6 +26,7 @@ const SECTIONS = [
   { id: 'categories', label: 'Categories', to: '/admin/categories' },
   { id: 'products', label: 'Bundles', to: '/admin/bundles' },
   { id: 'discounts', label: 'Discounts', to: '/admin/discounts' },
+  { id: 'coupons', label: 'Coupons', to: '/admin/coupons' },
   { id: 'enquiries', label: 'Enquiries', to: '/admin/enquiries' },
   { id: 'schemes', label: 'Schemes', to: '/admin/schemes' },
 ]
@@ -300,6 +302,11 @@ function DiscountsPage() {
   return <DiscountsPanel tiers={tiers} loading={loading} />
 }
 
+function CouponsPage() {
+  usePageTitle('Coupons')
+  return <CouponsPanel />
+}
+
 function EnquiriesPage() {
   usePageTitle('Enquiries')
   return <EnquiriesPanel />
@@ -330,6 +337,7 @@ function Dashboard() {
       <Route path="bundles" element={<ProductsPage />} />
       <Route path="products" element={<LegacyProductsRedirect />} />
       <Route path="discounts" element={<DiscountsPage />} />
+      <Route path="coupons" element={<CouponsPage />} />
       <Route path="enquiries" element={<EnquiriesPage />} />
       <Route path="schemes" element={<SchemesPage />} />
       <Route path="*" element={<Navigate to="/admin/categories" replace />} />
