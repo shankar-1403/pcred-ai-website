@@ -1,11 +1,17 @@
 import LegalPage from '../components/LegalPage'
+import { COMPANY } from '../lib/company'
 
 const sections = [
   {
     heading: 'About these terms',
     body: [
+      `PCRED (${COMPANY.website}) is owned and operated by ${COMPANY.name} (the "Company"). In these terms, "PCRED", "we", "us" and "our" mean the Company.`,
       'These terms apply when you use this website or buy a report, bundle or service from PCRED. By using the website or placing an order, you agree to them. If you do not agree, please do not use the website.',
     ],
+  },
+  {
+    heading: 'Company information',
+    body: [[`${COMPANY.name}`, `GSTIN: ${COMPANY.gstin}`, `Registered office: ${COMPANY.address}`]],
   },
   {
     heading: 'Our services',
@@ -28,7 +34,7 @@ const sections = [
   {
     heading: 'Prices and payment',
     body: [
-      'Prices are shown in Indian rupees. Where a price says "Price on request", we will quote it before any work starts. Government fees, third-party charges and applicable taxes are extra unless the bundle says otherwise.',
+      'Prices are shown in Indian rupees. The Udyam Scheme Report costs ₹699 when we fetch your record from your Udyam number, and ₹499 when you upload your Udyam certificate. Where a price says "Price on request", we will quote it before any work starts. Government fees, third-party charges and applicable taxes are extra unless the bundle says otherwise.',
       'Online payments are processed securely by our payment partner. A report or service is delivered once payment is confirmed. Bundle discounts apply only as shown at the time of your order.',
     ],
   },
@@ -42,7 +48,7 @@ const sections = [
     heading: 'Cancellations and refunds',
     body: [
       'Because reports are prepared and delivered digitally, a report cannot be cancelled or refunded once it has been delivered. For other services, you may cancel before work starts for a full refund. Once work has started, any refund will reflect the work already done and fees already paid to third parties.',
-      'If a payment fails but money is taken from your account, it is normally returned automatically by your bank or our payment partner. If it is not, message us with the payment details and we will help.',
+      'If a payment fails but money is taken from your account, it is normally returned automatically by your bank or our payment partner. If you are charged twice, or charged without receiving your report, message us on WhatsApp with the payment details and we will refund that amount to your original payment method within 5–7 working days.',
     ],
   },
   {
@@ -77,8 +83,8 @@ function Terms() {
     <LegalPage
       eyebrow="Legal"
       title="Terms & Conditions"
-      updated="28 October 2026"
-      intro="Please read these terms before using this website or ordering a report, bundle or service from PCRED."
+      updated="3 November 2026"
+      intro={`Please read these terms before using this website or ordering a report, bundle or service from PCRED, owned and operated by ${COMPANY.name}.`}
       sections={sections}
     />
   )

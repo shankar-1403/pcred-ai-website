@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import Logo from '../assets/pcred_logo.webp'
+import { COMPANY } from '../lib/company'
 import { useSuits } from '../lib/suitsStore'
 import { WHATSAPP_NUMBER, generalEnquireHref } from '../lib/whatsapp'
 
@@ -96,9 +97,15 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 py-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/50">
+          <p>
+            PCRED ({COMPANY.website}) is owned and operated by <span className="text-white/70">{COMPANY.name}</span> · GSTIN {COMPANY.gstin}
+          </p>
+          <p className="mt-1">Registered office: {COMPANY.address}</p>
+        </div>
+        <div className="mt-4 flex flex-col gap-4 pb-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-            <p>© {new Date().getFullYear()} PCRED. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved.</p>
             <nav aria-label="Legal" className="flex gap-5">
               <Link to="/privacy" className="transition hover:text-white">Privacy Policy</Link>
               <Link to="/terms" className="transition hover:text-white">Terms &amp; Conditions</Link>

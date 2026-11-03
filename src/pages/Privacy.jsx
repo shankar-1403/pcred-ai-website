@@ -1,12 +1,18 @@
 import LegalPage from '../components/LegalPage'
+import { COMPANY } from '../lib/company'
 
 const sections = [
   {
     heading: 'Who we are',
     body: [
-      'PCRED provides scheme discovery reports, credit and advisory services for Indian businesses through this website. In this policy, "PCRED", "we", "us" and "our" mean the business that operates this website.',
+      `PCRED (${COMPANY.website}, the "Platform") is owned and operated by ${COMPANY.name} (the "Company"). In this policy, "PCRED", "we", "us" and "our" mean the Company.`,
+      'Through this website we provide scheme discovery reports, credit and advisory services for Indian businesses.',
       'If you have a question about this policy or your information, message us on WhatsApp at +91 22 3512 0060.',
     ],
+  },
+  {
+    heading: 'Company information',
+    body: [[`${COMPANY.name}`, `GSTIN: ${COMPANY.gstin}`, `Registered office: ${COMPANY.address}`]],
   },
   {
     heading: 'Information we collect',
@@ -92,8 +98,8 @@ function Privacy() {
     <LegalPage
       eyebrow="Legal"
       title="Privacy Policy"
-      updated="28 October 2026"
-      intro="This policy explains what information PCRED collects when you use this website and our services, how we use it, and the choices you have."
+      updated="3 November 2026"
+      intro={`PCRED is owned and operated by ${COMPANY.name}. This policy explains what information we collect when you use this website and our services, how we use it, and the choices you have.`}
       sections={sections}
     />
   )
