@@ -5,7 +5,7 @@ export const COMPANY = {
   gstin: '',
   address: 'Lodha Supremus, 520, Off Mahakali Caves Road, Chakala Industrial Area (MIDC), Andheri East, Mumbai, Maharashtra - 400093, India',
   phone: '+91 22 3512 0060',
-  email: '',
+  email: 'info@pcred.org',
   website: 'pcred.ai',
 }
 
