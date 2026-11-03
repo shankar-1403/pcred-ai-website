@@ -56,7 +56,7 @@
 .udyam-app .flow__questions{grid-area:questions;min-width:0}
 .udyam-app .flow__main{grid-area:main;display:flex;flex-direction:column;gap:20px;min-width:0}
 /* Start and mobile check: business details full width, with a slim status bar above it */
-.udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"verify" "details" "questions";gap:12px}
+.udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"questions" "verify" "details";gap:12px}
 /* First step: only the ownership question. The help, credit, turnover and "More details" questions are asked beside the report, where they re-rank it */
 .udyam-app .card--merged #card-questions{display:none}
 /* Beside the report only the ownership question is asked. The help, credit, turnover and
@@ -78,7 +78,7 @@
 .udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
 @media (max-width:1000px){
   .udyam-app .flow{grid-template-columns:minmax(0,1fr)}
-  .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"verify" "details" "questions"}
+  .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"questions" "verify" "details"}
   .udyam-app .app--pay .flow{grid-template-areas:"verify" "main" "details";grid-template-rows:none}
   .udyam-app .app--report .flow{grid-template-areas:"questions" "main" "details" "verify";grid-template-rows:none}
 }
@@ -229,3 +229,34 @@
 .udyam-app .ud-lock__coupon .uv__input{flex:1;min-width:0;text-transform:uppercase}
 .udyam-app .ud-lock__coupon .btn{justify-self:auto;flex:none}
 .udyam-app .ud-lock__coupon-remove{background:none;border:0;padding:0;color:var(--navy);text-decoration:underline;cursor:pointer;font:inherit}
+
+/* Payment preview: what the paid report holds. The navy strip mirrors the report's own cover */
+.udyam-app .ud-tease{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.udyam-app .ud-tease__cover{background:var(--cover);background-image:radial-gradient(120% 140% at 100% 0%,var(--cover-2) 0%,transparent 60%);color:#fff;padding:16px 18px 14px}
+.udyam-app .ud-tease__eyebrow{margin:0;font:600 10.5px/1.3 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cover-ink-2)}
+.udyam-app .ud-tease__tally{display:flex;flex-wrap:wrap;gap:6px 28px;margin-top:10px}
+.udyam-app .ud-tease__tally div{display:flex;align-items:baseline;gap:8px}
+.udyam-app .ud-tease__tally b{font:600 30px/1 var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.udyam-app .ud-tease__tally span{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--cover-ink-2)}
+.udyam-app .ud-tease__dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.udyam-app .ud-tease__dot--yes{background:var(--cov-ok)}
+.udyam-app .ud-tease__dot--check{background:var(--cov-warn)}
+.udyam-app .ud-tease__note{margin:10px 0 0;font-size:12.5px;line-height:1.45;color:var(--cover-ink-2)}
+.udyam-app .ud-tease__list{list-style:none;margin:0;padding:0}
+.udyam-app .ud-tease__item{padding:13px 18px;border-top:1px solid var(--line)}
+.udyam-app .ud-tease__item:first-child{border-top:0}
+.udyam-app .ud-tease__badge{display:inline-block;border-radius:999px;padding:2px 9px;font:600 11px/1.6 var(--f-display)}
+.udyam-app .ud-tease__badge--yes{background:var(--ok-soft);color:var(--ok)}
+.udyam-app .ud-tease__badge--check{background:var(--warn-soft);color:var(--warn)}
+.udyam-app .ud-tease__headline{margin:6px 0 0;font:600 14.5px/1.4 var(--f-display);color:var(--ink);overflow-wrap:anywhere}
+.udyam-app .ud-tease__locked{display:flex;align-items:center;gap:7px;margin:6px 0 0;font-size:12px;color:var(--ink-3)}
+.udyam-app .ud-tease__lock-icon{width:14px;height:14px;flex:none;color:var(--accent)}
+.udyam-app .ud-tease__mask{display:inline-block;width:120px;max-width:35%;height:9px;border-radius:5px;background:var(--line-2);filter:blur(2px);flex:none}
+.udyam-app .ud-tease__more{margin:0;padding:11px 18px;border-top:1px dashed var(--line-2);background:var(--surface-2);font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+@media (max-width:520px){
+  .udyam-app .ud-tease__cover{padding:14px 14px 12px}
+  .udyam-app .ud-tease__tally b{font-size:26px}
+  .udyam-app .ud-tease__item,.udyam-app .ud-tease__more{padding-left:14px;padding-right:14px}
+  .udyam-app .ud-lock__pay .btn{justify-self:stretch;text-align:center}
+  .udyam-app .ud-lock__coupon .btn{justify-self:auto}
+}

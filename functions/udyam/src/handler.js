@@ -4,7 +4,7 @@ import { readCashfreeConfig } from './cashfree/config.js';
 import { udyamRateLimiter } from './server/rate-limit.js';
 import { allowedOriginList, clientIp, isAllowedOrigin } from './server/request.js';
 import { logEvent } from './server/log.js';
-import { publicPreview } from './payments/preview.js';
+import { matchProfile, publicPreview } from './payments/preview.js';
 import { UDYAM_NUMBER_PRICE_INR } from './payments/price.js';
 import { sealRecord } from './payments/seal.js';
 import { readProof } from './intake/otp.js';
@@ -76,6 +76,7 @@ export async function handleVerifyRequest(req, deps) {
             return reply(200, {
                 ok: true,
                 preview: publicPreview(saved.record),
+                match: matchProfile(saved.record),
                 sealed,
                 price: { amount: UDYAM_NUMBER_PRICE_INR, currency: 'INR' },
             });
@@ -116,6 +117,7 @@ export async function handleVerifyRequest(req, deps) {
             return reply(200, {
                 ok: true,
                 preview: publicPreview(result.record),
+                match: matchProfile(result.record),
                 sealed,
                 price: { amount: UDYAM_NUMBER_PRICE_INR, currency: 'INR' },
             });

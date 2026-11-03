@@ -10,6 +10,7 @@ import { logEvent } from '../server/log.js';
 export const MAX_PAY_BODY_BYTES = 80_000;
 const payLimiter = new RateLimiter(10, 40);
 const PHONE = /^[6-9]\d{9}$/;
+const PLACEHOLDER_PHONE = '9999999999';
 const ORDER_ID = /^pcred_pay_[a-z0-9]{16}$/;
 
 function corsHeaders(headers, allowed) {
@@ -140,9 +141,10 @@ export async function handleCheckoutRequest(req, deps) {
     if (gated.done)
         return gated.done;
     const { reply, failure, body } = gated;
-    const phone = typeof body.phone === 'string' ? body.phone.replace(/\s+/g, '') : '';
-    if (!PHONE.test(phone))
-        return failure('INVALID_PHONE', 'Enter a 10-digit Indian mobile number to continue to payment.', 400);
+    // The page sends the mobile from the contact step when it has one. Payment no longer asks for
+    // it, and Cashfree needs some customer phone on the order, so a placeholder stands in.
+    const entered = typeof body.phone === 'string' ? body.phone.replace(/\s+/g, '') : '';
+    const phone = PHONE.test(entered) ? entered : PLACEHOLDER_PHONE;
     const sealed = typeof body.sealed === 'string' ? body.sealed : '';
     const loaded = loadPg(deps, failure);
     if (loaded.error)

@@ -127,11 +127,17 @@ describe('payment handlers', () => {
         expect(JSON.stringify(sent)).not.toContain('Shed No. 12');
     });
 
-    it('rejects a bad phone and an expired preview', async () => {
+    it('sends a placeholder phone when none is given, and rejects an expired preview', async () => {
+        const priced = sealRecord(record, SECRET, 1_000, UDYAM_NUMBER_PRICE_INR);
+        let sent;
+        const fetchImpl = async (_url, init) => {
+            sent = JSON.parse(init.body);
+            return new Response(JSON.stringify({ payment_session_id: 'sess' }), { status: 200 });
+        };
+        const noPhone = await handleCheckoutRequest(request('/api/udyam/checkout', { sealed: priced }), { ...deps, now: () => 1_000, fetchImpl });
+        expect(noPhone.body.ok).toBe(true);
+        expect(sent.customer_details.customer_phone).toBe('9999999999');
         const sealed = sealRecord(record, SECRET, 1_000);
-        const badPhone = await handleCheckoutRequest(request('/api/udyam/checkout', { sealed, phone: '123' }), deps);
-        expect(badPhone.status).toBe(400);
-        expect(badPhone.body.error.code).toBe('INVALID_PHONE');
         const expired = await handleCheckoutRequest(request('/api/udyam/checkout', { sealed, phone: '9876543210' }), { ...deps, now: () => 1_000 + 31 * 60 * 1000 });
         expect(expired.body.error.code).toBe('PREVIEW_EXPIRED');
         const unpriced = sealRecord(record, SECRET);

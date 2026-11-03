@@ -425,7 +425,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     }
     else if (step === 'ready') {
         body = (<>
-        <p className="uv-status__text">{method === 'pdf' || fetched ? `We filled in your business details. Check them, answer the ownership question below, then ${NEXT_STEP}.` : `Answer the ownership question below, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
+        <p className="uv-status__text">{method === 'pdf' || fetched ? `${method === 'pdf' ? 'We read your certificate.' : 'We fetched your Udyam record.'} Answer the ownership question above, then ${NEXT_STEP}.` : `Answer the ownership question above, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
         <button type="button" className="btn uv-status__cta" onClick={openModal}>{CONTINUE_LABEL}</button>
       </>);
     }

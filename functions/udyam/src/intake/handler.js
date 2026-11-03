@@ -1,7 +1,7 @@
 import { RateLimiter } from '../server/rate-limit.js';
 import { allowedOriginList, clientIp, isAllowedOrigin } from '../server/request.js';
 import { logEvent } from '../server/log.js';
-import { publicPreview } from '../payments/preview.js';
+import { matchProfile, publicPreview } from '../payments/preview.js';
 import { CERTIFICATE_PRICE_INR } from '../payments/price.js';
 import { sealRecord } from '../payments/seal.js';
 import { normalizeUdyamSuccess } from '../udyam/normalize.js';
@@ -210,6 +210,7 @@ export async function handleCertificateRequest(req, deps) {
     return reply(200, {
         ok: true,
         preview: publicPreview(record),
+        match: matchProfile(record),
         sealed,
         price: { amount: CERTIFICATE_PRICE_INR, currency: 'INR' },
     });

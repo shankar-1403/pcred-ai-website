@@ -1570,6 +1570,29 @@ function showDetails(d, opts = {}) {
   refresh();
   return profile;
 }
+// The payment preview: how many schemes fit and their headline benefits, from the rules the paid
+// report uses. The page's own report and state are left as they were.
+function teaser(d, opts = {}) {
+  const saved = { profile: state.profile, answers: state.answers };
+  try {
+    state.profile = profileFromUdyam(d).profile;
+    state.answers = { ...state.answers, women: opts.women === true || opts.women === false ? opts.women : null };
+    const R = evaluate();
+    const all = [R.st, ...R.stMore];
+    const stYes = all.flatMap((x) => x.yes), stCheck = all.flatMap((x) => x.check);
+    const top = [...R.yes, ...stYes, ...R.check].slice(0, 3).map((x) => ({ headline: x.r.headline, cat: x.s?.cat || 'State scheme', yes: x.r.match === 'yes' }));
+    return {
+      strong: R.yes.length + stYes.length,
+      check: R.check.length + stCheck.length,
+      state: stYes.length + stCheck.length,
+      stateName: R.st.rec?.state || '',
+      top,
+    };
+  } finally {
+    state.profile = saved.profile;
+    state.answers = saved.answers;
+  }
+}
 function resetToSample() {
   state.mode = 'empty';
   state.profile = blankProfile();
@@ -1862,7 +1885,7 @@ async function onDownload() {
 const anchor = $('#goals');
 buildControls();
 refresh();
-const api = { applyUdyam, showDetails, resetToSample, evaluate, buildPdf, state, isMounted: () => anchor.isConnected };
+const api = { applyUdyam, showDetails, teaser, resetToSample, evaluate, buildPdf, state, isMounted: () => anchor.isConnected };
 window.__udyam = api;
 return api;
 }

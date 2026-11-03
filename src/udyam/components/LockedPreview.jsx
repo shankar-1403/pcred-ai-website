@@ -50,11 +50,40 @@ function rupees(amount) {
  * Right-hand confirmation: the fetched business is readable, the rest of the report is blurred
  * until Cashfree confirms payment. The full record never arrives in the browser before that.
  */
-export default function LockedPreview({ pack, onPaid }) {
+function LockIcon() {
+    return (<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="ud-tease__lock-icon"><rect x="5" y="10.5" width="14" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>);
+}
+
+/** What the paid report holds: the same tally as its cover, and the top benefits with names locked. */
+function Teaser({ teaser }) {
+    const total = teaser.strong + teaser.check;
+    const more = Math.max(0, total - teaser.top.length);
+    return (<div className="ud-tease">
+      <div className="ud-tease__cover">
+        <p className="ud-tease__eyebrow">Inside your scheme report</p>
+        <div className="ud-tease__tally">
+          <div><b>{teaser.strong}</b><span><i className="ud-tease__dot ud-tease__dot--yes"/>Strong matches</span></div>
+          <div><b>{teaser.check}</b><span><i className="ud-tease__dot ud-tease__dot--check"/>Worth checking</span></div>
+        </div>
+        {teaser.state > 0 && teaser.stateName ? <p className="ud-tease__note">Includes {teaser.state} from {teaser.stateName}’s own MSME policy.</p> : null}
+      </div>
+      {teaser.top.length ? (<ul className="ud-tease__list" aria-label="Top benefits in your report">
+          {teaser.top.map((item, i) => (<li key={i} className="ud-tease__item">
+              <span className={`ud-tease__badge ud-tease__badge--${item.yes ? 'yes' : 'check'}`}>{item.yes ? 'Strong match' : 'Worth checking'}</span>
+              <p className="ud-tease__headline">{item.headline}</p>
+              <p className="ud-tease__locked"><LockIcon /><span className="ud-tease__mask" aria-hidden="true"/><span className="sr">Scheme name</span> unlocks after payment</p>
+            </li>))}
+        </ul>) : null}
+      {more > 0 ? <p className="ud-tease__more">+ {more} more {more === 1 ? 'scheme' : 'schemes'}, with how to apply and the documents needed, in the full report.</p> : null}
+    </div>);
+}
+
+export default function LockedPreview({ pack, teaser, onPaid }) {
     const preview = pack.preview;
     const priceLabel = rupees(pack.price?.amount);
     const fromCertificate = pack.source === 'cert';
-    const [phone, setPhone] = useState(() => (typeof pack.phone === 'string' ? pack.phone.replace(/\D/g, '').slice(0, 10) : ''));
+    // The mobile comes from the contact step when it is on; payment no longer asks for it
+    const phone = typeof pack.phone === 'string' ? pack.phone.replace(/\D/g, '').slice(0, 10) : '';
     const [phase, setPhase] = useState('idle');
     const [message, setMessage] = useState('');
     const [couponInput, setCouponInput] = useState('');
@@ -100,16 +129,10 @@ export default function LockedPreview({ pack, onPaid }) {
         e.preventDefault();
         if (phase === 'paying')
             return;
-        const mobile = phone.replace(/\s+/g, '');
-        if (!/^[6-9]\d{9}$/.test(mobile)) {
-            setPhase('error');
-            setMessage('Enter a 10-digit Indian mobile number. Cashfree uses it for the payment.');
-            return;
-        }
         setPhase('paying');
         setMessage('');
         try {
-            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, phone: mobile, ...(coupon ? { coupon: coupon.code } : {}) });
+            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, ...(/^[6-9]\d{9}$/.test(phone) ? { phone } : {}), ...(coupon ? { coupon: coupon.code } : {}) });
             if (started.payload?.ok && started.payload.free && started.payload.data) {
                 setPhase('idle');
                 onPaid(started.payload.data);
@@ -161,7 +184,7 @@ export default function LockedPreview({ pack, onPaid }) {
         </div>
       </header>
       <p className="ud-lock__lead">{fromCertificate
-            ? `This is what we read from your certificate. Pay ${priceLabel} to open the scheme report.`
+            ? `This is what we read from your certificate. Pay ${priceLabel} to open the full scheme report.`
             : `This is your fetched record. Pay ${priceLabel} to open the full details and download the scheme report.`}</p>
       <div className="ud-lock__sheet">
         <dl className="ud-lock__clear">
@@ -174,18 +197,13 @@ export default function LockedPreview({ pack, onPaid }) {
           <p>Registered address</p>
           <span className="ud-lock__bar"/>
           <span className="ud-lock__bar ud-lock__bar--short"/>
-          <p>Scheme eligibility</p>
+          <p>How to apply and documents</p>
           <span className="ud-lock__bar"/>
           <span className="ud-lock__bar ud-lock__bar--mid"/>
-          <p>Credit guarantee and subsidy</p>
-          <span className="ud-lock__bar"/>
-          <p>Where to start</p>
-          <span className="ud-lock__bar ud-lock__bar--short"/>
         </div>
       </div>
+      {teaser ? <Teaser teaser={teaser}/> : null}
       <form className="ud-lock__pay" onSubmit={pay} noValidate>
-        <label className="uv__label" htmlFor="pay-phone">Mobile number</label>
-        <input id="pay-phone" name="phone" className="uv__input" type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} disabled={paying}/>
         <label className="uv__label" htmlFor="pay-coupon">Coupon code (optional)</label>
         {coupon ? (<p className="uv__msg" role="status">
             <strong>{coupon.code}</strong> applied: {rupees(coupon.discount)} off{' '}

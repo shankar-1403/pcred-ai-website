@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import UdyamVerification from './UdyamVerification';
 import UdyamDetails from './UdyamDetails';
@@ -41,7 +41,7 @@ const OWNERSHIP_OPTIONS = [[true, 'Yes, 51% or more'], [false, 'No, less than 51
 // The "Tailor your report" card in the first step: only the ownership question. The help,
 // credit and other questions (QuestionsCard) stay hidden until the report opens.
 // The answer goes with the record fetch.
-function OwnershipCard({ value, alert, fromRecord, onChange }) {
+function OwnershipCard({ value, alert, onChange }) {
     return (<div className={`ownership${alert ? ' ownership--alert' : ''}`} id="card-ownership">
       <div className="card__head">
         <span className="card__icon" aria-hidden="true">
@@ -54,7 +54,7 @@ function OwnershipCard({ value, alert, fromRecord, onChange }) {
       </div>
       <div className="q">
         <div className="q__label" id="ownership-q">Do women hold 51% or more of the business?</div>
-        <div className="q__hint">{fromRecord ? 'Filled from your Udyam record: the proprietor is a woman.' : 'Some schemes give women-owned businesses extra support.'}</div>
+        <div className="q__hint">Some schemes give women-owned businesses extra support.</div>
         <div className="ownership__options" role="group" aria-labelledby="ownership-q">
           {OWNERSHIP_OPTIONS.map(([option, label]) => (<button key={label} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className="ownership__option">
               {label}
@@ -100,11 +100,8 @@ export default function ReportApp() {
     const [record, setRecord] = useState(null);
     const [previewPack, setPreviewPack] = useState(null);
     const [returnError, setReturnError] = useState('');
-    const [hasDetails, setHasDetails] = useState(false);
-    // Women's ownership, asked below the Business details card before mobile verification
+    // Women's ownership: always the visitor's own answer, never filled in from the record
     const [women, setWomen] = useState(null);
-    // Set when the uploaded Udyam PDF names a woman proprietor
-    const [womenFromRecord, setWomenFromRecord] = useState(false);
     const [ownershipAlert, setOwnershipAlert] = useState(false);
     const needOwnership = useCallback(() => {
         setOwnershipAlert(true);
@@ -116,6 +113,8 @@ export default function ReportApp() {
     }, []);
     const [verifyStep, setVerifyStep] = useState('choose');
     const engine = useRef(null);
+    // The engine's scheme counter, once it has loaded, so the payment preview can count the schemes
+    const [countSchemes, setCountSchemes] = useState(null);
     const queued = useRef(null);
     const applyRecord = useCallback((r, extra = {}) => {
         // Every report opened here is new (fetched or just paid for), so its PDF downloads too
@@ -134,6 +133,7 @@ export default function ReportApp() {
                 return;
             const api = initReport(live);
             engine.current = api;
+            setCountSchemes(() => api.teaser);
             const q = queued.current;
             queued.current = null;
             if (q) {
@@ -157,13 +157,6 @@ export default function ReportApp() {
     }, [start, navigate]);
     // Certificate details (read on this device) go into the Details card before payment
     const showDetails = useCallback((details, source = 'cert') => {
-        setHasDetails(true);
-        // A woman proprietor owns the whole business, so the ownership answer is known; for
-        // firms and companies the owner's gender does not settle the 51% question
-        if (String(details?.owner_gender).toLowerCase() === 'female' && /propriet/i.test(String(details?.organization_type))) {
-            setWomen((current) => (current === null ? true : current));
-            setWomenFromRecord(true);
-        }
         if (engine.current)
             engine.current.showDetails(details, { source });
         else
@@ -244,9 +237,23 @@ export default function ReportApp() {
     const stage = record ? 'report' : previewPack ? 'pay' : verifyStep === 'otp' || verifyStep === 'women' ? 'verify' : 'start';
     // Mobile verification happens in a pop-up within "Your details", so it has no step of its own
     const current = { start: 0, verify: 0, pay: 1, report: STAGES.length - 1 }[stage];
-    // The details card sits beside the start card from the beginning; at payment only when filled
-    const showDetailsCard = stage !== 'pay' || hasDetails;
+    // Business details appear only beside the open report: never before or at payment
+    const showDetailsCard = stage === 'report';
     const firstStep = stage === 'start' || stage === 'verify';
+    // What the paid report holds for this business (scheme counts and headline benefits)
+    const teaser = useMemo(() => {
+        if (stage !== 'pay' || !countSchemes)
+            return null;
+        const source = previewPack?.match || previewPack?.details;
+        if (!source)
+            return null;
+        try {
+            return countSchemes(source, { women: previewPack.women });
+        }
+        catch {
+            return null;
+        }
+    }, [stage, countSchemes, previewPack]);
 
     return (<div className={`app app--${stage}`}>
       {/* The page opens straight on the steps; the heading is for screen readers */}
@@ -263,12 +270,12 @@ export default function ReportApp() {
           {/* In the first step this is one card: ownership, then what help and how much credit, so
               the report opens already tailored. Beside the report it is the engine's card alone. */}
           <div className={`flow__questions${firstStep ? ' card card--merged' : ''}`} hidden={stage === 'pay' || undefined}>
-            {firstStep ? <OwnershipCard value={women} alert={ownershipAlert} fromRecord={womenFromRecord && women === true} onChange={answerOwnership}/> : null}
+            {firstStep ? <OwnershipCard value={women} alert={ownershipAlert} onChange={answerOwnership}/> : null}
             <QuestionsCard />
           </div>
         </aside>
         <div className="flow__main">
-          {stage === 'pay' ? <LockedPreview pack={previewPack} onPaid={handlePaid}/> : null}
+          {stage === 'pay' ? <LockedPreview pack={previewPack} teaser={teaser} onPaid={handlePaid}/> : null}
           {stage === 'pay' && returnError ? <p className="uv__msg uv__msg--err" role="alert">{returnError}</p> : null}
           <div hidden={stage !== 'report' || undefined}>
             <ReportSection />
