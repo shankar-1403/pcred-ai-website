@@ -59,9 +59,10 @@ function EnterNumber() {
       <span className="inline-flex w-fit items-center gap-1 rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] px-2 py-0.5 text-[8px] font-semibold text-white sm:text-[9px]">
         <span className="h-1 w-1 rounded-full bg-white" /> Start here
       </span>
+      <div className="liquid-glass flex flex-col gap-2 rounded-2xl p-2">
       <div className="grid grid-cols-2 gap-1.5">
-        <span className="rounded-full border-2 border-[#00B2FC] bg-white py-1.5 text-center text-[10px] font-semibold text-[#00245A] shadow-[0_8px_18px_-12px_rgba(0,59,217,0.6)] sm:text-[11px]">
-          Udyam number <span className="ml-0.5 rounded-full bg-[#00B2FC]/15 px-1.5 text-[8px] text-[#003BD9] sm:text-[9px]">₹699</span>
+        <span className="rounded-full border-2 border-transparent bg-gradient-to-r from-[#00B2FC] to-[#003BD9] bg-origin-border py-1.5 text-center text-[10px] font-semibold text-white shadow-[0_8px_18px_-10px_rgba(0,59,217,0.7)] sm:text-[11px]">
+          Udyam number <span className="ml-0.5 rounded-full bg-[#FFD84D] px-1.5 text-[8px] text-[#003BD9] sm:text-[9px]">₹699</span>
         </span>
         <span className="rounded-full border-2 border-[#00245A]/10 bg-white/60 py-1.5 text-center text-[10px] font-semibold text-[#00245A]/55 sm:text-[11px]">
           Certificate <span className="ml-0.5 text-[8px] sm:text-[9px]">₹499</span>
@@ -75,11 +76,13 @@ function EnterNumber() {
           <Pointer at={500} />
         </span>
         <span className="relative shrink-0">
-          <span className="demo-press flex items-center gap-1 rounded-full bg-[#00245A] px-4 py-2 text-[10px] font-semibold text-white shadow-[0_10px_22px_-12px_rgba(0,36,90,0.8)] sm:text-[11px]" style={{ animationDelay: '2900ms' }}>
+          <span className="demo-press flex items-center gap-1 rounded-full bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] px-4 py-2 text-[10px] font-semibold text-white shadow-[0_10px_22px_-10px_rgba(91,33,182,0.7)] sm:text-[11px]" style={{ animationDelay: '2900ms' }}>
             Verify →
           </span>
           <Pointer at={2900} />
         </span>
+      </div>
+      <p className="px-2 text-[8px] text-[#00245A]/55 sm:text-[9px]">Format: <span className="font-mono">UDYAM-XX-00-0000000</span>, as on your Udyam certificate</p>
       </div>
       <div className="demo-fillin flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5" style={{ animationDelay: '3200ms' }}>
         <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-[#003BD9]/20 border-t-[#003BD9]" />

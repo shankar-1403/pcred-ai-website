@@ -7,6 +7,7 @@ import { cartItemId, formatPrice, useCart } from '../lib/cart'
 import { CartIcon } from '../components/CartDrawer'
 import { useBundlePreviews } from '../lib/bundlePreviews'
 import HowItWorks from '../components/HowItWorks'
+import SuitCard from '../components/SuitCard'
 import { useSuitImages } from '../lib/suitImages'
 
 function ArrowIcon({ className = 'h-4 w-4' }) {
@@ -142,13 +143,13 @@ function BundlePreview({ image, loading, name, badge }) {
 }
 
 // What the bundle contains, listed as separate products
-function BundleProducts({ products }) {
+function BundleProducts({ products, added = false }) {
   if (!products.length) return null
   return (
     <div className="mt-4">
-      <h3 className="flex items-center gap-2 font-mono text-[10px] font-semibold tracking-[0.18em] text-[#00245A]/50 uppercase">
+      <h3 className={`flex items-center gap-2 font-mono text-[10px] font-semibold tracking-[0.18em] uppercase ${added ? 'text-white/75' : 'text-[#00245A]/50'}`}>
         {products.length} {products.length === 1 ? 'product' : 'products'} included
-        <span aria-hidden="true" className="h-px flex-1 bg-[#00245A]/8" />
+        <span aria-hidden="true" className={`h-px flex-1 ${added ? 'bg-white/25' : 'bg-[#00245A]/8'}`} />
       </h3>
       <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {products.map((name, index) => (
@@ -175,10 +176,22 @@ function BundleProducts({ products }) {
 
 // One bundle's card: picture, name, number, description, included products, price and actions
 function ProductCard({ suit, product, index, previews, previewsLoading, large = false, className = 'bg-white/85' }) {
+  const cart = useCart()
+  const id = cartItemId(suit.slug, product.id)
+  const buyable = product.price > 0
+  // In the cart: the card turns the brand blue gradient so added bundles stand out
+  const added = cart.has(id)
+  // A click anywhere on a priced bundle adds it to the cart (it never removes it). The Enquire link and
+  // the cart button keep their own clicks; keyboard users add it with the cart button.
+  const onCardClick = (event) => {
+    if (!buyable || added || event.target.closest('a, button')) return
+    cart.toggle({ id, name: product.name, price: product.price, suitSlug: suit.slug, suitIcon: suit.icon, suitName: suit.name, documents: product.documents })
+  }
   return (
     <article
       id={product.id}
-      className={`group relative flex scroll-mt-28 flex-col ${large ? 'lg:flex-row lg:gap-8' : ''} overflow-hidden rounded-[1.5rem] border border-white ${className} p-4 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_60px_-34px_rgba(0,59,217,0.5)] target:ring-2 target:ring-[#00B2FC] sm:p-5`}
+      onClick={onCardClick}
+      className={`group relative flex scroll-mt-28 flex-col ${buyable ? 'cursor-pointer' : ''} ${large ? 'lg:flex-row lg:gap-8' : ''} overflow-hidden rounded-[1.5rem] border ${added ? 'border-transparent bg-gradient-to-br from-[#00B2FC] to-[#003BD9] bg-origin-border text-white' : `border-white ${className}`} p-4 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_60px_-34px_rgba(0,59,217,0.5)] target:ring-2 target:ring-[#00B2FC] sm:p-5`}
     >
       <span
         aria-hidden="true"
@@ -190,27 +203,27 @@ function ProductCard({ suit, product, index, previews, previewsLoading, large = 
       </div>
       <div className="flex flex-1 flex-col">
         <div className={`mt-4 flex items-start justify-between gap-3 ${large ? 'lg:mt-1' : ''}`}>
-          <h2 className={`font-semibold tracking-tight ${large ? 'text-xl sm:text-3xl' : 'text-lg sm:text-xl'}`}>{product.name}</h2>
+          <h2 className={`font-semibold tracking-tight ${large ? 'text-xl sm:text-3xl' : 'text-lg sm:text-xl'} ${added ? 'text-white' : ''}`}>{product.name}</h2>
           <span
             aria-hidden="true"
-            className="bg-gradient-to-b from-[#00B2FC]/50 to-[#00B2FC]/0 bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent"
+            className={`bg-gradient-to-b bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent ${added ? 'from-white/70 to-white/0' : 'from-[#00B2FC]/50 to-[#00B2FC]/0'}`}
           >
             {String(index + 1).padStart(2, '0')}
           </span>
         </div>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-[#00245A]/65">{product.description}</p>
+        <p className={`mt-1.5 text-[13px] leading-relaxed ${added ? 'text-white/80' : 'text-[#00245A]/65'}`}>{product.description}</p>
         <div className="flex-1">
-          <BundleProducts products={product.documents} />
+          <BundleProducts products={product.documents} added={added} />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#00245A]/8 pt-4">
+        <div className={`mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4 ${added ? 'border-white/25' : 'border-[#00245A]/8'}`}>
           <span>
-            <span className="block font-mono text-[10px] tracking-[0.2em] text-[#00245A]/45 uppercase">Price</span>
+            <span className={`block font-mono text-[10px] tracking-[0.2em] uppercase ${added ? 'text-white/75' : 'text-[#00245A]/45'}`}>Price</span>
             {/* A price of 0 in the CMS means the price is not set yet: enquire only */}
             <span className="block text-xl font-semibold tracking-tight">{product.price > 0 ? formatPrice(product.price) : 'Price on request'}</span>
           </span>
           <span className="flex items-center gap-4">
-            <a href={productEnquireHref(product.name)} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[#003BD9] transition hover:text-[#00245A]">
+            <a href={productEnquireHref(product.name)} target="_blank" rel="noopener noreferrer" className={`text-sm font-semibold transition ${added ? 'text-white hover:text-white/80' : 'text-[#003BD9] hover:text-[#00245A]'}`}>
               Enquire
               <span className="sr-only"> about {product.name}</span>
             </a>
@@ -465,20 +478,10 @@ function Suit() {
                 <ArrowIcon className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {otherSuits.map((item) => (
                 <li key={item.slug}>
-                  <Link
-                    to={`/suits/${item.slug}`}
-                    className="group flex h-full items-center gap-4 rounded-2xl border border-[#00245A]/8 bg-white p-4 transition hover:border-[#00B2FC]/40 hover:shadow-[0_20px_40px_-30px_rgba(0,59,217,0.6)]"
-                  >
-                    <SuitBadge icon={item.icon} className="h-11 w-11 rounded-xl" />
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold tracking-tight">{item.name}</h3>
-                      <span className="block text-xs text-[#00245A]/55">{item.products.length} {item.products.length === 1 ? 'bundle' : 'bundles'}</span>
-                    </div>
-                    <ArrowIcon className="h-4 w-4 text-[#003BD9] transition group-hover:translate-x-1" />
-                  </Link>
+                  <SuitCard suit={item} image={uploadedImages[item.slug]?.card || item.cardImage} />
                 </li>
               ))}
             </ul>

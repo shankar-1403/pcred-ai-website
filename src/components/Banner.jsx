@@ -149,24 +149,13 @@ function Banner() {
       <div className="mx-auto grid w-full grid-cols-1 max-w-screen-xl items-center gap-8 px-6 pt-24 pb-8 sm:pt-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-12 lg:pt-22 lg:pb-4">
         {/* Copy + form */}
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <h1 className="mt-4 text-[2.9rem] leading-[0.95] font-semibold tracking-[-0.06em] sm:text-7xl lg:text-[3.5rem] xl:text-[3.75rem]">
+          {/* One line at every width: the size steps down with the space available */}
+          <h1 className="mt-4 text-[7.6vw] leading-[1.05] font-semibold tracking-[-0.05em] whitespace-nowrap sm:text-5xl lg:text-[2.7rem] xl:text-[3.1rem]">
             Scheme{' '}
-            <span className="block">
-              <span className="hero-gradient-text bg-[linear-gradient(100deg,#00B2FC,#003BD9_35%,#00B2FC_60%,#003BD9)] bg-[length:220%_100%] bg-clip-text text-transparent">
-                Discovery
-              </span>{' '}
-            </span>
-            <span className="flex items-center justify-center gap-3 lg:justify-start">
-              Report
-              <span
-                aria-hidden="true"
-                className="hidden h-[0.72em] w-[1.5em] items-center justify-center rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] text-white shadow-[0_12px_24px_-10px_rgba(0,59,217,0.7)] sm:inline-flex"
-              >
-                <svg viewBox="0 0 24 24" className="h-[0.42em] w-[0.42em] -rotate-45" fill="none">
-                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </span>
+            <span className="hero-gradient-text bg-[linear-gradient(100deg,#00B2FC,#003BD9_35%,#00B2FC_60%,#003BD9)] bg-[length:220%_100%] bg-clip-text text-transparent">
+              Discovery
+            </span>{' '}
+            Report
           </h1>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-[#00245A]/70 sm:text-lg lg:text-base">
@@ -181,7 +170,7 @@ function Banner() {
                 <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-white" />
                 Start here
               </span>
-              <div>
+              <div className="liquid-glass rounded-[2rem] p-3 sm:p-4">
                 <div>
                   <div className="flex gap-2" role="group" aria-label="Start the report with">
                     {MODES.map((item) => (
@@ -192,14 +181,14 @@ function Banner() {
                         onClick={() => selectMode(item.id)}
                         className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-2 px-3 py-2.5 text-sm whitespace-nowrap font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
                           mode === item.id
-                            ? 'border-[#00B2FC] bg-white text-[#00245A] shadow-[0_8px_20px_-10px_rgba(0,59,217,0.55)]'
+                            ? 'border-transparent bg-gradient-to-r from-[#00B2FC] to-[#003BD9] bg-origin-border text-white shadow-[0_12px_24px_-10px_rgba(0,59,217,0.7)]'
                             : 'border-[#00245A]/10 bg-white/60 text-[#00245A]/55 hover:border-[#00B2FC]/50 hover:text-[#00245A]'
                         }`}
                       >
                         {item.label}
                         <span
                           className={`hidden rounded-full px-2 py-0.5 font-mono text-xs font-bold sm:inline ${
-                            mode === item.id ? 'bg-[#00B2FC]/15 text-[#003BD9]' : 'bg-white/70 text-[#00245A]/50'
+                            mode === item.id ? 'bg-[#FFD84D] text-[#003BD9]' : 'bg-white/70 text-[#00245A]/50'
                           }`}
                         >
                           {item.price}
@@ -270,7 +259,7 @@ function Banner() {
 
                     <button
                       type="submit"
-                      className="group relative inline-flex min-h-14 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full bg-[#00245A] px-7 py-3.5 sm:min-w-36 shadow-[0_14px_30px_-14px_rgba(0,36,90,0.8)] text-sm font-semibold text-white transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]"
+                      className="group relative inline-flex min-h-14 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] px-7 py-3.5 sm:min-w-36 shadow-[0_14px_30px_-12px_rgba(91,33,182,0.7)] text-sm font-semibold text-white transition hover:from-[#6366F1] hover:to-[#8B5CF6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]"
                     >
                       <span aria-hidden="true" className="btn-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                       {mode === 'number' ? 'Verify' : 'Upload'}

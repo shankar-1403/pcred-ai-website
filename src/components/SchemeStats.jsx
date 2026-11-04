@@ -86,14 +86,22 @@ const ICONS = {
   msme: 'M3 21h18M5 21V9l5 3V9l5 3V6l4 2v13M8 17h1m3 0h1m3 0h1',
 }
 
+// Each pill has its own colour: a soft tint, a gradient icon circle and the number in the deep shade
+const TONES = {
+  blue: { card: 'border-[#CFE0FF] bg-[#EEF4FF]', icon: 'from-[#00B2FC] to-[#003BD9] shadow-[0_10px_22px_-10px_rgba(0,59,217,0.8)]', number: 'text-[#003BD9]' },
+  violet: { card: 'border-[#DDD3FF] bg-[#F3EFFF]', icon: 'from-[#A78BFA] to-[#6D28D9] shadow-[0_10px_22px_-10px_rgba(109,40,217,0.8)]', number: 'text-[#6D28D9]' },
+  teal: { card: 'border-[#BDECE5] bg-[#E9FAF7]', icon: 'from-[#2DD4BF] to-[#0D9488] shadow-[0_10px_22px_-10px_rgba(13,148,136,0.8)]', number: 'text-[#0F766E]' },
+  amber: { card: 'border-[#FBE2A8] bg-[#FFF7E6]', icon: 'from-[#FBBF24] to-[#EA580C] shadow-[0_10px_22px_-10px_rgba(234,88,12,0.75)]', number: 'text-[#C2410C]' },
+}
+
 function SchemeStats() {
   const { central, states, stateItems, extras } = useSchemeCounts()
   const cards = [
     // Every scheme and state incentive the report checks: central, each state's own policy items, and the rest
-    { icon: 'total', value: central + stateItems + extras, suffix: '+', label: 'Schemes tracked', note: 'Central, state, sector, export and startup' },
-    { icon: 'map', value: states, label: 'States & UTs covered', note: 'Each state’s own MSME policy' },
-    { icon: 'central', value: central, label: 'Central MSME schemes', note: 'Credit guarantees, subsidies and loans' },
-    { icon: 'msme', value: 10000, suffix: '+', label: 'MSMEs benefited', note: 'Businesses helped across India' },
+    { icon: 'total', tone: 'blue', value: central + stateItems + extras, suffix: '+', label: 'Schemes tracked' },
+    { icon: 'map', tone: 'violet', value: states, label: 'States & UTs covered' },
+    { icon: 'central', tone: 'teal', value: central, label: 'Central MSME schemes' },
+    { icon: 'msme', tone: 'amber', value: 10000, suffix: '+', label: 'MSMEs benefited' },
   ]
 
   return (
@@ -101,50 +109,24 @@ function SchemeStats() {
       <div className="mx-auto w-full max-w-screen-xl px-6">
         {/* The strip speaks for itself on screen; the heading keeps the page outline complete */}
         <h2 id="scheme-coverage" className="sr-only">Scheme coverage</h2>
-        {/* Four tiles with gradient frames: the total leads in navy, the rest in light glass */}
         <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {cards.map((card, index) => {
-            const lead = index === 0
+          {cards.map((card) => {
+            const tone = TONES[card.tone]
             return (
               <li
                 key={card.label}
-                className={`group relative rounded-[1.5rem] p-px transition duration-300 hover:-translate-y-0.5 sm:rounded-[1.75rem] ${
-                  lead
-                    ? 'bg-gradient-to-br from-[#00B2FC]/70 via-[#003BD9]/40 to-[#00245A] shadow-[0_28px_60px_-30px_rgba(0,36,90,0.85)]'
-                    : 'bg-gradient-to-br from-white via-[#CDE6FB] to-white shadow-[0_24px_50px_-36px_rgba(0,36,90,0.55)] hover:from-[#00B2FC]/50 hover:shadow-[0_30px_60px_-34px_rgba(0,36,90,0.6)]'
-                }`}
+                className={`group flex min-w-0 items-center gap-3 rounded-[1.75rem] border px-3 py-3 shadow-[0_18px_40px_-30px_rgba(0,36,90,0.55)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-28px_rgba(0,36,90,0.6)] sm:gap-4 sm:px-4 sm:py-4 ${tone.card}`}
               >
-                {/* A 1px gradient frame around the tile's face */}
-                <span className={`relative flex h-full flex-col gap-2.5 overflow-hidden rounded-[calc(1.5rem-1px)] px-3.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:rounded-[calc(1.75rem-1px)] sm:px-5 sm:py-4 ${
-                  lead
-                    ? 'bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.09)_1px,transparent_0)] bg-[length:14px_14px] bg-[#00245A] text-white'
-                    : 'bg-white/90 backdrop-blur'
-                }`}>
-                  {/* Blue glow behind the lead, the tile's own icon faint in the corner, and a light sweep on hover */}
-                  {lead ? <span aria-hidden="true" className="pointer-events-none absolute -top-16 -left-10 h-40 w-40 rounded-full bg-[#003BD9]/60 blur-3xl" /> : null}
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={`pointer-events-none absolute -right-3 -bottom-4 h-24 w-24 transition duration-500 group-hover:-translate-y-1 group-hover:rotate-[-6deg] ${lead ? 'text-white/[0.08]' : 'text-[#003BD9]/[0.05]'}`}>
-                    <path d={ICONS[card.icon]} stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                <span aria-hidden="true" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-white transition duration-300 group-hover:scale-105 sm:h-14 sm:w-14 ${tone.icon}`}>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none">
+                    <path d={ICONS[card.icon]} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 group-hover:left-[120%] group-hover:opacity-100 motion-reduce:hidden" />
-
-                  <span aria-hidden="true" className={`relative grid h-9 w-9 shrink-0 place-items-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl ${
-                    lead
-                      ? 'bg-gradient-to-br from-[#00B2FC] to-[#003BD9] text-white shadow-[0_10px_24px_-10px_rgba(0,178,252,0.9)]'
-                      : 'bg-[#EAF6FF] text-[#003BD9] ring-1 ring-[#00B2FC]/15 transition group-hover:bg-gradient-to-br group-hover:from-[#00B2FC] group-hover:to-[#003BD9] group-hover:text-white group-hover:shadow-[0_10px_24px_-10px_rgba(0,178,252,0.9)]'
-                  }`}>
-                    <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 sm:h-5 sm:w-5" fill="none">
-                      <path d={ICONS[card.icon]} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-[1.45rem] leading-none font-semibold tracking-[-0.04em] max-[380px]:text-xl sm:text-[1.9rem] ${tone.number}`}>
+                    <CountUp value={card.value} suffix={card.suffix} />
                   </span>
-
-                  <span className="relative min-w-0">
-                    <span className={`block text-[1.6rem] leading-none font-semibold tracking-[-0.04em] max-[380px]:text-2xl sm:text-[1.85rem] ${
-                      lead ? 'bg-gradient-to-r from-white to-[#9FDCFF] bg-clip-text text-transparent' : 'bg-gradient-to-r from-[#00245A] to-[#003BD9] bg-clip-text text-transparent'
-                    }`}>
-                      {card.text ?? <CountUp value={card.value} suffix={card.suffix} />}
-                    </span>
-                    <span className={`mt-1 block text-[13px] leading-tight font-medium ${lead ? 'text-white/75' : 'text-[#00245A]/60'}`}>{card.label}</span>
-                  </span>
+                  <span className="mt-1 block text-[12px] leading-tight font-medium text-[#00245A]/65 sm:text-[13px]">{card.label}</span>
                 </span>
               </li>
             )

@@ -310,7 +310,8 @@ function Header() {
                       className="group flex h-full gap-4 rounded-[1.25rem] border border-transparent p-4 transition hover:border-[#00B2FC]/25 hover:bg-[#F4F9FF] focus-visible:outline-2 focus-visible:outline-[#00B2FC]"
                     >
                       <SuitIcon icon={suit.icon} />
-                      <span className="min-w-0 flex-1">
+                      {/* Text in a column so the bundle count sits on the same line in every card */}
+                      <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-[#00245A]">
                           {suit.name}
                           <svg
@@ -322,8 +323,8 @@ function Header() {
                             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </span>
-                        <span className="mt-1 block text-[13px] leading-snug text-[#00245A]/60">{suit.summary}</span>
-                        <span className="mt-3 inline-flex rounded-full bg-[#EAF6FF] px-2 py-0.5 font-mono text-[10px] text-[#003BD9]">
+                        <span className="mt-1 mb-3 line-clamp-3 text-[13px] leading-snug text-[#00245A]/60">{suit.summary}</span>
+                        <span className="mt-auto inline-flex self-start rounded-full bg-[#EAF6FF] px-2 py-0.5 font-mono text-[10px] text-[#003BD9]">
                           {suit.products.length} {suit.products.length === 1 ? 'bundle' : 'bundles'}
                         </span>
                       </span>
