@@ -313,29 +313,42 @@ summary {
 @keyframes demo-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes demo-pop { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: none; } }
 @keyframes demo-type { from { max-width: 0; } to { max-width: 100%; } }
-@keyframes demo-caret { 50% { opacity: 0; } }
-@keyframes demo-press { 0% { transform: none; } 40% { transform: scale(0.94); filter: brightness(1.25); } 100% { transform: none; filter: none; } }
+@keyframes demo-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes demo-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes demo-hide { to { opacity: 0; } }
+@keyframes demo-press { 0% { transform: none; } 40% { transform: scale(0.94); filter: brightness(1.3); } 100% { transform: none; filter: none; } }
 @keyframes demo-choose { to { background: #EAF6FF; color: #003BD9; border-color: #00B2FC; } }
+@keyframes demo-focus { to { border-color: #00B2FC; box-shadow: 0 0 0 3px rgba(0, 178, 252, 0.2); } }
 @keyframes demo-fillin { from { opacity: 0; } to { opacity: 1; } }
+@keyframes demo-skeleton { 0% { opacity: 1; background-position: -120px 0; } 99% { opacity: 1; background-position: 120px 0; } 100% { opacity: 0; } }
 @keyframes demo-fill { from { width: 0; } to { width: 100%; } }
+@keyframes demo-progress { from { width: 0; } to { width: 100%; } }
 @keyframes demo-count { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes demo-pointer { 0% { opacity: 0; transform: translate(70px, 40px); } 20% { opacity: 1; } 100% { opacity: 1; transform: translate(-2px, -6px); } }
+/* The pointer glides in (0-55%), taps, rests, then fades out */
+@keyframes demo-pointer { 0% { opacity: 0; transform: translate(60px, 34px); } 18% { opacity: 1; } 55% { transform: translate(-2px, -6px); } 62% { transform: translate(-2px, -4px) scale(0.9); } 70% { transform: translate(-2px, -6px); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(-2px, -6px); } }
 @keyframes demo-ripple { 0% { opacity: 0.9; transform: scale(0.3); } 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes demo-toast { 0% { opacity: 0; transform: translate(-50%, 8px) scale(0.95); } 100% { opacity: 1; transform: translate(-50%, 0); } }
 .demo-in { animation: demo-in 0.45s ease-out both; }
 .demo-pop { animation: demo-pop 0.45s ease-out both; }
-.demo-type { max-width: 0; animation: demo-type 1.5s steps(19, end) 0.4s forwards; }
-.demo-caret { animation: demo-caret 0.9s step-end infinite; }
-.demo-press { animation: demo-press 0.35s ease-out both; animation-fill-mode: backwards; }
+.demo-type { max-width: 0; animation: demo-type 1.6s steps(19, end) forwards; }
+.demo-caret { opacity: 0; animation: demo-show 0s linear forwards, demo-caret 0.9s step-end infinite; }
+.demo-placeholder { animation: demo-hide 0.15s linear forwards; }
+.demo-press { animation: demo-press 0.35s ease-out backwards; }
 .demo-choose { color: rgba(0, 36, 90, 0.6); border-color: rgba(0, 36, 90, 0.12); animation: demo-choose 0.25s ease-out forwards; }
+.demo-focus { animation: demo-focus 0.2s ease-out forwards; }
 .demo-fillin { opacity: 0; animation: demo-fillin 0.35s ease-out forwards; }
+.demo-skeleton { background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent); background-size: 120px 100%; background-repeat: no-repeat; animation: demo-skeleton 0.9s linear backwards; animation-fill-mode: forwards; animation-delay: 0s !important; }
 .demo-fill { animation: demo-fill linear both; }
+.demo-progress { width: 0; animation: demo-progress 1.6s ease-in-out forwards; }
 .demo-count { display: inline-block; animation: demo-count 0.5s ease-out 0.3s both; }
-.demo-pointer { opacity: 0; animation: demo-pointer 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.demo-pointer { opacity: 0; animation: demo-pointer 1.45s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 .demo-ripple { opacity: 0; animation: demo-ripple 0.6s ease-out forwards; }
+.demo-toast { opacity: 0; transform: translate(-50%, 0); animation: demo-toast 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 @media (prefers-reduced-motion: reduce) {
-  .demo-in, .demo-pop, .demo-press, .demo-caret, .demo-count { animation: none; }
+  .demo-in, .demo-pop, .demo-press, .demo-caret, .demo-count, .demo-focus { animation: none; }
   .demo-type { animation: none; max-width: 100%; }
-  .demo-fillin { animation: none; opacity: 1; }
+  .demo-placeholder, .demo-skeleton, .demo-pointer, .demo-ripple { display: none; }
+  .demo-fillin, .demo-toast { animation: none; opacity: 1; }
+  .demo-progress { animation: none; width: 100%; }
   .demo-choose { animation: none; background: #EAF6FF; color: #003BD9; border-color: #00B2FC; }
-  .demo-pointer, .demo-ripple { display: none; }
 }
