@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { isReportPrice } from './price.js';
+import { isReportPrice, withGst } from './price.js';
 import { openRecord, sealHash, sealTagMatches } from './seal.js';
 import { createPaymentOrder, readPaymentOrder } from './gateway.js';
 import { COUPON_CODE, MIN_PAYABLE_INR, applyCoupon, cleanCouponCode } from './coupon.js';
@@ -135,7 +135,8 @@ export async function handleCouponRequest(req, deps) {
     const priced = await priceWithCoupon(body, opened.amount, deps, failure);
     if (priced.error)
         return priced.error;
-    return reply(200, { ok: true, coupon: priced.code, price: { amount: priced.amount, original: opened.amount, discount: priced.discount, currency: 'INR' } });
+    const due = withGst(priced.amount);
+    return reply(200, { ok: true, coupon: priced.code, price: { amount: priced.amount, original: opened.amount, discount: priced.discount, gst: due.gst, total: due.total, currency: 'INR' } });
 }
 
 export async function handleCheckoutRequest(req, deps) {
@@ -176,9 +177,11 @@ export async function handleCheckoutRequest(req, deps) {
         logEvent('info', 'udyam_pay', { outcome: 'unlocked_free', order_id: orderId, coupon: priced.code });
         return reply(200, { ok: true, free: true, data: opened.record, price: { amount: 0, currency: 'INR' } });
     }
+    // The price (after any coupon) is before GST: Cashfree charges it with 18% GST added
+    const due = withGst(priced.amount);
     const created = await createPaymentOrder(loaded.pg, {
         orderId,
-        amount: priced.amount,
+        amount: due.total,
         phone,
         customerId: `cust_${createHash('sha256').update(phone).digest('hex').slice(0, 12)}`,
         returnUrl: `${siteOrigin(req.headers)}/report?order_id={order_id}`,
@@ -192,7 +195,7 @@ export async function handleCheckoutRequest(req, deps) {
         return failure('SERVICE_UNAVAILABLE', `Payment could not be started. Please try again later. (Cashfree ${reason})`, created.httpStatus === 504 ? 504 : 503);
     }
     logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId, ...(priced.code ? { coupon: priced.code } : {}) });
-    return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: priced.amount, currency: 'INR' } });
+    return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: due.total, base: priced.amount, gst: due.gst, currency: 'INR' } });
 }
 
 export async function handleUnlockRequest(req, deps) {
@@ -223,10 +226,11 @@ export async function handleUnlockRequest(req, deps) {
     const amount = Number(payment.order?.order_amount);
     const currency = payment.order?.order_currency;
     // Only this server creates orders (with the secret keys), so a coupon tag means it priced the
-    // order lower itself: the amount may then be anything from ₹1 up to the full price.
+    // order lower itself: the amount may then be anything from ₹1 plus GST up to the full price with GST.
     const coupon = tags && typeof tags === 'object' ? cleanCouponCode(tags.coupon) : '';
-    const amountOk = Math.abs(amount - opened.amount) <= 0.001
-        || (COUPON_CODE.test(coupon) && amount >= MIN_PAYABLE_INR && amount < opened.amount);
+    const full = withGst(opened.amount).total;
+    const amountOk = Math.abs(amount - full) <= 0.001
+        || (COUPON_CODE.test(coupon) && amount >= withGst(MIN_PAYABLE_INR).total - 0.001 && amount < full);
     if (!sealTagMatches(sealed, tag) || currency !== 'INR' || !isReportPrice(opened.amount) || !amountOk) {
         logEvent('warn', 'udyam_pay', { outcome: 'rejected', reason: 'order_mismatch', order_id: orderId });
         return failure('BAD_REQUEST', 'This payment does not match the fetched record. Please pay again.', 400);

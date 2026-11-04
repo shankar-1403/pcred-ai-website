@@ -34,7 +34,7 @@ const sections = [
   {
     heading: 'Prices and payment',
     body: [
-      'Prices are shown in Indian rupees. The Udyam Scheme Report costs ₹699 when we fetch your record from your Udyam number, and ₹499 when you upload your Udyam certificate. Where a price says "Price on request", we will quote it before any work starts. Government fees, third-party charges and applicable taxes are extra unless the bundle says otherwise.',
+      'Prices are shown in Indian rupees. The Udyam Scheme Report costs ₹699 when we fetch your record from your Udyam number, and ₹499 when you upload your Udyam certificate; 18% GST is added to these prices at checkout. Where a price says "Price on request", we will quote it before any work starts. Government fees, third-party charges and applicable taxes are extra unless the bundle says otherwise.',
       'Online payments are processed securely by our payment partner. A report or service is delivered once payment is confirmed. Bundle discounts apply only as shown at the time of your order.',
     ],
   },

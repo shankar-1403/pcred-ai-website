@@ -248,3 +248,9 @@
     .udyam-app .ud-lock__pay .btn{justify-self:stretch;text-align:center}
   .udyam-app .ud-lock__coupon .btn{justify-self:auto}
 }
+.udyam-app .ud-lock__bill{display:grid;gap:4px;margin:4px 0 2px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.udyam-app .ud-lock__bill div{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--ink-2)}
+.udyam-app .ud-lock__bill dt,.udyam-app .ud-lock__bill dd{margin:0}
+.udyam-app .ud-lock__bill dd{font-variant-numeric:tabular-nums}
+.udyam-app .ud-lock__bill-total{margin-top:4px;padding-top:6px;border-top:1px solid var(--line)}
+.udyam-app .ud-lock__bill .ud-lock__bill-total dt,.udyam-app .ud-lock__bill .ud-lock__bill-total dd{font-weight:700;color:var(--ink)}

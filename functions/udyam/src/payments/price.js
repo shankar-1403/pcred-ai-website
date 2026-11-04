@@ -10,3 +10,13 @@ export function priceForSource(source) {
 export function isReportPrice(amount) {
     return amount === UDYAM_NUMBER_PRICE_INR || amount === CERTIFICATE_PRICE_INR;
 }
+
+/** Report prices are before GST; 18% GST is added on top of the price (after any coupon). */
+export const GST_RATE = 0.18;
+const paise = (n) => Math.round(n * 100) / 100;
+
+/** { base, gst, total } in rupees, rounded to the paisa. */
+export function withGst(base) {
+    const gst = paise(base * GST_RATE);
+    return { base, gst, total: paise(base + gst) };
+}

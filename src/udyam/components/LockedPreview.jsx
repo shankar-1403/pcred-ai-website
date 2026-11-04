@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GST_RATE, withGst } from '../../../functions/udyam/src/udyam/prices.js';
 
 const SDK_URL = 'https://sdk.cashfree.com/js/v3/cashfree.js';
 
@@ -75,8 +76,10 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
     const [couponInput, setCouponInput] = useState('');
     const [coupon, setCoupon] = useState(null); // { code, amount, discount } once applied
     const [couponState, setCouponState] = useState({ phase: 'idle', message: '' });
+    // Prices are before GST: the coupon applies to the price, then 18% GST is added
     const payable = coupon ? coupon.amount : pack.price?.amount;
-    const payLabel = rupees(payable);
+    const due = withGst(Number(payable) || 0);
+    const gstPercent = `${Math.round(GST_RATE * 100)}%`;
     const rows = [
         ['Enterprise type', preview.enterprise_type],
         ['Activity', preview.major_activity],
@@ -170,8 +173,8 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
         </div>
       </header>
       <p className="ud-lock__lead">{fromCertificate
-            ? `This is what we read from your certificate. Pay ${priceLabel} to open the full scheme report.`
-            : `This is your fetched record. Pay ${priceLabel} to open the full details and download the scheme report.`}</p>
+            ? `This is what we read from your certificate. Pay ${priceLabel} + GST to open the full scheme report.`
+            : `This is your fetched record. Pay ${priceLabel} + GST to open the full details and download the scheme report.`}</p>
       {teaser ? <Teaser teaser={teaser}/> : null}
       <div className="ud-lock__sheet">
         <dl className="ud-lock__clear">
@@ -206,9 +209,15 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
             </button>
           </div>)}
         {couponState.phase === 'error' ? <p className="uv__msg uv__msg--err" role="alert">{couponState.message}</p> : null}
+        {payable > 0 ? (<dl className="ud-lock__bill">
+            <div><dt>Report price</dt><dd>{priceLabel}</dd></div>
+            {coupon ? <div><dt>Coupon {coupon.code}</dt><dd>−{rupees(coupon.discount)}</dd></div> : null}
+            <div><dt>GST ({gstPercent})</dt><dd>{rupees(due.gst)}</dd></div>
+            <div className="ud-lock__bill-total"><dt>Total</dt><dd>{rupees(due.total)}</dd></div>
+          </dl>) : null}
         <button className="btn" type="submit" id="pay-preview" disabled={paying}>
           {paying ? (<><span className="spinner" aria-hidden="true"/>{payable === 0 ? 'Opening report…' : 'Opening payment…'}</>)
-            : payable === 0 ? 'Open the free report' : coupon ? `Pay ${payLabel} (was ${priceLabel}) to view and download` : `Pay ${priceLabel} to view and download`}
+            : payable === 0 ? 'Open the free report' : `Pay ${rupees(due.total)} to view and download`}
         </button>
         {message ? <p className="uv__msg uv__msg--err" role="alert">{message}</p> : null}
         <p className="ud-lock__note">{fromCertificate

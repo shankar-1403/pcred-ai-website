@@ -3,6 +3,7 @@ import { applyCoupon, cleanCouponCode } from '../src/payments/coupon.js';
 import { handleCheckoutRequest, handleCouponRequest, handleUnlockRequest } from '../src/payments/handler.js';
 import { sealHash, sealRecord } from '../src/payments/seal.js';
 import { apiRoute } from '../src/server/route.js';
+import { withGst } from '../src/payments/price.js';
 
 const SECRET = 'test-seal-secret';
 const record = { udyam_number: 'UDYAM-MH-01-0000001', enterprise_name: 'Test' };
@@ -50,13 +51,16 @@ describe('coupons', () => {
         expect(applyCoupon(null, { amount: 699 }).ok).toBe(false);
         expect(applyCoupon({ kind: 'percent', value: 99.9, active: true }, { amount: 699 }).amount).toBe(1);
         expect(cleanCouponCode(' free ')).toBe('FREE');
+        expect(withGst(499)).toEqual({ base: 499, gst: 89.82, total: 588.82 });
+        expect(withGst(699)).toEqual({ base: 699, gst: 125.82, total: 824.82 });
+        expect(withGst(1)).toEqual({ base: 1, gst: 0.18, total: 1.18 });
         expect(apiRoute({ path: '/api/udyam/coupon' })).toBe('coupon');
     });
 
     it('previews the coupon price', async () => {
         const sealed = sealRecord(record, SECRET, 1_000, 699);
         const res = await handleCouponRequest(request('/api/udyam/coupon', { sealed, coupon: 'half' }), makeDeps());
-        expect(res.body.price).toEqual({ amount: 349, original: 699, discount: 350, currency: 'INR' });
+        expect(res.body.price).toEqual({ amount: 349, original: 699, discount: 350, gst: 62.82, total: 411.82, currency: 'INR' });
         const bad = await handleCouponRequest(request('/api/udyam/coupon', { sealed, coupon: 'NOPE' }), makeDeps());
         expect(bad.status).toBe(400);
     });
@@ -83,15 +87,15 @@ describe('coupons', () => {
             },
         });
         const res = await handleCheckoutRequest(request('/api/udyam/checkout', { sealed, phone: '9876543210', coupon: 'HALF' }), deps);
-        expect(res.body.price.amount).toBe(349);
-        expect(sent.order_amount).toBe(349);
+        expect(res.body.price).toEqual({ amount: 411.82, base: 349, gst: 62.82, currency: 'INR' });
+        expect(sent.order_amount).toBe(411.82);
         expect(sent.order_tags).toEqual({ seal: sealHash(sealed), coupon: 'HALF' });
 
         const order = (tags, amount) => async () => new Response(JSON.stringify({ order_status: 'PAID', order_amount: amount, order_currency: 'INR', order_tags: tags }), { status: 200 });
-        const ok = await handleUnlockRequest(request('/api/udyam/unlock', { order_id: 'pcred_pay_0123456789abcdef', sealed }), { ...deps, fetchImpl: order(sent.order_tags, 349) });
+        const ok = await handleUnlockRequest(request('/api/udyam/unlock', { order_id: 'pcred_pay_0123456789abcdef', sealed }), { ...deps, fetchImpl: order(sent.order_tags, 411.82) });
         expect(ok.body.ok).toBe(true);
-        expect(deps.redeemed).toEqual([['HALF', 'pcred_pay_0123456789abcdef', 349]]);
-        const noTag = await handleUnlockRequest(request('/api/udyam/unlock', { order_id: 'pcred_pay_0123456789abcdef', sealed }), { ...deps, fetchImpl: order({ seal: sealHash(sealed) }, 349) });
+        expect(deps.redeemed).toEqual([['HALF', 'pcred_pay_0123456789abcdef', 411.82]]);
+        const noTag = await handleUnlockRequest(request('/api/udyam/unlock', { order_id: 'pcred_pay_0123456789abcdef', sealed }), { ...deps, fetchImpl: order({ seal: sealHash(sealed) }, 411.82) });
         expect(noTag.status).toBe(400);
     });
 });

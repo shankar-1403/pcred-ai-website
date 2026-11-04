@@ -117,7 +117,8 @@ describe('payment handlers', () => {
         const sent = JSON.parse(calls[0].init.body);
         expect(calls[0].url).toBe('https://api.cashfree.com/pg/orders');
         expect(calls[0].init.headers['x-client-id']).toBe('pg_id');
-        expect(sent.order_amount).toBe(UDYAM_NUMBER_PRICE_INR);
+        // ₹699 before GST, charged with 18% GST added
+        expect(sent.order_amount).toBe(824.82);
         expect(sent.order_currency).toBe('INR');
         expect(sent.customer_details.customer_phone).toBe('9876543210');
         expect(sent.order_tags.seal).toBe(sealHash(sealed));
@@ -167,7 +168,7 @@ describe('payment handlers', () => {
         const tag = sealHash(sealed);
         const paid = {
             order_status: 'PAID',
-            order_amount: UDYAM_NUMBER_PRICE_INR,
+            order_amount: 824.82,
             order_currency: 'INR',
             order_tags: { seal: tag },
         };

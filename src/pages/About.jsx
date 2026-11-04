@@ -13,7 +13,7 @@ const sections = [
     heading: 'What we offer on pcred.ai',
     body: [
       [
-        'Udyam Scheme Report: enter your Udyam registration number (₹699) or upload your Udyam certificate (₹499). The report matches your business against central, sector and your state’s own MSME schemes, shows what each one gives and how to apply, and downloads as a PDF.',
+        'Udyam Scheme Report: enter your Udyam registration number (₹699 + GST) or upload your Udyam certificate (₹499 + GST). The report matches your business against central, sector and your state’s own MSME schemes, shows what each one gives and how to apply, and downloads as a PDF.',
         'Advisory bundles for MSMEs and startups, such as registrations, research reports, financial analysis and documentation support. Each bundle’s page lists what it includes and its price.',
       ],
     ],
