@@ -8,6 +8,8 @@ import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js'
 import { loadLiveSchemes } from '../lib/live-schemes';
 
 const PREVIEW_KEY = 'pcred_udyam_preview';
+// The report opened in this tab (after payment), so a refresh shows it again instead of an empty page
+const REPORT_KEY = 'pcred_udyam_report';
 
 // The page walks the visitor through four stages. Only what matters for the current stage is shown.
 // With payment switched off (features.js) the Payment step is left out
@@ -85,6 +87,22 @@ function readStoredPreview() {
     catch { /* ignore a broken stored preview */ }
     return null;
 }
+function readStoredReport() {
+    try {
+        const raw = sessionStorage.getItem(REPORT_KEY);
+        const saved = raw ? JSON.parse(raw) : null;
+        if (saved?.record && typeof saved.record === 'object')
+            return saved;
+    }
+    catch { /* ignore a broken stored report */ }
+    return null;
+}
+function storeReport(record, extra = {}) {
+    try {
+        sessionStorage.setItem(REPORT_KEY, JSON.stringify({ record, source: extra.source, women: extra.women }));
+    }
+    catch { /* the report still shows until the page is refreshed */ }
+}
 // What the home banner handed over: { udyam } or { certificate: File }
 function bannerStart(state) {
     if (typeof state?.udyam === 'string' && state.udyam)
@@ -117,8 +135,9 @@ export default function ReportApp() {
     const [countSchemes, setCountSchemes] = useState(null);
     const queued = useRef(null);
     const applyRecord = useCallback((r, extra = {}) => {
-        // Every report opened here is new (fetched or just paid for), so its PDF downloads too
-        const opts = { source: extra.source, women: extra.women, autoDownload: true };
+        // A newly opened report (fetched or just paid for) downloads its PDF too; one restored after
+        // a refresh does not download it again
+        const opts = { source: extra.source, women: extra.women, autoDownload: extra.autoDownload ?? true };
         if (engine.current)
             engine.current.applyUdyam(r, opts);
         else
@@ -168,11 +187,23 @@ export default function ReportApp() {
         // unpaid preview kept in this tab must not jump the visitor to payment
         if (start && !orderId) {
             sessionStorage.removeItem(PREVIEW_KEY);
+            sessionStorage.removeItem(REPORT_KEY);
+            return;
+        }
+        // A refresh after paying: show the same report again
+        const saved = orderId ? null : readStoredReport();
+        if (saved) {
+            setRecord(saved.record);
+            applyRecord(saved.record, { source: saved.source, women: saved.women, autoDownload: false });
             return;
         }
         const pack = readStoredPreview();
-        if (!pack)
+        // Nothing in progress in this tab (opened directly, or the tab was closed): start from the home page
+        if (!pack) {
+            if (!start)
+                navigate('/', { replace: true });
             return;
+        }
         if (!orderId) {
             setPreviewPack(pack);
             if (pack.details)
@@ -185,6 +216,7 @@ export default function ReportApp() {
             if (!active)
                 return;
             sessionStorage.removeItem(PREVIEW_KEY);
+            storeReport(r, pack);
             navigate('/report', { replace: true });
             setRecord(r);
             applyRecord(r, pack);
@@ -204,12 +236,14 @@ export default function ReportApp() {
     // Payment switched off: the fetched record opens the report straight away
     const handleReport = useCallback((hit) => {
         sessionStorage.removeItem(PREVIEW_KEY);
+        storeReport(hit.data, { source: hit.source, women: hit.women });
         setReturnError('');
         setPreviewPack(null);
         setRecord(hit.data);
         applyRecord(hit.data, { source: hit.source, women: hit.women });
     }, [applyRecord]);
     const handleVerified = useCallback((pack) => {
+        sessionStorage.removeItem(REPORT_KEY);
         setRecord(null);
         setReturnError('');
         setPreviewPack(pack);
@@ -227,6 +261,7 @@ export default function ReportApp() {
     const handlePaid = useCallback((r) => {
         const extra = { source: previewPack?.source, women: previewPack?.women };
         sessionStorage.removeItem(PREVIEW_KEY);
+        storeReport(r, extra);
         setReturnError('');
         setPreviewPack(null);
         setRecord(r);
