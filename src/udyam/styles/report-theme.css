@@ -267,3 +267,8 @@
   .udyam-app .ud-lock__pay{position:sticky;top:96px;margin-top:0;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
   .udyam-app .ud-lock__pay .btn{justify-self:stretch;text-align:center}
 }
+/* Tablet and phone: coupon and payment first, the preview below */
+@media (max-width:1000px){
+  .udyam-app .ud-lock{display:flex;flex-direction:column}
+  .udyam-app .ud-lock__pay{order:-1;margin:0 0 18px}
+}
