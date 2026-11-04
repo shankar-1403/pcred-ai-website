@@ -35,7 +35,10 @@ straight from `functions/udyam/src/udyam`. Prices: `functions/udyam/src/payments
 
 ## Setup in the pcred-ai-website project
 
-1. **Secrets.** The same values as in the pcred-udyam-system project:
+1. **Secrets.** The Payment Gateway keys (`CASHFREE_PG_*`) come from PCRED VENTURE PRIVATE LIMITED's own
+   Cashfree account (Developers → API Keys, production). The Verification Suite keys (`CASHFREE_CLIENT_ID`,
+   `CASHFREE_CLIENT_SECRET`, `CASHFREE_PUBLIC_KEY`) are the ones copied from the pcred-udyam-system project.
+   After setting any of them, redeploy `udyamVerify` so it picks up the new values:
    ```
    firebase functions:secrets:set CASHFREE_CLIENT_ID
    firebase functions:secrets:set CASHFREE_CLIENT_SECRET
@@ -46,8 +49,10 @@ straight from `functions/udyam/src/udyam`. Prices: `functions/udyam/src/payments
    ```
    To copy one across without displaying it:
    `firebase functions:secrets:access CASHFREE_CLIENT_ID --project pcred-udyam-system | firebase functions:secrets:set CASHFREE_CLIENT_ID --project pcred-ai-website --data-file -`
-2. **Cashfree Payment Gateway:** whitelist the website's domain (Developers → Whitelisting) so the payment
-   return to `https://<site>/report` is accepted.
+2. **Cashfree Payment Gateway:** in PCRED Venture's Cashfree account, whitelist `https://pcred.ai`
+   (Payment Gateway → Developers → Whitelisting → Add New → Website URL). A visitor paying on pcred.ai
+   returns to `https://pcred.ai/report`. The site names the same company everywhere (`src/lib/company.js`),
+   which Cashfree's website review checks.
 3. **Deploy:** `npm run build && firebase deploy --only functions,database,hosting`
 4. **Test** on the live site with a real Udyam number. Each lookup and payment is real and billed.
 

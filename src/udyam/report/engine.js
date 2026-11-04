@@ -11,6 +11,7 @@
 import statesData from '../data/states.json';
 import extrasData from '../data/extras.json';
 import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
+import { COMPANY } from '../../lib/company.js';
 
 let engine = null;
 
@@ -1841,7 +1842,7 @@ async function buildPdf() {
   if (R.hidden.length) { const hs = hiddenSummary(R.hidden); para(`${R.c.goals.size ? `Left out because they are outside the goals chosen${hs.group ? ' or need a group of units' : ''}` : `Left out until the matching goal is chosen${hs.group ? ', or because they need a group of units' : ''}`}: ${hs.parts.join(', ')}.`, { size: 8.6, color: C.ink3, after: 2 }); }
 
   y += 4;
-  para(`This report is a guide based on the Udyam record and the answers given. The bank, state department or implementing agency makes the final decision on eligibility. Central scheme rules were checked against official sources on ${VERIFIED}; state, sector, export and startup data on ${CHECKED}. Items marked 'Secondary source' or 'Not verified' rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change. An independent PCRED tool, not affiliated with the Ministry of MSME or any government body.`, { size: 7.8, color: C.ink3 });
+  para(`This report is a guide based on the Udyam record and the answers given. The bank, state department or implementing agency makes the final decision on eligibility. Central scheme rules were checked against official sources on ${VERIFIED}; state, sector, export and startup data on ${CHECKED}. Items marked 'Secondary source' or 'Not verified' rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change. An independent tool by PCRED (${COMPANY.website}), owned and operated by ${COMPANY.name}; not affiliated with the Ministry of MSME or any government body.`, { size: 7.8, color: C.ink3 });
 
   // Running header and footer
   const n = doc.getNumberOfPages();

@@ -19,8 +19,8 @@ const REGION = 'asia-south1';
 const CASHFREE_CLIENT_ID = defineSecret('CASHFREE_CLIENT_ID');
 const CASHFREE_CLIENT_SECRET = defineSecret('CASHFREE_CLIENT_SECRET');
 const CASHFREE_PUBLIC_KEY = defineSecret('CASHFREE_PUBLIC_KEY');
-// Payment Gateway keys (Cashfree dashboard → Payment Gateway → Developers → API Keys).
-// These are separate from the Verification Suite keys above.
+// Payment Gateway keys from PCRED VENTURE PRIVATE LIMITED's own Cashfree account (Developers →
+// API Keys, production). These are separate from the Verification Suite keys above.
 const CASHFREE_PG_CLIENT_ID = defineSecret('CASHFREE_PG_CLIENT_ID');
 const CASHFREE_PG_CLIENT_SECRET = defineSecret('CASHFREE_PG_CLIENT_SECRET');
 // Fast2SMS Dev API key (https://www.fast2sms.com → Dev API). Used only to text the OTP.
