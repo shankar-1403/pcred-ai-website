@@ -127,7 +127,6 @@ function Banner() {
   }
 
   const error = mode === 'number' ? udyamError : fileError
-  const active = MODES.find((item) => item.id === mode)
 
 
   return (
@@ -176,29 +175,25 @@ function Banner() {
           </p>
 
           <form onSubmit={onSubmit} noValidate className="mt-5 w-full max-w-xl text-left">
+            {/* No card around it: the two tabs, the field and the button each stand on the page */}
             <div className="relative">
-              <div
-                aria-hidden="true"
-                className="form-glow pointer-events-none absolute -inset-3 rounded-[2.25rem] bg-gradient-to-r from-[#00B2FC]/60 via-[#3D7BFF]/40 to-[#00B2FC]/60 blur-2xl"
-              />
-              <span className="absolute -top-3 left-6 z-20 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] px-3 py-1 text-[11px] font-semibold tracking-wide text-white shadow-[0_8px_20px_-8px_rgba(0,59,217,0.8)]">
+              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00B2FC] to-[#003BD9] px-3 py-1 text-[11px] font-semibold tracking-wide text-white shadow-[0_8px_20px_-8px_rgba(0,59,217,0.8)]">
                 <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-white" />
                 Start here
               </span>
-              <div className="relative overflow-clip rounded-[1.75rem] bg-gradient-to-r from-[#00B2FC]/70 to-[#003BD9]/60 p-[3px] shadow-[0_30px_60px_-28px_rgba(0,36,90,0.6)]">
-                <div aria-hidden="true" className="form-ring absolute top-1/2 left-1/2 -mt-[75%] -ml-[75%] aspect-square w-[150%]" />
-                <div className="relative rounded-[calc(1.75rem-3px)] bg-white p-2.5 pt-4">
-                  <div className="flex gap-1 rounded-2xl bg-[#EAF6FF] p-1" role="group" aria-label="Start the report with">
+              <div>
+                <div>
+                  <div className="flex gap-2" role="group" aria-label="Start the report with">
                     {MODES.map((item) => (
                       <button
                         key={item.id}
                         type="button"
                         aria-pressed={mode === item.id}
                         onClick={() => selectMode(item.id)}
-                        className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm whitespace-nowrap font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
+                        className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-2 px-3 py-2.5 text-sm whitespace-nowrap font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
                           mode === item.id
-                            ? 'bg-white text-[#00245A] shadow-[0_6px_16px_-8px_rgba(0,36,90,0.5)]'
-                            : 'text-[#00245A]/55 hover:text-[#00245A]'
+                            ? 'border-[#00B2FC] bg-white text-[#00245A] shadow-[0_8px_20px_-10px_rgba(0,59,217,0.55)]'
+                            : 'border-[#00245A]/10 bg-white/60 text-[#00245A]/55 hover:border-[#00B2FC]/50 hover:text-[#00245A]'
                         }`}
                       >
                         {item.label}
@@ -213,24 +208,16 @@ function Banner() {
                     ))}
                   </div>
 
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <div className="mt-3 flex flex-col gap-2.5 sm:flex-row">
                     {mode === 'number' ? (
                       <label
                         htmlFor="udyam_no"
-                        className={`flex min-w-0 flex-1 cursor-text items-center gap-3 rounded-2xl border-2 bg-[#F4F9FF] px-3 py-2 transition focus-within:border-[#00B2FC] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#00B2FC]/20 ${
-                          udyamError ? 'border-[#C2261C]/60' : 'border-[#00B2FC]/40 hover:border-[#00B2FC]/80'
+                        className={`flex min-h-14 min-w-0 flex-1 cursor-text items-center rounded-full border-2 bg-white px-5 py-3 shadow-[0_10px_24px_-12px_rgba(0,36,90,0.45)] transition focus-within:border-[#00B2FC] focus-within:ring-4 focus-within:ring-[#00B2FC]/20 ${
+                          udyamError ? 'border-[#C2261C]/60' : 'border-[#00245A]/15 hover:border-[#00B2FC]/70'
                         }`}
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#003BD9] shadow-[0_4px_12px_-6px_rgba(0,59,217,0.5)]">
-                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5">
-                            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                            <path d="m13.2 13.2 3.3 3.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                          </svg>
-                        </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[10px] font-semibold tracking-[0.14em] text-[#003BD9] uppercase">
-                            Udyam registration number
-                          </span>
+                          <span className="sr-only">Udyam registration number</span>
                           <input
                             id="udyam_no"
                             name="udyam_no"
@@ -244,22 +231,23 @@ function Banner() {
                             autoCorrect="off"
                             spellCheck={false}
                             autoComplete="off"
-                            placeholder="UDYAM-XX-00-0000000"
+                            placeholder="Enter your Udyam number"
                             aria-invalid={udyamError ? 'true' : 'false'}
-                            className="w-full bg-transparent pt-0.5 font-mono text-base font-semibold tracking-wide text-[#00245A] uppercase outline-none placeholder:font-medium placeholder:text-[#00245A]/45"
+                            aria-describedby="udyam_format"
+                            className="w-full bg-transparent font-mono text-base font-semibold tracking-wide text-[#00245A] uppercase outline-none placeholder:font-sans placeholder:font-medium placeholder:tracking-normal placeholder:normal-case placeholder:text-[#00245A]/50"
                           />
                         </span>
                       </label>
                     ) : (
                       <label
                         htmlFor="udyam_certificate"
-                        className={`flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed bg-[#F4F9FF] px-3 py-2 transition hover:border-[#00B2FC] hover:bg-white has-[:focus-visible]:border-[#00B2FC] has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#00B2FC]/20 ${
-                          fileError ? 'border-[#C2261C]/60' : 'border-[#00B2FC]/50'
+                        className={`flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-full border-2 border-dashed bg-white px-4 py-2 shadow-[0_10px_24px_-12px_rgba(0,36,90,0.45)] transition hover:border-[#00B2FC] has-[:focus-visible]:border-[#00B2FC] has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#00B2FC]/20 ${
+                          fileError ? 'border-[#C2261C]/60' : 'border-[#00245A]/20'
                         }`}
                       >
                         <span className="sr-only">Udyam certificate</span>
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#003BD9] shadow-[0_4px_12px_-6px_rgba(0,59,217,0.5)]">
-                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF6FF] text-[#003BD9]">
+                          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4.5 w-4.5">
                             <path d="M6 2.5h5.5L15 6v11.5H6z M11 2.5V6.5h4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                           </svg>
                         </span>
@@ -282,19 +270,20 @@ function Banner() {
 
                     <button
                       type="submit"
-                      className="group relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#00245A] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]"
+                      className="group relative inline-flex min-h-14 shrink-0 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full bg-[#00245A] px-7 py-3.5 sm:min-w-36 shadow-[0_14px_30px_-14px_rgba(0,36,90,0.8)] text-sm font-semibold text-white transition hover:bg-[#003BD9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC]"
                     >
                       <span aria-hidden="true" className="btn-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
                       {mode === 'number' ? 'Verify' : 'Upload'}
-                      <span className="font-mono text-base font-bold text-[#00B2FC]">
-                        <span className="sr-only">for </span>
-                        {active.price}
-                      </span>
                       <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4 transition group-hover:translate-x-0.5">
                         <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </button>
                   </div>
+                  {mode === 'number' ? (
+                    <p id="udyam_format" className="mt-2 px-5 text-xs text-[#00245A]/60">
+                      Format: <span className="font-mono">UDYAM-XX-00-0000000</span>, as on your Udyam certificate
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
