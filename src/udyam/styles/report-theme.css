@@ -57,6 +57,8 @@
 .udyam-app .flow__main{grid-area:main;display:flex;flex-direction:column;gap:20px;min-width:0}
 /* Start and mobile check: business details full width, with a slim status bar above it */
 .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"details" "questions" "verify";gap:12px}
+/* While the certificate is read or the record fetched (or it failed), that status sits on top */
+.udyam-app .app--start .flow:has(#card-udyam .uv-status__line,#card-udyam .uv__msg--err),.udyam-app .app--verify .flow:has(#card-udyam .uv-status__line,#card-udyam .uv__msg--err){grid-template-areas:"verify" "details" "questions"}
 /* First step: only the ownership question. The help, credit, turnover and "More details" questions are asked beside the report, where they re-rank it */
 .udyam-app .card--merged #card-questions{display:none}
 /* Beside the report only the ownership question is asked. The help, credit, turnover and
@@ -73,13 +75,15 @@
 .udyam-app .ownership__alert{margin:10px 0 0;font-size:13px;font-weight:600;color:var(--danger)}
 .udyam-app .app--start .flow__main,.udyam-app .app--verify .flow__main{display:none}
 /* Payment: the pay panel is the main column */
-.udyam-app .app--pay .flow{grid-template-areas:"verify main" "details main" ". main";grid-template-rows:auto auto 1fr}
+/* Payment: only the pay panel, centred; the side cards are not shown */
+.udyam-app .app--pay .flow{grid-template-columns:minmax(0,860px);justify-content:center;grid-template-areas:"main"}
+.udyam-app .app--pay .flow__verify,.udyam-app .app--pay .flow__details,.udyam-app .app--pay .flow__questions{display:none!important}
 /* Report: controls that change it on the left, the report on the right */
 .udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
 @media (max-width:1000px){
   .udyam-app .flow{grid-template-columns:minmax(0,1fr)}
   .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"details" "questions" "verify"}
-  .udyam-app .app--pay .flow{grid-template-areas:"verify" "main" "details";grid-template-rows:none}
+  .udyam-app .app--pay .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"main";grid-template-rows:none}
   .udyam-app .app--report .flow{grid-template-areas:"questions" "main" "details" "verify";grid-template-rows:none}
 }
 /* Business details at full width: four fields per row */
