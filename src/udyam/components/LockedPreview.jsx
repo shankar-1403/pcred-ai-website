@@ -162,6 +162,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
 
     const paying = phase === 'paying';
     return (<section className="ud ud-lock" id="udyam-preview" aria-labelledby="udyam-preview-title">
+      <div className="ud-lock__main">
       <header className="ud__head">
         <div className="ud__heading">
           <p className="ud__eyebrow">{fromCertificate ? 'Read from your certificate' : 'Udyam record fetched'}</p>
@@ -191,6 +192,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
           <span className="ud-lock__bar"/>
           <span className="ud-lock__bar ud-lock__bar--mid"/>
         </div>
+      </div>
       </div>
       <form className="ud-lock__pay" onSubmit={pay} noValidate>
         <label className="uv__label" htmlFor="pay-coupon">Coupon code (optional)</label>

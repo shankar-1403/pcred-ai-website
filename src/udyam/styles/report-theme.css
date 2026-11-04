@@ -76,7 +76,7 @@
 .udyam-app .app--start .flow__main,.udyam-app .app--verify .flow__main{display:none}
 /* Payment: the pay panel is the main column */
 /* Payment: only the pay panel, centred; the side cards are not shown */
-.udyam-app .app--pay .flow{grid-template-columns:minmax(0,860px);justify-content:center;grid-template-areas:"main"}
+.udyam-app .app--pay .flow{grid-template-columns:minmax(0,1180px);justify-content:center;grid-template-areas:"main"}
 .udyam-app .app--pay .flow__verify,.udyam-app .app--pay .flow__details,.udyam-app .app--pay .flow__questions{display:none!important}
 /* Report: controls that change it on the left, the report on the right */
 .udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
@@ -258,3 +258,10 @@
 .udyam-app .ud-lock__bill dd{font-variant-numeric:tabular-nums}
 .udyam-app .ud-lock__bill-total{margin-top:4px;padding-top:6px;border-top:1px solid var(--line)}
 .udyam-app .ud-lock__bill .ud-lock__bill-total dt,.udyam-app .ud-lock__bill .ud-lock__bill-total dd{font-weight:700;color:var(--ink)}
+/* Payment card: the preview on the left, coupon and payment on the right (stacked on narrow screens) */
+@media (min-width:1001px){
+  .udyam-app .ud-lock{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:0 28px;align-items:start}
+  .udyam-app .ud-lock__main{min-width:0}
+  .udyam-app .ud-lock__pay{position:sticky;top:96px;margin-top:0;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+  .udyam-app .ud-lock__pay .btn{justify-self:stretch;text-align:center}
+}
