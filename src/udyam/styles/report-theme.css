@@ -79,12 +79,14 @@
 .udyam-app .app--pay .flow{grid-template-columns:minmax(0,1180px);justify-content:center;grid-template-areas:"main"}
 .udyam-app .app--pay .flow__verify,.udyam-app .app--pay .flow__details,.udyam-app .app--pay .flow__questions{display:none!important}
 /* Report: controls that change it on the left, the report on the right */
-.udyam-app .app--report .flow{grid-template-areas:"questions main" "details main" "verify main" ". main";grid-template-rows:auto auto auto 1fr}
+/* Report: only the report, centred; the side cards are not shown */
+.udyam-app .app--report .flow{grid-template-columns:minmax(0,1100px);justify-content:center;grid-template-areas:"main"}
+.udyam-app .app--report .flow__verify,.udyam-app .app--report .flow__details,.udyam-app .app--report .flow__questions{display:none!important}
 @media (max-width:1000px){
   .udyam-app .flow{grid-template-columns:minmax(0,1fr)}
   .udyam-app .app--start .flow,.udyam-app .app--verify .flow{grid-template-areas:"details" "questions" "verify"}
   .udyam-app .app--pay .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"main";grid-template-rows:none}
-  .udyam-app .app--report .flow{grid-template-areas:"questions" "main" "details" "verify";grid-template-rows:none}
+  .udyam-app .app--report .flow{grid-template-columns:minmax(0,1fr);grid-template-areas:"main";grid-template-rows:none}
 }
 /* Business details at full width: four fields per row */
 @media (min-width:1001px){
