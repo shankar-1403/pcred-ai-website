@@ -35,10 +35,11 @@ straight from `functions/udyam/src/udyam`. Prices: `functions/udyam/src/payments
 
 ## Setup in the pcred-ai-website project
 
-1. **Secrets.** The Payment Gateway keys (`CASHFREE_PG_*`) come from PCRED VENTURE PRIVATE LIMITED's own
-   Cashfree account (Developers → API Keys, production). The Verification Suite keys (`CASHFREE_CLIENT_ID`,
-   `CASHFREE_CLIENT_SECRET`, `CASHFREE_PUBLIC_KEY`) are the ones copied from the pcred-udyam-system project.
-   After setting any of them, redeploy `udyamVerify` so it picks up the new values:
+1. **Secrets.** Every Cashfree key comes from PCRED VENTURE PRIVATE LIMITED's own Cashfree account (production):
+   the Payment Gateway keys (`CASHFREE_PG_*`) from Payment Gateway → Developers → API Keys, and the Secure ID
+   keys (`CASHFREE_CLIENT_ID`, `CASHFREE_CLIENT_SECRET`) from Secure ID → Developers → API Keys. Secure ID's
+   two-factor method must be **Public Key**; its `.pem` (`CASHFREE_PUBLIC_KEY`) comes zipped from
+   Secure ID → Developers → Two-Factor Authentication. After setting any of them, redeploy `udyamVerify`:
    ```
    firebase functions:secrets:set CASHFREE_CLIENT_ID
    firebase functions:secrets:set CASHFREE_CLIENT_SECRET
@@ -47,8 +48,6 @@ straight from `functions/udyam/src/udyam`. Prices: `functions/udyam/src/payments
    firebase functions:secrets:set CASHFREE_PG_CLIENT_SECRET
    firebase functions:secrets:set FAST2SMS_API_KEY
    ```
-   To copy one across without displaying it:
-   `firebase functions:secrets:access CASHFREE_CLIENT_ID --project pcred-udyam-system | firebase functions:secrets:set CASHFREE_CLIENT_ID --project pcred-ai-website --data-file -`
 2. **Cashfree Payment Gateway:** in PCRED Venture's Cashfree account, whitelist `https://pcred.ai`
    (Payment Gateway → Developers → Whitelisting → Add New → Website URL). A visitor paying on pcred.ai
    returns to `https://pcred.ai/report`. The site names the same company everywhere (`src/lib/company.js`),

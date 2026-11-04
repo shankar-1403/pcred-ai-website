@@ -12,7 +12,8 @@ import { deactivateExpiredLeads, realtimeLeadLookup, realtimeLeadStore } from '.
 // Firebase Hosting rewrites POST /api/udyam/verify to this function (see firebase.json).
 // Keep REGION in sync with the rewrite's "region".
 const REGION = 'asia-south1';
-// Cashfree Verification Suite (production) credentials, stored in Google Secret Manager:
+// Cashfree Secure ID (Verification Suite, production) credentials from PCRED VENTURE PRIVATE LIMITED's
+// own Cashfree account, stored in Google Secret Manager:
 //   firebase functions:secrets:set CASHFREE_CLIENT_ID
 //   firebase functions:secrets:set CASHFREE_CLIENT_SECRET
 //   firebase functions:secrets:set CASHFREE_PUBLIC_KEY --data-file cashfree_public_key.pem
