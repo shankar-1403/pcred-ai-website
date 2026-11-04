@@ -158,7 +158,7 @@
     "enquiries": {
       ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
       "$enquiryId": {
-        ".write": "auth != null && root.child('admins').child(auth.uid).exists() || (!data.exists() && newData.exists() && auth != null && auth.token.phone_number != null && newData.child('phone').val() === auth.token.phone_number && newData.child('uid').val() === auth.uid)",
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists() || (!data.exists() && newData.exists() && auth != null && auth.token.phone_number != null && newData.child('phone').val() === auth.token.phone_number && newData.child('uid').val() === auth.uid) || (!data.exists() && newData.exists() && newData.child('uid').val() === 'unverified')",
         ".validate": "newData.hasChildren(['name', 'email', 'phone', 'uid', 'items', 'total', 'status', 'createdAt'])",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"

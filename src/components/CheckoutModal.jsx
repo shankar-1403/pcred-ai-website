@@ -5,6 +5,7 @@ import { db } from '../lib/firebase'
 import { auth } from '../lib/firebaseAuth'
 import { formatPrice } from '../lib/cart'
 import { formatPhone, isValidEmail, isValidMobile, toE164 } from '../lib/enquiries'
+import { OTP_ENABLED } from '../../functions/udyam/src/udyam/features.js'
 
 const RESEND_SECONDS = 30
 
@@ -25,7 +26,9 @@ const describe = (error) => AUTH_ERRORS[error?.code] ?? 'Something went wrong. P
 const fieldShell =
   'flex items-center gap-3 rounded-2xl border-2 bg-[#F4F9FF] px-3.5 transition focus-within:border-[#00B2FC] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#00B2FC]/15'
 
-const STEPS = ['Your details', 'Verify mobile', 'Done']
+// With mobile OTP switched off (features.js) there is no code step: details, then done
+const STEPS = OTP_ENABLED ? ['Your details', 'Verify mobile', 'Done'] : ['Your details', 'Done']
+const DONE = STEPS.length - 1
 
 // `pricing` holds plain numbers from cartPricing(); items/pricing are copied on open so the
 // summary stays put after the cart is cleared.
@@ -74,7 +77,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
       createdAt: serverTimestamp(),
     }
     await set(push(ref(db, 'enquiries')), enquiry)
-    setStep(2)
+    setStep(DONE)
     onPlaced()
   }
 
@@ -99,8 +102,11 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
     setBusy(true)
     setMessage('')
     try {
-      // Already verified this number in this browser: no new code needed
-      if (auth.currentUser?.phoneNumber === toE164(form.mobile)) {
+      // OTP off: the enquiry is saved with the number as typed, marked unverified
+      if (!OTP_ENABLED) {
+        await saveEnquiry({ phoneNumber: toE164(form.mobile), uid: 'unverified' })
+      } else if (auth.currentUser?.phoneNumber === toE164(form.mobile)) {
+        // Already verified this number in this browser: no new code needed
         await saveEnquiry(auth.currentUser)
       } else {
         await sendCode()
@@ -178,7 +184,9 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
           <form onSubmit={onSubmitDetails} noValidate className="mt-6 space-y-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Where should we reach you?</h2>
-              <p className="mt-1 text-sm text-[#00245A]/60">We verify your mobile number with a one-time code.</p>
+              <p className="mt-1 text-sm text-[#00245A]/60">
+                {OTP_ENABLED ? 'We verify your mobile number with a one-time code.' : 'We’ll contact you on this number about your order.'}
+              </p>
             </div>
 
             <Labelled id="checkout-name" label="Full name" error={errors.name}>
@@ -224,13 +232,13 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
             {message ? <Message>{message}</Message> : null}
 
             <PrimaryButton busy={busy} busyLabel="Please wait…">
-              Send OTP
+              {OTP_ENABLED ? 'Send OTP' : 'Place enquiry'}
             </PrimaryButton>
-            <p className="text-center text-xs text-[#00245A]/45">Protected by reCAPTCHA. Standard SMS rates may apply.</p>
+            {OTP_ENABLED ? <p className="text-center text-xs text-[#00245A]/45">Protected by reCAPTCHA. Standard SMS rates may apply.</p> : null}
           </form>
         ) : null}
 
-        {step === 1 ? (
+        {OTP_ENABLED && step === 1 ? (
           <form onSubmit={onVerify} noValidate className="mt-6 space-y-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Enter the code</h2>
@@ -290,7 +298,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
           </form>
         ) : null}
 
-        {step === 2 ? (
+        {step === DONE ? (
           <div className="mt-8 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E6FAF0] text-[#128C4A]">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7" fill="none">
