@@ -237,8 +237,9 @@ export default function ReportApp() {
     const stage = record ? 'report' : previewPack ? 'pay' : verifyStep === 'otp' || verifyStep === 'women' ? 'verify' : 'start';
     // Mobile verification happens in a pop-up within "Your details", so it has no step of its own
     const current = { start: 0, verify: 0, pay: 1, report: STAGES.length - 1 }[stage];
-    // Business details appear only beside the open report: never before or at payment
-    const showDetailsCard = stage === 'report';
+    // Business details sit above the ownership question in the first step and beside the open
+    // report; they stay hidden at payment
+    const showDetailsCard = stage !== 'pay';
     const firstStep = stage === 'start' || stage === 'verify';
     // What the paid report holds for this business (scheme counts and headline benefits)
     const teaser = useMemo(() => {

@@ -50,14 +50,8 @@ function rupees(amount) {
  * Right-hand confirmation: the fetched business is readable, the rest of the report is blurred
  * until Cashfree confirms payment. The full record never arrives in the browser before that.
  */
-function LockIcon() {
-    return (<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="ud-tease__lock-icon"><rect x="5" y="10.5" width="14" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>);
-}
-
-/** What the paid report holds: the same tally as its cover, and the top benefits with names locked. */
+/** What the paid report holds: the same tally as its cover. */
 function Teaser({ teaser }) {
-    const total = teaser.strong + teaser.check;
-    const more = Math.max(0, total - teaser.top.length);
     return (<div className="ud-tease">
       <div className="ud-tease__cover">
         <p className="ud-tease__eyebrow">Inside your scheme report</p>
@@ -67,14 +61,6 @@ function Teaser({ teaser }) {
         </div>
         {teaser.state > 0 && teaser.stateName ? <p className="ud-tease__note">Includes {teaser.state} from {teaser.stateName}’s own MSME policy.</p> : null}
       </div>
-      {teaser.top.length ? (<ul className="ud-tease__list" aria-label="Top benefits in your report">
-          {teaser.top.map((item, i) => (<li key={i} className="ud-tease__item">
-              <span className={`ud-tease__badge ud-tease__badge--${item.yes ? 'yes' : 'check'}`}>{item.yes ? 'Strong match' : 'Worth checking'}</span>
-              <p className="ud-tease__headline">{item.headline}</p>
-              <p className="ud-tease__locked"><LockIcon /><span className="ud-tease__mask" aria-hidden="true"/><span className="sr">Scheme name</span> unlocks after payment</p>
-            </li>))}
-        </ul>) : null}
-      {more > 0 ? <p className="ud-tease__more">+ {more} more {more === 1 ? 'scheme' : 'schemes'}, with how to apply and the documents needed, in the full report.</p> : null}
     </div>);
 }
 
@@ -186,6 +172,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
       <p className="ud-lock__lead">{fromCertificate
             ? `This is what we read from your certificate. Pay ${priceLabel} to open the full scheme report.`
             : `This is your fetched record. Pay ${priceLabel} to open the full details and download the scheme report.`}</p>
+      {teaser ? <Teaser teaser={teaser}/> : null}
       <div className="ud-lock__sheet">
         <dl className="ud-lock__clear">
           {rows.map(([label, value]) => (<div key={label}>
@@ -202,7 +189,6 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
           <span className="ud-lock__bar ud-lock__bar--mid"/>
         </div>
       </div>
-      {teaser ? <Teaser teaser={teaser}/> : null}
       <form className="ud-lock__pay" onSubmit={pay} noValidate>
         <label className="uv__label" htmlFor="pay-coupon">Coupon code (optional)</label>
         {coupon ? (<p className="uv__msg" role="status">
