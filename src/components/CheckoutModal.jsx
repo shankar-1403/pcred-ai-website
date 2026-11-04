@@ -195,7 +195,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
                 value={form.name}
                 onChange={setField('name')}
                 autoComplete="name"
-                placeholder="Priya Shah"
+                placeholder="Your full name"
                 aria-invalid={errors.name ? 'true' : 'false'}
                 className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-[#00245A]/35"
               />
@@ -223,7 +223,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
                 value={form.mobile}
                 onChange={setField('mobile')}
                 autoComplete="tel-national"
-                placeholder="98765 43210"
+                placeholder="10-digit mobile number"
                 aria-invalid={errors.mobile ? 'true' : 'false'}
                 className="min-w-0 flex-1 bg-transparent py-3 text-sm tracking-wide outline-none placeholder:text-[#00245A]/35"
               />

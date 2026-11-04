@@ -43,7 +43,7 @@ export function formatDateTime(timestamp) {
   return timestamp ? dateFormat.format(new Date(timestamp)) : '—'
 }
 
-// +919876543210 -> +91 98765 43210
+// +91XXXXXXXXXX -> +91 XXXXX XXXXX
 export function formatPhone(phone) {
   const match = /^\+91(\d{5})(\d{5})$/.exec(phone)
   return match ? `+91 ${match[1]} ${match[2]}` : phone

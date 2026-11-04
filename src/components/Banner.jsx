@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import favicon from '../assets/favicon.svg'
-import YouTubeVideo from './YouTubeVideo'
+import ReportStepsDemo from './ReportStepsDemo'
 
 const NUMBER_PRICE = '₹699'
 const UPLOAD_PRICE = '₹499'
-const YOUTUBE_VIDEO_ID = 'SRf3nprZkQ8?si=C7znsfTy0IHxzj01'
 const UDYAM_PATTERN = /^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/
 const MAX_CERTIFICATE_BYTES = 8 * 1024 * 1024
 // The report reads the certificate PDF on the device (src/udyam/lib/read-certificate.js)
@@ -74,7 +73,7 @@ function Banner() {
 
   const onVerify = () => {
     if (!UDYAM_PATTERN.test(udyam)) {
-      setUdyamError('Enter a full Udyam number, like UDYAM-MH-26-0048217.')
+      setUdyamError('Enter the full Udyam number from your certificate, in the format UDYAM-XX-00-0000000.')
       setNotice('')
       return
     }
@@ -245,7 +244,7 @@ function Banner() {
                             autoCorrect="off"
                             spellCheck={false}
                             autoComplete="off"
-                            placeholder="UDYAM-MH-26-0048217"
+                            placeholder="UDYAM-XX-00-0000000"
                             aria-invalid={udyamError ? 'true' : 'false'}
                             className="w-full bg-transparent pt-0.5 font-mono text-base font-semibold tracking-wide text-[#00245A] uppercase outline-none placeholder:font-medium placeholder:text-[#00245A]/45"
                           />
@@ -310,7 +309,7 @@ function Banner() {
           </form>
         </div>
 
-        {/* Video */}
+        {/* How it works: a looping walk-through of the report's steps */}
         <div className="flex w-full max-w-xl flex-col gap-2 justify-self-center lg:justify-self-end">
           <figure className="relative overflow-hidden rounded-[2rem] border border-white bg-white/70 p-2 shadow-[0_40px_80px_-40px_rgba(0,36,90,0.55)] backdrop-blur">
             <div className="flex items-center gap-3 px-3 pt-1 pb-2.5">
@@ -320,15 +319,15 @@ function Banner() {
                 <span className="h-2.5 w-2.5 rounded-full bg-[#00B2FC]" />
               </span>
               <figcaption className="min-w-0 flex-1 truncate text-xs font-semibold text-[#00245A]/70">
-                Watch the Scheme Discovery report
+                How the Scheme Discovery report works
               </figcaption>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FDECEA] px-2 py-0.5 font-mono text-[10px] font-semibold text-[#C2261C]">
                 <span className="cta-pulse h-1.5 w-1.5 rounded-full bg-[#C2261C]" />
-                Video
+                4 steps
               </span>
             </div>
-            <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-[#00245A] lg:aspect-[16/10]">
-              <YouTubeVideo videoId={YOUTUBE_VIDEO_ID} title="PCRED Foundation Day 2025" />
+            <div className="relative aspect-[5/4] overflow-hidden rounded-[1.5rem] bg-[#00245A] sm:aspect-video lg:aspect-[16/10]">
+              <ReportStepsDemo />
             </div>
           </figure>
         </div>

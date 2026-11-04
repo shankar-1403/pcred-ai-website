@@ -197,7 +197,7 @@ function Contact() {
                   value={form.name}
                   onChange={update('name')}
                   autoComplete="name"
-                  placeholder="Priya Shah"
+                  placeholder="Your full name"
                   aria-invalid={error ? 'true' : 'false'}
                   aria-describedby={error ? 'contact_error' : undefined}
                   className={inputClass}
@@ -212,7 +212,7 @@ function Contact() {
                   value={form.business}
                   onChange={update('business')}
                   autoComplete="organization"
-                  placeholder="Shah Textiles"
+                  placeholder="Your business name"
                   className={inputClass}
                 />
               </div>

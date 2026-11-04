@@ -309,3 +309,33 @@ summary {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+/* Home: looping "how it works" demo (ReportStepsDemo): small copies of the real screens */
+@keyframes demo-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes demo-pop { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes demo-type { from { max-width: 0; } to { max-width: 100%; } }
+@keyframes demo-caret { 50% { opacity: 0; } }
+@keyframes demo-press { 0% { transform: none; } 40% { transform: scale(0.94); filter: brightness(1.25); } 100% { transform: none; filter: none; } }
+@keyframes demo-choose { to { background: #EAF6FF; color: #003BD9; border-color: #00B2FC; } }
+@keyframes demo-fillin { from { opacity: 0; } to { opacity: 1; } }
+@keyframes demo-fill { from { width: 0; } to { width: 100%; } }
+@keyframes demo-count { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes demo-pointer { 0% { opacity: 0; transform: translate(70px, 40px); } 20% { opacity: 1; } 100% { opacity: 1; transform: translate(-2px, -6px); } }
+@keyframes demo-ripple { 0% { opacity: 0.9; transform: scale(0.3); } 100% { opacity: 0; transform: scale(2.2); } }
+.demo-in { animation: demo-in 0.45s ease-out both; }
+.demo-pop { animation: demo-pop 0.45s ease-out both; }
+.demo-type { max-width: 0; animation: demo-type 1.5s steps(19, end) 0.4s forwards; }
+.demo-caret { animation: demo-caret 0.9s step-end infinite; }
+.demo-press { animation: demo-press 0.35s ease-out both; animation-fill-mode: backwards; }
+.demo-choose { color: rgba(0, 36, 90, 0.6); border-color: rgba(0, 36, 90, 0.12); animation: demo-choose 0.25s ease-out forwards; }
+.demo-fillin { opacity: 0; animation: demo-fillin 0.35s ease-out forwards; }
+.demo-fill { animation: demo-fill linear both; }
+.demo-count { display: inline-block; animation: demo-count 0.5s ease-out 0.3s both; }
+.demo-pointer { opacity: 0; animation: demo-pointer 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.demo-ripple { opacity: 0; animation: demo-ripple 0.6s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .demo-in, .demo-pop, .demo-press, .demo-caret, .demo-count { animation: none; }
+  .demo-type { animation: none; max-width: 100%; }
+  .demo-fillin { animation: none; opacity: 1; }
+  .demo-choose { animation: none; background: #EAF6FF; color: #003BD9; border-color: #00B2FC; }
+  .demo-pointer, .demo-ripple { display: none; }
+}
