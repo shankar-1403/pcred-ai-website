@@ -107,6 +107,9 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     // Payment off: the record fetched for a Udyam number, shown in Business details until the
     // visitor answers the ownership question and opens the report
     const [fetched, setFetched] = useState(null);
+    // Payment on: the sealed preview for a Udyam number, fetched as soon as the number arrives so
+    // Business details fill in; Continue (after the ownership question) then goes to payment
+    const [fetchedPack, setFetchedPack] = useState(null);
     const abortRef = useRef(null);
     const requestSeq = useRef(0);
     const busy = useRef(false);
@@ -123,10 +126,10 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     };
 
     function openModal() {
-        // Payment and OTP off: a typed number is fetched first, before the ownership question
-        if (!PAYMENT_ENABLED && !OTP_ENABLED && method === 'number' && !fetched) {
+        // OTP off: a number is fetched first, before the ownership question (again if that failed)
+        if (!OTP_ENABLED && method === 'number' && !fetched && !fetchedPack) {
             setError({ message: '', reference: '' });
-            finish('');
+            finish('', { early: true });
             return;
         }
         if (!answered) {
@@ -138,6 +141,10 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         setError({ message: '', reference: '' });
         if (!PAYMENT_ENABLED && fetched) {
             openReport(fetched, 'udyam');
+            return;
+        }
+        if (fetchedPack) {
+            toPayment(fetchedPack);
             return;
         }
         if (!OTP_ENABLED) {
@@ -186,11 +193,12 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         }
         setValue(check.value);
         setFetched(null);
+        setFetchedPack(null);
         setStep('ready');
-        // Payment and OTP off: fetch the record now, so Business details fill in straight away.
+        // OTP off: fetch the record now, so Business details fill in straight away.
         // With OTP on, the record is fetched only after the mobile is verified.
-        if (!PAYMENT_ENABLED && !OTP_ENABLED) {
-            finish('', { method: 'number', udyam: check.value });
+        if (!OTP_ENABLED) {
+            finish('', { method: 'number', udyam: check.value, early: true });
             return;
         }
         // Opens straight away only when the ownership question is already answered
@@ -299,6 +307,14 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         onReport?.({ data, women, source });
     }
 
+    // Hands the fetched preview to the page for payment, with the ownership answer given now
+    function toPayment(pack) {
+        setModalOpen(false);
+        setStep('done');
+        setDoneMessage(`Details fetched: ${pack.preview.enterprise_name || pack.preview.udyam_number}`);
+        onVerified({ ...pack, phone: form.phone, women });
+    }
+
     // `next` carries the method and number when called in the same click that set them
     async function finish(proof, next = {}) {
         const how = next.method ?? method;
@@ -320,19 +336,25 @@ export default function UdyamVerification({ start, stage = 'start', women = null
             return;
         }
         if (payload?.ok && payload.preview && payload.sealed && payload.price) {
-            setModalOpen(false);
-            setStep('done');
-            setDoneMessage(`Details fetched: ${payload.preview.enterprise_name || payload.preview.udyam_number}`);
-            onVerified({
+            const pack = {
                 preview: payload.preview,
                 sealed: payload.sealed,
                 price: payload.price,
-                phone: form.phone,
-                women,
+                // What the scheme rules read, for the payment preview's scheme counts
+                ...(payload.match ? { match: payload.match } : {}),
                 source: how === 'pdf' ? 'cert' : 'udyam',
                 // The certificate's own details, so the Details card stays filled after a refresh
                 ...(how === 'pdf' ? { details: extracted } : {}),
-            });
+            };
+            // A Udyam number fetched on arrival: fill Business details and wait for the ownership
+            // answer and Continue before payment
+            if (how !== 'pdf' && next.early) {
+                setFetchedPack(pack);
+                if (payload.match)
+                    onRead?.(payload.match, 'udyam');
+                return;
+            }
+            toPayment(pack);
             return;
         }
         setError({
@@ -425,7 +447,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     }
     else if (step === 'ready') {
         body = (<>
-        <p className="uv-status__text">{method === 'pdf' || fetched ? `${method === 'pdf' ? 'We read your certificate.' : 'We fetched your Udyam record.'} Answer the ownership question above, then ${NEXT_STEP}.` : `Answer the ownership question above, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
+        <p className="uv-status__text">{method === 'pdf' || fetched || fetchedPack ? `${method === 'pdf' ? 'We read your certificate.' : 'We fetched your Udyam record.'} Answer the ownership question above, then ${NEXT_STEP}.` : `Answer the ownership question above, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
         <button type="button" className="btn uv-status__cta" onClick={openModal}>{CONTINUE_LABEL}</button>
       </>);
     }
