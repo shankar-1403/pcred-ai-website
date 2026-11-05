@@ -7,8 +7,8 @@ import { COMPANY } from '../lib/company'
 
 const GENERAL_TOPIC = 'General enquiry'
 
-// 912235120060 -> +91 22 3512 0060
-const displayNumber = `+${WHATSAPP_NUMBER.slice(0, 2)} ${WHATSAPP_NUMBER.slice(2, 4)} ${WHATSAPP_NUMBER.slice(4, 8)} ${WHATSAPP_NUMBER.slice(8)}`
+// 918655680340 -> +91 86556 80340
+const displayNumber = `+${WHATSAPP_NUMBER.slice(0, 2)} ${WHATSAPP_NUMBER.slice(2, 7)} ${WHATSAPP_NUMBER.slice(7)}`
 
 const CHECKLIST = [
   'The bundle or category you are interested in',
