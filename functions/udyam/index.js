@@ -4,11 +4,11 @@ import { defineSecret } from 'firebase-functions/params';
 import { handleVerifyRequest } from './src/handler.js';
 import { handleCheckoutRequest, handleCouponRequest, handleUnlockRequest } from './src/payments/handler.js';
 import { realtimeCouponLookup, realtimeCouponRedemption } from './src/payments/coupon.js';
-import { handleCertificateRequest, handleLeadRequest, handleOtpSendRequest, handleOtpVerifyRequest } from './src/intake/handler.js';
+import { handleCertificateRequest, handleEnquiryRequest, handleLeadRequest, handleOtpSendRequest, handleOtpVerifyRequest } from './src/intake/handler.js';
 import { readCashfreeConfig } from './src/cashfree/config.js';
 import { apiRoute } from './src/server/route.js';
 import { logEvent } from './src/server/log.js';
-import { deactivateExpiredLeads, realtimeLeadLookup, realtimeLeadStore } from './src/leads/store.js';
+import { deactivateExpiredLeads, realtimeEnquiryStore, realtimeLeadLookup, realtimeLeadStore } from './src/leads/store.js';
 // Firebase Hosting rewrites POST /api/udyam/verify to this function (see firebase.json).
 // Keep REGION in sync with the rewrite's "region".
 const REGION = 'asia-south1';
@@ -88,6 +88,7 @@ export const udyamVerify = onRequest({
         loadSmsConfig,
         saveLead: realtimeLeadStore(),
         findLead: realtimeLeadLookup(),
+        saveEnquiry: realtimeEnquiryStore(),
         findCoupon: realtimeCouponLookup(),
         redeemCoupon: realtimeCouponRedemption(),
     };
@@ -106,6 +107,8 @@ export const udyamVerify = onRequest({
                         ? await handleCertificateRequest(incoming, deps)
                         : route === 'lead'
                             ? await handleLeadRequest(incoming, deps)
+                            : route === 'enquiry'
+                            ? await handleEnquiryRequest(incoming, deps)
                             : await handleVerifyRequest(incoming, deps);
     res.status(result.status).set(result.headers);
     if (result.body === null)

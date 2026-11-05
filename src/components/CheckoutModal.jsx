@@ -1,27 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
 import { push, ref, serverTimestamp, set } from 'firebase/database'
 import { db } from '../lib/firebase'
-import { auth } from '../lib/firebaseAuth'
 import { formatPrice } from '../lib/cart'
 import { formatPhone, isValidEmail, isValidMobile, toE164 } from '../lib/enquiries'
 import { CHECKOUT_OTP_ENABLED as OTP_ENABLED } from '../../functions/udyam/src/udyam/features.js'
 
 const RESEND_SECONDS = 30
 
-const AUTH_ERRORS = {
-  'auth/invalid-phone-number': 'That mobile number does not look right. Check it and try again.',
-  'auth/too-many-requests': 'Too many attempts from this device. Please wait a while and try again.',
-  'auth/quota-exceeded': 'We cannot send more codes right now. Please try again later.',
-  'auth/invalid-verification-code': 'That code is not right. Check the SMS and try again.',
-  'auth/code-expired': 'That code has expired. Send a new one.',
-  'auth/captcha-check-failed': 'The security check failed. Please try again.',
-  'auth/operation-not-allowed': 'Mobile verification is not switched on yet. Please contact us on WhatsApp instead.',
-  'auth/billing-not-enabled': 'Mobile verification is not switched on yet. Please contact us on WhatsApp instead.',
-  'auth/network-request-failed': 'Could not reach the server. Check your connection and try again.',
+// The code is texted from PCREDV through the site's own server (DLT template for bundle enquiries),
+// and the server saves the enquiry only after the code is verified
+async function postJson(url, body) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' })
+  const payload = await res.json().catch(() => null)
+  if (!payload?.ok) throw new Error(payload?.error?.message || 'Something went wrong. Please try again.')
+  return payload
 }
 
-const describe = (error) => AUTH_ERRORS[error?.code] ?? 'Something went wrong. Please try again.'
+const describe = (error) => (error instanceof Error && error.message ? error.message : 'Something went wrong. Please try again.')
 
 const fieldShell =
   'flex items-center gap-3 rounded-2xl border-2 bg-[#F4F9FF] px-3.5 transition focus-within:border-[#00B2FC] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#00B2FC]/15'
@@ -41,13 +36,9 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(0)
-  const [recaptchaKey, setRecaptchaKey] = useState(0)
 
-  const recaptchaRef = useRef(null)
-  const verifierRef = useRef(null)
-  const confirmationRef = useRef(null)
-
-  useEffect(() => () => verifierRef.current?.clear(), [])
+  // The signed challenge from the last code sent; the server checks the code against it
+  const challengeRef = useRef('')
 
   useEffect(() => {
     if (secondsLeft <= 0) return undefined
@@ -81,11 +72,9 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
     onPlaced()
   }
 
-  // A fresh invisible reCAPTCHA per send: Firebase widgets cannot be reused after they expire
   const sendCode = async () => {
-    verifierRef.current?.clear()
-    verifierRef.current = new RecaptchaVerifier(auth, recaptchaRef.current, { size: 'invisible' })
-    confirmationRef.current = await signInWithPhoneNumber(auth, toE164(form.mobile), verifierRef.current)
+    const sent = await postJson('/api/udyam/otp/send', { phone: form.mobile, purpose: 'bundle' })
+    challengeRef.current = sent.challenge
     setSecondsLeft(RESEND_SECONDS)
   }
 
@@ -105,16 +94,12 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
       // OTP off: the enquiry is saved with the number as typed, marked unverified
       if (!OTP_ENABLED) {
         await saveEnquiry({ phoneNumber: toE164(form.mobile), uid: 'unverified' })
-      } else if (auth.currentUser?.phoneNumber === toE164(form.mobile)) {
-        // Already verified this number in this browser: no new code needed
-        await saveEnquiry(auth.currentUser)
       } else {
         await sendCode()
         setStep(1)
       }
     } catch (error) {
-      setMessage(error?.code ? describe(error) : 'Could not save your enquiry. Please try again.')
-      setRecaptchaKey((key) => key + 1)
+      setMessage(describe(error))
     }
     setBusy(false)
   }
@@ -128,10 +113,21 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
     setBusy(true)
     setMessage('')
     try {
-      const { user } = await confirmationRef.current.confirm(code)
-      await saveEnquiry(user)
+      const { proof } = await postJson('/api/udyam/otp/verify', { phone: form.mobile, otp: code, challenge: challengeRef.current })
+      await postJson('/api/udyam/enquiry', {
+        proof,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        items: order.items.map((item) => ({ id: item.id, name: item.name, suitName: item.suitName, price: item.price })),
+        subtotal: order.subtotal,
+        discountPercent: order.percent,
+        discount: order.discount,
+        total: order.total,
+      })
+      setStep(DONE)
+      onPlaced()
     } catch (error) {
-      setMessage(error?.code ? describe(error) : 'Your number is verified, but we could not save the enquiry. Please try again.')
+      setMessage(describe(error))
     }
     setBusy(false)
   }
@@ -234,7 +230,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
             <PrimaryButton busy={busy} busyLabel="Please wait…">
               {OTP_ENABLED ? 'Send OTP' : 'Place enquiry'}
             </PrimaryButton>
-            {OTP_ENABLED ? <p className="text-center text-xs text-[#00245A]/45">Protected by reCAPTCHA. Standard SMS rates may apply.</p> : null}
+            {OTP_ENABLED ? <p className="text-center text-xs text-[#00245A]/45">We text a 6-digit code to this number.</p> : null}
           </form>
         ) : null}
 
@@ -328,8 +324,6 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
           </div>
         ) : null}
 
-        {/* Invisible reCAPTCHA mounts here; the key gives each attempt a clean container */}
-        <div key={recaptchaKey} ref={recaptchaRef} />
       </div>
     </Overlay>
   )

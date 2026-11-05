@@ -7,7 +7,7 @@ import { sealRecord } from '../payments/seal.js';
 import { normalizeUdyamSuccess } from '../udyam/normalize.js';
 import { checkUdyamNumber } from '../udyam/validate.js';
 import { checkOtp, issueOtp, readProof } from './otp.js';
-import { sendFast2Sms } from './sms.js';
+import { BUNDLE_MESSAGE_ID, DLT_MESSAGE_ID, sendFast2Sms } from './sms.js';
 import { certificateBody } from './certificate.js';
 import { rememberLead, savedLeadRecord } from '../leads/store.js';
 import { OTP_ENABLED, PAYMENT_ENABLED } from '../udyam/features.js';
@@ -17,6 +17,7 @@ const otpSendLimiter = new RateLimiter(5, 20);
 const otpVerifyLimiter = new RateLimiter(8, 40);
 const certLimiter = new RateLimiter(10, 30);
 const leadLimiter = new RateLimiter(20, 60);
+const enquiryLimiter = new RateLimiter(10, 30);
 
 function corsHeaders(headers, allowed) {
     const origin = headers.get('origin');
@@ -74,11 +75,11 @@ function maskPhone(phone) {
 }
 
 /** Sends the code through Fast2SMS. The emulator (and OTP_DEV_ECHO=1) also returns it for local testing. */
-export async function deliverOtp(phone, otp, fetchImpl = fetch, sms = {}) {
+export async function deliverOtp(phone, otp, fetchImpl = fetch, sms = {}, messageId = DLT_MESSAGE_ID) {
     const echo = process.env.FUNCTIONS_EMULATOR === 'true' || process.env.OTP_DEV_ECHO === '1';
     const apiKey = (sms.apiKey || process.env.FAST2SMS_API_KEY || '').trim();
     if (apiKey) {
-        const sent = await sendFast2Sms({ apiKey, phone, otp, fetchImpl });
+        const sent = await sendFast2Sms({ apiKey, phone, otp, messageId, fetchImpl });
         if (!sent.ok)
             return sent;
     }
@@ -113,7 +114,9 @@ export async function handleOtpSendRequest(req, deps) {
     catch {
         sms = {};
     }
-    const sent = await deliverOtp(phone, issued.otp, deps.fetchImpl, sms);
+    // The bundle checkout sends its own approved template; the report sends the scheme one
+    const messageId = body.purpose === 'bundle' ? BUNDLE_MESSAGE_ID : DLT_MESSAGE_ID;
+    const sent = await deliverOtp(phone, issued.otp, deps.fetchImpl, sms, messageId);
     if (!sent.ok) {
         logEvent('error', 'udyam_otp', { outcome: 'error', reason: sent.reason, detail: sent.detail || '', phone: maskPhone(phone) });
         return failure('SERVICE_UNAVAILABLE', 'The verification code could not be sent. Please try again later.', 503);
@@ -229,4 +232,72 @@ export async function handleLeadRequest(req, deps) {
     if (!check.ok)
         return failure('INVALID_UDYAM', check.message, 400);
     return reply(200, { ok: true, cached: false });
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const text = (value, max) => (typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+const amount = (value) => (typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null);
+
+/**
+ * Saves a bundle checkout enquiry once the mobile is verified (the proof from /otp/verify).
+ * The browser cannot write a verified enquiry itself: only this server, after checking the proof.
+ */
+export async function handleEnquiryRequest(req, deps) {
+    const gated = begin(req, deps, 20_000, enquiryLimiter);
+    if (gated.done)
+        return gated.done;
+    const { reply, failure, body } = gated;
+    let secret;
+    try {
+        secret = deps.loadSealSecret();
+    }
+    catch {
+        secret = '';
+    }
+    if (!secret)
+        return failure('SERVICE_UNAVAILABLE', 'Your enquiry could not be saved. Please try again later.', 503);
+    const proof = readProof(typeof body.proof === 'string' ? body.proof : '', secret, deps.now?.() ?? Date.now());
+    if (!proof)
+        return failure('OTP_REQUIRED', 'Verify your mobile number again, then place the enquiry.', 401);
+    const name = text(body.name, 100);
+    const email = text(body.email, 200).toLowerCase();
+    if (!name)
+        return failure('BAD_REQUEST', 'Enter your name.', 400);
+    if (!EMAIL.test(email))
+        return failure('BAD_REQUEST', 'Enter a valid email address.', 400);
+    const items = (Array.isArray(body.items) ? body.items : []).slice(0, 50).map((item) => ({
+        id: text(item?.id, 120),
+        name: text(item?.name, 120),
+        suitName: text(item?.suitName, 120),
+        price: amount(item?.price),
+    }));
+    if (!items.length || items.some((item) => !item.name || item.price === null))
+        return failure('BAD_REQUEST', 'Your cart is empty. Add a bundle, then try again.', 400);
+    const subtotal = amount(body.subtotal);
+    const total = amount(body.total);
+    const discount = amount(body.discount) ?? 0;
+    const percent = amount(body.discountPercent) ?? 0;
+    if (subtotal === null || total === null || percent > 100)
+        return failure('BAD_REQUEST', 'Your cart could not be read. Please try again.', 400);
+    const enquiry = {
+        name,
+        email,
+        phone: `+91${proof.phone}`,
+        uid: 'otp-verified',
+        items,
+        subtotal,
+        discountPercent: percent,
+        discount,
+        total,
+        status: 'new',
+    };
+    try {
+        await deps.saveEnquiry(enquiry);
+    }
+    catch (e) {
+        logEvent('error', 'udyam_enquiry', { outcome: 'error', reason: 'save_failed', detail: e instanceof Error ? e.name : 'unknown' });
+        return failure('SERVICE_UNAVAILABLE', 'Your enquiry could not be saved. Please try again later.', 503);
+    }
+    logEvent('info', 'udyam_enquiry', { outcome: 'saved', phone: maskPhone(proof.phone), items: items.length });
+    return reply(200, { ok: true });
 }

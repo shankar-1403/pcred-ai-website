@@ -10,6 +10,8 @@ export function apiRoute(req) {
         return 'certificate';
     if (path.endsWith('/lead'))
         return 'lead';
+    if (path.endsWith('/enquiry'))
+        return 'enquiry';
     if (path.endsWith('/checkout'))
         return 'checkout';
     if (path.endsWith('/unlock'))

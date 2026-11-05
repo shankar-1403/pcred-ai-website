@@ -5,6 +5,8 @@ const FAST2SMS_URL = 'https://www.fast2sms.com/dev/bulkV2';
 // Fast2SMS knows that template by its own message ID.
 export const DLT_SENDER_ID = 'PCREDV';
 export const DLT_MESSAGE_ID = '230575';
+// Bundle checkout: template 1077147120108194663 ("Your OTP to confirm your PCRED bundle enquiry is {#var#}. ...")
+export const BUNDLE_MESSAGE_ID = '230579';
 
 function detailOf(body) {
     const raw = Array.isArray(body?.message) ? body.message.join(' ') : typeof body?.message === 'string' ? body.message : '';
@@ -12,7 +14,7 @@ function detailOf(body) {
 }
 
 /** Sends the 6-digit code through Fast2SMS's DLT route, using the approved PCREDV template. */
-export async function sendFast2Sms({ apiKey, phone, otp, fetchImpl = fetch }) {
+export async function sendFast2Sms({ apiKey, phone, otp, messageId = DLT_MESSAGE_ID, fetchImpl = fetch }) {
     let res;
     try {
         res = await fetchImpl(FAST2SMS_URL, {
@@ -24,7 +26,7 @@ export async function sendFast2Sms({ apiKey, phone, otp, fetchImpl = fetch }) {
             body: JSON.stringify({
                 route: 'dlt',
                 sender_id: DLT_SENDER_ID,
-                message: DLT_MESSAGE_ID,
+                message: messageId,
                 variables_values: otp,
                 numbers: phone,
                 flash: '0',

@@ -57,6 +57,13 @@
         }
       },
       {
+        "source": "/api/udyam/enquiry",
+        "function": {
+          "functionId": "udyamVerify",
+          "region": "asia-south1"
+        }
+      },
+      {
         "source": "/api/udyam/lead",
         "function": {
           "functionId": "udyamVerify",

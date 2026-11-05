@@ -52,6 +52,13 @@ export function leadDocument(record, extra = {}) {
     };
 }
 
+/** Saves a verified bundle checkout enquiry, where the CMS's Enquiries list reads it. */
+export function realtimeEnquiryStore() {
+    return async (enquiry) => {
+        await database().ref('enquiries').push({ ...jsonValue(enquiry), createdAt: ServerValue.TIMESTAMP });
+    };
+}
+
 /** Writes one lead per successful Udyam lookup. The Admin SDK bypasses client security rules. */
 export function realtimeLeadStore() {
     return async (lead) => {
