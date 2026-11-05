@@ -6,7 +6,14 @@
  * When false, the mobile number is collected but not verified. Turn it back on here, then
  * rebuild and deploy both: npm run build && firebase deploy --only functions:udyamVerify,hosting
  */
-export const OTP_ENABLED = false;
+export const OTP_ENABLED = true;
+
+/**
+ * CHECKOUT_OTP_ENABLED: the bundle checkout's own mobile code (Firebase phone sign-in today). Off until
+ * its DLT template ("Your OTP to confirm your PCRED bundle enquiry is ...") is approved and checkout
+ * is moved to Fast2SMS; with it off, checkout saves the enquiry with the number as typed.
+ */
+export const CHECKOUT_OTP_ENABLED = false;
 
 /**
  * PAYMENT_ENABLED: when true, the fetched record is sealed and the report opens only after a

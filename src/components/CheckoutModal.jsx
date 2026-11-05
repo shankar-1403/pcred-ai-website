@@ -5,7 +5,7 @@ import { db } from '../lib/firebase'
 import { auth } from '../lib/firebaseAuth'
 import { formatPrice } from '../lib/cart'
 import { formatPhone, isValidEmail, isValidMobile, toE164 } from '../lib/enquiries'
-import { OTP_ENABLED } from '../../functions/udyam/src/udyam/features.js'
+import { CHECKOUT_OTP_ENABLED as OTP_ENABLED } from '../../functions/udyam/src/udyam/features.js'
 
 const RESEND_SECONDS = 30
 
@@ -26,7 +26,7 @@ const describe = (error) => AUTH_ERRORS[error?.code] ?? 'Something went wrong. P
 const fieldShell =
   'flex items-center gap-3 rounded-2xl border-2 bg-[#F4F9FF] px-3.5 transition focus-within:border-[#00B2FC] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#00B2FC]/15'
 
-// With mobile OTP switched off (features.js) there is no code step: details, then done
+// With checkout OTP switched off (CHECKOUT_OTP_ENABLED in features.js) there is no code step: details, then done
 const STEPS = OTP_ENABLED ? ['Your details', 'Verify mobile', 'Done'] : ['Your details', 'Done']
 const DONE = STEPS.length - 1
 
