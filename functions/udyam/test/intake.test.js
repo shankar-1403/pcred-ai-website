@@ -85,7 +85,7 @@ describe('mobile OTP', () => {
         const body = JSON.parse(calls[0].init.body);
         expect(calls[0].url).toBe('https://www.fast2sms.com/dev/bulkV2');
         expect(calls[0].init.headers.authorization).toBe('fast2sms-test-key');
-        expect(body).toEqual({ route: 'otp', variables_values: expect.stringMatching(/^\d{6}$/), numbers: '9876543210', flash: '0' });
+        expect(body).toEqual({ route: 'dlt', sender_id: 'PCREDV', message: '230575', variables_values: expect.stringMatching(/^\d{6}$/), numbers: '9876543210', flash: '0' });
         const verified = await handleOtpVerifyRequest(request('/api/udyam/otp/verify', {
             phone: '9876543210',
             otp: body.variables_values,
