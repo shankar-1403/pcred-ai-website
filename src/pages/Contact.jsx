@@ -119,7 +119,7 @@ function Contact() {
             </div>
 
             <div className="rounded-[2rem] border border-white bg-white/80 p-6 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur sm:p-8">
-              <p className="font-mono text-[10px] tracking-[0.22em] text-[#003BD9] uppercase">Helps us reply faster</p>
+              <p className="font-mono text-[10px] tracking-[0.22em] text-[#6D28D9] uppercase">Helps us reply faster</p>
               <ul className="mt-4 space-y-3">
                 {CHECKLIST.map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-[#00245A]/75">
@@ -136,7 +136,7 @@ function Contact() {
 
             {/* The registered business behind the site, with every way to reach it */}
             <div className="rounded-[2rem] border border-white bg-white/80 p-6 shadow-[0_24px_50px_-36px_rgba(0,36,90,0.5)] backdrop-blur md:col-span-2 sm:p-8">
-              <p className="font-mono text-[10px] tracking-[0.22em] text-[#003BD9] uppercase">Company details</p>
+              <p className="font-mono text-[10px] tracking-[0.22em] text-[#0F766E] uppercase">Company details</p>
               <p className="mt-4 text-sm font-semibold">{COMPANY.name}</p>
               <dl className="mt-3 space-y-3 text-sm text-[#00245A]/75">
                 <div>

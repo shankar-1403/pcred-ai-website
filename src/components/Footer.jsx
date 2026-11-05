@@ -47,7 +47,7 @@ function Footer() {
           </div>
 
           <div>
-            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Explore</p>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#C4B5FD] uppercase">Explore</p>
             <ul className="mt-5 space-y-3 text-sm">
               {explore.map((item) => (
                 <li key={item.label}>
@@ -60,7 +60,7 @@ function Footer() {
           </div>
 
           <div>
-            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Categories</p>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#5EEAD4] uppercase">Categories</p>
             <ul className="mt-5 space-y-3 text-sm">
               {loading ? (
                 <li aria-hidden="true" className="h-4 w-32 animate-pulse rounded bg-white/10" />
@@ -89,7 +89,7 @@ function Footer() {
           </div>
 
           <div>
-            <p className="font-mono text-[11px] tracking-[0.22em] text-[#00B2FC] uppercase">Contact</p>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-[#FCD34D] uppercase">Contact</p>
             <ul className="mt-5 space-y-3 text-sm">
               <li>
                 <a

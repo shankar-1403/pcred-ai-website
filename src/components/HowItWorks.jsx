@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { tone } from '../lib/tones'
 
 // From picking a bundle to receiving the report. Edit the wording here.
 const STEPS = [
@@ -264,7 +265,7 @@ function HowItWorks() {
                 <span
                   className={`relative z-10 grid h-14 w-14 shrink-0 place-items-center rounded-2xl border transition duration-500 ${
                     on
-                      ? 'border-transparent bg-gradient-to-br from-[#00B2FC] to-[#003BD9] text-white shadow-[0_0_0_6px_rgba(0,178,252,0.12),0_18px_36px_-12px_rgba(0,178,252,0.8)]'
+                      ? `border-transparent bg-gradient-to-br text-white ${tone(index).node}`
                       : 'border-white/15 bg-[#0A2E6B]/80 text-white/35 backdrop-blur'
                   } ${current ? 'scale-110' : ''}`}
                 >

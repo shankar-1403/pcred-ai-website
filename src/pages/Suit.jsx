@@ -9,6 +9,7 @@ import { useBundlePreviews } from '../lib/bundlePreviews'
 import HowItWorks from '../components/HowItWorks'
 import SuitCard from '../components/SuitCard'
 import { useSuitImages } from '../lib/suitImages'
+import { tone } from '../lib/tones'
 
 function ArrowIcon({ className = 'h-4 w-4' }) {
   return (
@@ -159,7 +160,7 @@ function BundleProducts({ products, added = false }) {
           >
             <span
               aria-hidden="true"
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-[#003BD9] shadow-[0_6px_14px_-8px_rgba(0,36,90,0.45)] ring-1 ring-[#00245A]/6"
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white ${added ? 'text-[#003BD9]' : tone(index).text} shadow-[0_6px_14px_-8px_rgba(0,36,90,0.45)] ring-1 ring-[#00245A]/6`}
             >
               <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
                 <path d="M6 2.5h5.5l3.5 3.5v11.5H6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -206,7 +207,7 @@ function ProductCard({ suit, product, index, previews, previewsLoading, large = 
           <h2 className={`font-semibold tracking-tight ${large ? 'text-xl sm:text-3xl' : 'text-lg sm:text-xl'} ${added ? 'text-white' : ''}`}>{product.name}</h2>
           <span
             aria-hidden="true"
-            className={`bg-gradient-to-b bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent ${added ? 'from-white/70 to-white/0' : 'from-[#00B2FC]/50 to-[#00B2FC]/0'}`}
+            className={`bg-gradient-to-b bg-clip-text text-3xl leading-none font-semibold tracking-[-0.06em] text-transparent ${added ? 'from-white/70 to-white/0' : tone(index).soft}`}
           >
             {String(index + 1).padStart(2, '0')}
           </span>

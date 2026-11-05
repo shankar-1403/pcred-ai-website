@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router'
+import { tone } from '../lib/tones'
 
 // Shared layout for About and the legal pages (Privacy, Terms, Refund, Shipping): title, date, and numbered sections
 function LegalPage({ eyebrow, title, updated, intro, sections }) {
@@ -30,7 +31,7 @@ function LegalPage({ eyebrow, title, updated, intro, sections }) {
           {sections.map((section, index) => (
             <section key={section.heading} className="rounded-[1.5rem] border border-white bg-white/85 p-6 shadow-[0_24px_50px_-40px_rgba(0,36,90,0.5)] backdrop-blur sm:p-8">
               <h2 className="flex items-baseline gap-3 text-lg font-semibold tracking-tight sm:text-xl">
-                <span className="font-mono text-xs text-[#00B2FC]">{String(index + 1).padStart(2, '0')}</span>
+                <span className={`font-mono text-xs ${tone(index).text}`}>{String(index + 1).padStart(2, '0')}</span>
                 {section.heading}
               </h2>
               <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-[#00245A]/75">
