@@ -1210,7 +1210,7 @@ function renderReport() {
           <section><h5>Check before applying</h5><ul>${r.checks.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
           <section><h5>How to apply</h5><ul class="links">${apply.map(([l, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a></li>`).join('')}</ul><h5 style="margin-top:14px">Documents</h5><p>${esc(s.docs)}</p></section>
         </div>
-        <p class="more__status"><b>Status:</b> ${esc(s.prog.note)} Source: ${s.src.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join(', ')}.</p>
+        <p class="more__status"><b>Status:</b> ${esc(s.prog.note)} Source: ${s.src.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join(', ')}. Checked ${esc(s.checked || VERIFIED)}.</p>
       </details>
     </article>`;
   };
@@ -1776,7 +1776,7 @@ async function buildPdf() {
     label('How to apply'); for (const [l, u] of (s.applyFn ? s.applyFn(p) : s.apply)) linkLine(l, u);
     y += 1;
     para('Documents: ' + s.docs, { size: 8.6, color: C.ink2, after: 1 });
-    para(`Status: ${s.prog.note} Source: ${s.src.map(([l, u]) => `${l} (${u})`).join('; ')}.`, { size: 7.6, color: C.ink3, after: 2.4 });
+    para(`Status: ${s.prog.note} Source: ${s.src.map(([l, u]) => `${l} (${u})`).join('; ')}. Checked ${s.checked || VERIFIED}.`, { size: 7.6, color: C.ink3, after: 2.4 });
     rule(); y += 1;
   };
   // One block per state: the main address's state, then each other state with a unit
