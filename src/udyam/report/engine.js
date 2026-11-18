@@ -1700,7 +1700,7 @@ async function buildPdf() {
   doc.addImage(IMG.dark, 'PNG', M, 13, 46, 46 * BRAND.ratio, 'logoDark', 'FAST');
   const eb = 'MSME SCHEME ELIGIBILITY REPORT';
   font(6.8, 'bold', C.steel); doc.text(eb, PW - M - spaced(eb, 0.55), 17.5, { charSpace: 0.55 });
-  font(8, 'normal', C.steel); doc.text(pdfSafe(`Generated ${today}  |  Rules checked ${checkedText()}`), PW - M, 23, { align: 'right' });
+  font(8, 'normal', C.steel); doc.text(pdfSafe(`Generated ${today}`), PW - M, 23, { align: 'right' });
   const fullName = pdfSafe(p.name || 'Your business');
   let ns = 21; font(ns, 'bold', C.white);
   while (ns > 13 && doc.getTextWidth(fullName) > CW) { ns -= 1; font(ns, 'bold', C.white); }
