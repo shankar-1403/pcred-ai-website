@@ -1210,7 +1210,7 @@ function renderReport() {
           <section><h5>Check before applying</h5><ul>${r.checks.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></section>
           <section><h5>How to apply</h5><ul class="links">${apply.map(([l, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a></li>`).join('')}</ul><h5 style="margin-top:14px">Documents</h5><p>${esc(s.docs)}</p></section>
         </div>
-        <p class="more__status"><b>Status:</b> ${esc(s.prog.note)} Source: ${s.src.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join(', ')}. Checked ${esc(s.checked || VERIFIED)}.</p>
+        <p class="more__status"><b>Status:</b> ${esc(s.prog.note)} Source: ${s.src.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join(', ')}.</p>
       </details>
     </article>`;
   };
@@ -1284,7 +1284,7 @@ function renderReport() {
       ${R.watch.length ? `<section class="group"><div class="group__head"><h3>On the horizon</h3><span class="count">${R.watch.length}</span><p>Announced, closed or awaiting notification. Not open to applications now.</p></div><ul class="watch">${R.watch.map((w) => `<li><strong>${esc(w.name)}</strong><span class="prog prog--renewal">${esc(w.status)}</span><p>${esc(w.text)}</p>${w.src ? `<a href="${esc(w.src[1])}" target="_blank" rel="noopener">${esc(w.src[0])}</a>` : ''}</li>`).join('')}</ul></section>` : ''}
       ${fold('Not a fit', R.nofit, false)}
       ${R.hidden.length || state.showAll ? `<div class="hiddenby">${state.showAll ? '<span>Showing every scheme, including ones outside your goals.</span>' : `<span>${c.goals.size ? `Not shown because they are outside your goals${hs.group ? ' or need a group of units' : ''}` : `Shown when you pick the matching goal${hs.group ? ', or for groups of units' : ''}`}: ${esc(hs.parts.join(', '))}.</span>`}<button class="btn btn--ghost btn--sm" type="button" id="toggle-all">${state.showAll ? 'Match my goals only' : 'Show all schemes'}</button></div>` : ''}
-      <p class="fine">This report is a guide based on your Udyam record and answers. The bank, state department or implementing agency makes the final decision on eligibility. Central scheme rules were checked against official sources on ${esc(VERIFIED)}; state, sector, export and startup data on ${esc(CHECKED)}. Items marked “Secondary source” or “Not verified” rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change.</p>
+      <p class="fine">This report is a guide based on your Udyam record and answers. The bank, state department or implementing agency makes the final decision on eligibility. Items marked “Secondary source” or “Not verified” rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change.</p>
     </div>`;
 
   $('#dl').addEventListener('click', onDownload);
@@ -1776,7 +1776,7 @@ async function buildPdf() {
     label('How to apply'); for (const [l, u] of (s.applyFn ? s.applyFn(p) : s.apply)) linkLine(l, u);
     y += 1;
     para('Documents: ' + s.docs, { size: 8.6, color: C.ink2, after: 1 });
-    para(`Status: ${s.prog.note} Source: ${s.src.map(([l, u]) => `${l} (${u})`).join('; ')}. Checked ${s.checked || VERIFIED}.`, { size: 7.6, color: C.ink3, after: 2.4 });
+    para(`Status: ${s.prog.note} Source: ${s.src.map(([l, u]) => `${l} (${u})`).join('; ')}.`, { size: 7.6, color: C.ink3, after: 2.4 });
     rule(); y += 1;
   };
   // One block per state: the main address's state, then each other state with a unit
@@ -1836,7 +1836,7 @@ async function buildPdf() {
   if (R.hidden.length) { const hs = hiddenSummary(R.hidden); para(`${R.c.goals.size ? `Left out because they are outside the goals chosen${hs.group ? ' or need a group of units' : ''}` : `Left out until the matching goal is chosen${hs.group ? ', or because they need a group of units' : ''}`}: ${hs.parts.join(', ')}.`, { size: 8.6, color: C.ink3, after: 2 }); }
 
   y += 4;
-  para(`This report is a guide based on the Udyam record and the answers given. The bank, state department or implementing agency makes the final decision on eligibility. Central scheme rules were checked against official sources on ${VERIFIED}; state, sector, export and startup data on ${CHECKED}. Items marked 'Secondary source' or 'Not verified' rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change. An independent tool by PCRED (${COMPANY.website}), owned and operated by ${COMPANY.name}; not affiliated with the Ministry of MSME or any government body.`, { size: 7.8, color: C.ink3 });
+  para(`This report is a guide based on the Udyam record and the answers given. The bank, state department or implementing agency makes the final decision on eligibility. Items marked 'Secondary source' or 'Not verified' rely on summaries rather than the official text. Several schemes are awaiting renewal, and amounts can change. An independent tool by PCRED (${COMPANY.website}), owned and operated by ${COMPANY.name}; not affiliated with the Ministry of MSME or any government body.`, { size: 7.8, color: C.ink3 });
 
   // Running header and footer
   const n = doc.getNumberOfPages();
