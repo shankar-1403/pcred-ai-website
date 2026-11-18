@@ -801,11 +801,6 @@ const TODAY = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
 const iso = (s) => { const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(String(s || '')); return m ? new Date(+m[1], (+m[2] || 1) - 1, +(m[3] || 1)) : null; };
 const fmtD = (d) => (d ? `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}` : '');
 const fmtM = (d) => (d ? `${MON[d.getMonth()]} ${d.getFullYear()}` : '');
-function checkedText() {
-  if (VERIFIED === CHECKED) return CHECKED;
-  const a = VERIFIED.split(' '), b = CHECKED.split(' ');
-  return a[1] === b[1] && a[2] === b[2] ? `${a[0]}–${CHECKED}` : `${VERIFIED} and ${CHECKED}`;
-}
 GOALS.push(['startup', 'Startup (DPIIT) benefits']);
 
 const ST_BY_NAME = new Map(STATE_DATA.states.map((s) => [s.state, s]));
@@ -1096,7 +1091,6 @@ function hiddenSummary(hidden) {
   return { parts, group: by.has('group') };
 }
 
-{ const v = document.querySelector('.verified'); if (v) v.innerHTML = '<i></i>Rules checked ' + esc(checkedText()); }
 
 /* --------------------------------------------------------- evaluation */
 function evaluate() {
