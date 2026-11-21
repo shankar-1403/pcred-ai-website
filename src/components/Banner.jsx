@@ -179,7 +179,7 @@ function Banner() {
                         type="button"
                         aria-pressed={mode === item.id}
                         onClick={() => selectMode(item.id)}
-                        className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-2 px-3 py-2.5 text-sm whitespace-nowrap font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
+                        className={`flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-full border-2 px-1.5 py-2.5 text-xs whitespace-nowrap max-[359px]:px-1 max-[359px]:text-[11px] min-[380px]:gap-1.5 min-[380px]:px-2 min-[380px]:text-[13px] sm:gap-2 sm:px-3 sm:text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B2FC] ${
                           mode === item.id
                             ? 'border-transparent bg-gradient-to-r from-[#00B2FC] to-[#003BD9] bg-origin-border text-white shadow-[0_12px_24px_-10px_rgba(0,59,217,0.7)]'
                             : 'border-[#00245A]/10 bg-white/60 text-[#00245A]/55 hover:border-[#00B2FC]/50 hover:text-[#00245A]'
@@ -187,7 +187,7 @@ function Banner() {
                       >
                         {item.label}
                         <span
-                          className={`hidden rounded-full px-2 py-0.5 font-mono text-xs font-bold sm:inline ${
+                          className={`inline rounded-full px-1 py-0.5 font-mono text-[10px] font-bold min-[380px]:px-1.5 min-[380px]:text-[11px] sm:px-2 sm:text-xs ${
                             mode === item.id ? 'bg-[#FFD84D] text-[#003BD9]' : 'bg-white/70 text-[#00245A]/50'
                           }`}
                         >
