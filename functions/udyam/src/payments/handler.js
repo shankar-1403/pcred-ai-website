@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { isReportPrice, withGst } from './price.js';
+import { CERTIFICATE_PRICE_INR, isReportPrice, withGst } from './price.js';
+import { cleanEmail, cleanName } from '../leads/store.js';
 import { openRecord, sealHash, sealTagMatches } from './seal.js';
 import { createPaymentOrder, readPaymentOrder } from './gateway.js';
 import { COUPON_CODE, MIN_PAYABLE_INR, applyCoupon, cleanCouponCode } from './coupon.js';
@@ -93,6 +94,33 @@ function loadPg(deps, failure) {
     return { pg, sealSecret };
 }
 
+/** What the CMS's Reports list shows for one order: who, which business, the price and any coupon. */
+export function orderDocument(record, price, contact = {}) {
+    const phone = typeof contact.phone === 'string' ? contact.phone.replace(/\s+/g, '') : '';
+    const str = (v) => (typeof v === 'string' ? v : '');
+    return {
+        source: price === CERTIFICATE_PRICE_INR ? 'certificate' : 'udyam_number',
+        name: cleanName(contact.name),
+        email: cleanEmail(contact.email),
+        phone: PHONE.test(phone) ? phone : '',
+        udyam_number: str(record?.udyam_number),
+        enterprise_name: str(record?.enterprise_name),
+        price,
+    };
+}
+
+/** Saves or updates the order record. A database error never blocks the visitor's payment or report. */
+async function recordOrder(action, orderId, data) {
+    if (typeof action !== 'function')
+        return;
+    try {
+        await action(orderId, data);
+    }
+    catch (e) {
+        logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'order_save_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
+    }
+}
+
 function newOrderId() {
     return `pcred_pay_${randomBytes(8).toString('hex')}`;
 }
@@ -174,6 +202,10 @@ export async function handleCheckoutRequest(req, deps) {
             logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_redeem_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
             return failure('SERVICE_UNAVAILABLE', 'The coupon could not be applied. Please try again.', 503);
         }
+        await recordOrder(deps.saveOrder, orderId, {
+            ...orderDocument(opened.record, opened.amount, { ...body, phone: entered }),
+            status: 'free', coupon: priced.code, discount: priced.discount, total: 0, amount_paid: 0,
+        });
         logEvent('info', 'udyam_pay', { outcome: 'unlocked_free', order_id: orderId, coupon: priced.code });
         return reply(200, { ok: true, free: true, data: opened.record, price: { amount: 0, currency: 'INR' } });
     }
@@ -194,6 +226,10 @@ export async function handleCheckoutRequest(req, deps) {
         const reason = `${created.code}: ${created.message}`.replace(/\s+/g, ' ').slice(0, 160);
         return failure('SERVICE_UNAVAILABLE', `Payment could not be started. Please try again later. (Cashfree ${reason})`, created.httpStatus === 504 ? 504 : 503);
     }
+    await recordOrder(deps.saveOrder, orderId, {
+        ...orderDocument(opened.record, opened.amount, { ...body, phone: entered }),
+        status: 'pending', coupon: priced.code, discount: priced.discount, total: due.total,
+    });
     logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId, ...(priced.code ? { coupon: priced.code } : {}) });
     return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: due.total, base: priced.amount, gst: due.gst, currency: 'INR' } });
 }
@@ -248,6 +284,9 @@ export async function handleUnlockRequest(req, deps) {
             logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_redeem_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
         }
     }
+    // Business and price again, so the row is complete even if saving it at checkout failed
+    const { name: _n, email: _e, phone: _p, ...business } = orderDocument(opened.record, opened.amount);
+    await recordOrder(deps.markOrderPaid, orderId, { ...business, status: 'paid', amount_paid: amount, ...(coupon ? { coupon } : {}) });
     logEvent('info', 'udyam_pay', { outcome: 'unlocked', order_id: orderId });
     return reply(200, { ok: true, data: opened.record });
 }

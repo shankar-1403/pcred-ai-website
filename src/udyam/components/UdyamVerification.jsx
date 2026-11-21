@@ -312,7 +312,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         setModalOpen(false);
         setStep('done');
         setDoneMessage(`Details fetched: ${pack.preview.enterprise_name || pack.preview.udyam_number}`);
-        onVerified({ ...pack, phone: form.phone, women });
+        onVerified({ ...pack, phone: form.phone, name: form.name.trim(), email: form.email.trim(), women });
     }
 
     // `next` carries the method and number when called in the same click that set them

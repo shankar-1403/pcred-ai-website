@@ -52,6 +52,21 @@ export function leadDocument(record, extra = {}) {
     };
 }
 
+/**
+ * Scheme report orders for the CMS's Reports list, keyed by the payment order id: saved when
+ * payment starts (or a 100% coupon opens the report) and marked paid once Cashfree confirms it.
+ */
+export function realtimeOrderStore() {
+    return {
+        save: async (orderId, order) => {
+            await database().ref(`orders/${orderId}`).set({ ...jsonValue(order), created_at: ServerValue.TIMESTAMP });
+        },
+        markPaid: async (orderId, fields) => {
+            await database().ref(`orders/${orderId}`).update({ ...jsonValue(fields), paid_at: ServerValue.TIMESTAMP });
+        },
+    };
+}
+
 /** Saves a verified bundle checkout enquiry, where the CMS's Enquiries list reads it. */
 export function realtimeEnquiryStore() {
     return async (enquiry) => {

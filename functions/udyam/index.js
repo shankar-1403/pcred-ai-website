@@ -8,7 +8,7 @@ import { handleCertificateRequest, handleEnquiryRequest, handleLeadRequest, hand
 import { readCashfreeConfig } from './src/cashfree/config.js';
 import { apiRoute } from './src/server/route.js';
 import { logEvent } from './src/server/log.js';
-import { deactivateExpiredLeads, realtimeEnquiryStore, realtimeLeadLookup, realtimeLeadStore } from './src/leads/store.js';
+import { deactivateExpiredLeads, realtimeEnquiryStore, realtimeOrderStore, realtimeLeadLookup, realtimeLeadStore } from './src/leads/store.js';
 // Firebase Hosting rewrites POST /api/udyam/verify to this function (see firebase.json).
 // Keep REGION in sync with the rewrite's "region".
 const REGION = 'asia-south1';
@@ -27,6 +27,7 @@ const CASHFREE_PG_CLIENT_SECRET = defineSecret('CASHFREE_PG_CLIENT_SECRET');
 // Fast2SMS Dev API key (https://www.fast2sms.com → Dev API). Used only to text the OTP.
 //   firebase functions:secrets:set FAST2SMS_API_KEY
 const FAST2SMS_API_KEY = defineSecret('FAST2SMS_API_KEY');
+const orderStore = realtimeOrderStore();
 let config = null;
 function loadConfig() {
     if (!config) {
@@ -89,6 +90,8 @@ export const udyamVerify = onRequest({
         saveLead: realtimeLeadStore(),
         findLead: realtimeLeadLookup(),
         saveEnquiry: realtimeEnquiryStore(),
+        saveOrder: orderStore.save,
+        markOrderPaid: orderStore.markPaid,
         findCoupon: realtimeCouponLookup(),
         redeemCoupon: realtimeCouponRedemption(),
     };

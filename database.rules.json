@@ -219,8 +219,13 @@
       ".read": true,
       ".write": false
     },
+    "orders": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".write": false,
+      ".indexOn": ["created_at"]
+    },
     "leads": {
-      ".read": false,
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
       ".write": false,
       ".indexOn": [
         "udyam_number",

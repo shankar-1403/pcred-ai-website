@@ -12,6 +12,7 @@ import DiscountsPanel from '../components/admin/DiscountsPanel'
 import CouponsPanel from '../components/admin/CouponsPanel'
 import EnquiriesPanel from '../components/admin/EnquiriesPanel'
 import SchemesPanel from '../components/admin/SchemesPanel'
+import ReportsPanel from '../components/admin/ReportsPanel'
 import { useDiscounts } from '../lib/discounts'
 import { Button, Notice } from '../components/admin/ui'
 
@@ -28,6 +29,7 @@ const SECTIONS = [
   { id: 'discounts', label: 'Discounts', to: '/admin/discounts' },
   { id: 'coupons', label: 'Coupons', to: '/admin/coupons' },
   { id: 'enquiries', label: 'Enquiries', to: '/admin/enquiries' },
+  { id: 'reports', label: 'Reports', to: '/admin/reports' },
   { id: 'schemes', label: 'Schemes', to: '/admin/schemes' },
 ]
 
@@ -312,6 +314,11 @@ function EnquiriesPage() {
   return <EnquiriesPanel />
 }
 
+function ReportsPage() {
+  usePageTitle('Reports')
+  return <ReportsPanel />
+}
+
 function SchemesPage() {
   usePageTitle('Schemes')
   return <SchemesPanel />
@@ -339,6 +346,7 @@ function Dashboard() {
       <Route path="discounts" element={<DiscountsPage />} />
       <Route path="coupons" element={<CouponsPage />} />
       <Route path="enquiries" element={<EnquiriesPage />} />
+      <Route path="reports" element={<ReportsPage />} />
       <Route path="schemes" element={<SchemesPage />} />
       <Route path="*" element={<Navigate to="/admin/categories" replace />} />
     </Routes>

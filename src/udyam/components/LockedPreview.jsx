@@ -121,7 +121,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
         setPhase('paying');
         setMessage('');
         try {
-            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, ...(/^[6-9]\d{9}$/.test(phone) ? { phone } : {}), ...(coupon ? { coupon: coupon.code } : {}) });
+            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, ...(/^[6-9]\d{9}$/.test(phone) ? { phone } : {}), ...(pack.name ? { name: pack.name } : {}), ...(pack.email ? { email: pack.email } : {}), ...(coupon ? { coupon: coupon.code } : {}) });
             if (started.payload?.ok && started.payload.free && started.payload.data) {
                 setPhase('idle');
                 onPaid(started.payload.data);
