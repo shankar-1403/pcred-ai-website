@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { REPORT_PARAMS, metaFields, track, trackPaidOrder } from '../../lib/metaPixel';
 import { GST_RATE, withGst } from '../../../functions/udyam/src/udyam/prices.js';
 
 const SDK_URL = 'https://sdk.cashfree.com/js/v3/cashfree.js';
@@ -121,7 +122,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
         setPhase('paying');
         setMessage('');
         try {
-            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, ...(/^[6-9]\d{9}$/.test(phone) ? { phone } : {}), ...(pack.name ? { name: pack.name } : {}), ...(pack.email ? { email: pack.email } : {}), ...(coupon ? { coupon: coupon.code } : {}) });
+            const started = await postJson('/api/udyam/checkout', { sealed: pack.sealed, ...(/^[6-9]\d{9}$/.test(phone) ? { phone } : {}), ...(pack.name ? { name: pack.name } : {}), ...(pack.email ? { email: pack.email } : {}), ...(coupon ? { coupon: coupon.code } : {}), meta: metaFields() });
             if (started.payload?.ok && started.payload.free && started.payload.data) {
                 setPhase('idle');
                 onPaid(started.payload.data);
@@ -132,6 +133,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
                 setMessage(started.payload?.error?.message || 'Payment could not be started. Please try again.');
                 return;
             }
+            track('InitiateCheckout', { ...REPORT_PARAMS, value: started.payload.price?.amount, currency: 'INR', num_items: 1 }, `ic_${started.payload.order_id}`);
             const Cashfree = await loadCashfree();
             const cashfree = Cashfree({ mode: 'production' });
             const result = await cashfree.checkout({
@@ -145,8 +147,9 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
             }
             if (result?.redirect)
                 return;
-            const opened = await postJson('/api/udyam/unlock', { order_id: started.payload.order_id, sealed: pack.sealed });
+            const opened = await postJson('/api/udyam/unlock', { order_id: started.payload.order_id, sealed: pack.sealed, meta: metaFields() });
             if (opened.payload?.ok && opened.payload.data) {
+                trackPaidOrder(opened.payload.payment);
                 setPhase('idle');
                 onPaid(opened.payload.data);
                 return;
@@ -231,9 +234,11 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
 
 /** Called after Cashfree redirects back to this site with ?order_id=. */
 export async function unlockPaidOrder(orderId, sealed) {
-    const opened = await postJson('/api/udyam/unlock', { order_id: orderId, sealed });
-    if (opened.payload?.ok && opened.payload.data)
+    const opened = await postJson('/api/udyam/unlock', { order_id: orderId, sealed, meta: metaFields() });
+    if (opened.payload?.ok && opened.payload.data) {
+        trackPaidOrder(opened.payload.payment);
         return opened.payload.data;
+    }
     const error = new Error(opened.payload?.error?.message || 'Payment could not be confirmed.');
     error.code = opened.payload?.error?.code || 'UNLOCK_FAILED';
     throw error;

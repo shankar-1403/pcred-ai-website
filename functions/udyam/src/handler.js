@@ -10,6 +10,18 @@ import { sealRecord } from './payments/seal.js';
 import { readProof } from './intake/otp.js';
 import { OTP_ENABLED, PAYMENT_ENABLED } from './udyam/features.js';
 import { rememberLead, savedLeadRecord } from './leads/store.js';
+import { REPORT_CONTENT, metaContext, newEventId, sendMetaEvents } from './meta/capi.js';
+/** Meta ViewContent for the payment preview, with the event_id the browser Pixel uses. */
+export async function trackPreview(req, deps, body, phone, price) {
+    const ctx = metaContext(body, req.headers);
+    await sendMetaEvents(deps, req.headers, [{
+        name: 'ViewContent',
+        eventId: ctx.eventId || newEventId('vc'),
+        ctx,
+        user: { name: body.name, email: body.email, phone },
+        custom: { ...REPORT_CONTENT, value: price, currency: 'INR' },
+    }]);
+}
 export const MAX_BODY_BYTES = 4096;
 // Identical numbers submitted at the same moment share one Cashfree call (each call is billed).
 const inflight = new Map();
@@ -73,6 +85,7 @@ export async function handleVerifyRequest(req, deps) {
                 return failure('SERVICE_UNAVAILABLE', USER_MESSAGES.SERVICE_UNAVAILABLE, 503);
             }
             logEvent('info', 'udyam_verify', { outcome: 'saved_lead', udyam: maskUdyamNumber(check.value) });
+            await trackPreview(req, deps, body, typeof body.phone === 'string' ? body.phone : '', UDYAM_NUMBER_PRICE_INR);
             return reply(200, {
                 ok: true,
                 preview: publicPreview(saved.record),
@@ -114,6 +127,7 @@ export async function handleVerifyRequest(req, deps) {
             });
             if (!(deps.paymentEnabled ?? PAYMENT_ENABLED))
                 return reply(200, { ok: true, data: result.record });
+            await trackPreview(req, deps, body, proof?.phone || enteredPhone, UDYAM_NUMBER_PRICE_INR);
             return reply(200, {
                 ok: true,
                 preview: publicPreview(result.record),

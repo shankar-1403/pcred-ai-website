@@ -7,6 +7,7 @@ import { COUPON_CODE, MIN_PAYABLE_INR, applyCoupon, cleanCouponCode } from './co
 import { RateLimiter } from '../server/rate-limit.js';
 import { allowedOriginList, clientIp, isAllowedOrigin } from '../server/request.js';
 import { logEvent } from '../server/log.js';
+import { REPORT_CONTENT, metaContext, sendMetaEvents } from '../meta/capi.js';
 
 export const MAX_PAY_BODY_BYTES = 80_000;
 const payLimiter = new RateLimiter(10, 40);
@@ -231,6 +232,14 @@ export async function handleCheckoutRequest(req, deps) {
         status: 'pending', coupon: priced.code, discount: priced.discount, total: due.total,
     });
     logEvent('info', 'udyam_pay', { outcome: 'order_created', order_id: orderId, ...(priced.code ? { coupon: priced.code } : {}) });
+    // Meta InitiateCheckout; the browser Pixel sends the same event with event_id ic_<order id>
+    await sendMetaEvents(deps, req.headers, [{
+        name: 'InitiateCheckout',
+        eventId: `ic_${orderId}`,
+        ctx: metaContext(body, req.headers),
+        user: { name: body.name, email: body.email, phone: entered },
+        custom: { ...REPORT_CONTENT, value: due.total, currency: 'INR', num_items: 1 },
+    }]);
     return reply(200, { ok: true, order_id: orderId, payment_session_id: created.paymentSessionId, price: { amount: due.total, base: priced.amount, gst: due.gst, currency: 'INR' } });
 }
 
@@ -284,9 +293,29 @@ export async function handleUnlockRequest(req, deps) {
             logEvent('error', 'udyam_pay', { outcome: 'error', reason: 'coupon_redeem_failed', order_id: orderId, detail: e instanceof Error ? e.name : 'unknown' });
         }
     }
+    // Read before marking paid, so Meta gets the Purchase once even if this is called again
+    let saved = null;
+    if (typeof deps.findOrder === 'function') {
+        try {
+            saved = await deps.findOrder(orderId);
+        }
+        catch {
+            saved = null;
+        }
+    }
     // Business and price again, so the row is complete even if saving it at checkout failed
     const { name: _n, email: _e, phone: _p, ...business } = orderDocument(opened.record, opened.amount);
     await recordOrder(deps.markOrderPaid, orderId, { ...business, status: 'paid', amount_paid: amount, ...(coupon ? { coupon } : {}) });
     logEvent('info', 'udyam_pay', { outcome: 'unlocked', order_id: orderId });
-    return reply(200, { ok: true, data: opened.record });
+    if (saved?.status !== 'paid') {
+        // Meta AddPaymentInfo + Purchase; the browser Pixel uses the same event ids
+        const ctx = metaContext(body, req.headers);
+        const user = { name: saved?.name, email: saved?.email, phone: saved?.phone || payment.order?.customer_details?.customer_phone };
+        const custom = { ...REPORT_CONTENT, value: amount, currency: 'INR', num_items: 1 };
+        await sendMetaEvents(deps, req.headers, [
+            { name: 'AddPaymentInfo', eventId: `api_${orderId}`, ctx, user, custom },
+            { name: 'Purchase', eventId: `purchase_${orderId}`, ctx, user, custom: { ...custom, order_id: orderId } },
+        ]);
+    }
+    return reply(200, { ok: true, data: opened.record, payment: { order_id: orderId, amount, currency: 'INR' } });
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { push, ref, serverTimestamp, set } from 'firebase/database'
 import { db } from '../lib/firebase'
 import { formatPrice } from '../lib/cart'
+import { metaFields, newEventId, track } from '../lib/metaPixel'
 import { formatPhone, isValidEmail, isValidMobile, toE164 } from '../lib/enquiries'
 import { CHECKOUT_OTP_ENABLED as OTP_ENABLED } from '../../functions/udyam/src/udyam/features.js'
 
@@ -114,7 +115,9 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
     setMessage('')
     try {
       const { proof } = await postJson('/api/udyam/otp/verify', { phone: form.mobile, otp: code, challenge: challengeRef.current })
+      const leadId = newEventId('lead')
       await postJson('/api/udyam/enquiry', {
+        meta: metaFields(leadId),
         proof,
         name: form.name.trim(),
         email: form.email.trim(),
@@ -124,6 +127,7 @@ function CheckoutModal({ items, pricing, onClose, onPlaced }) {
         discount: order.discount,
         total: order.total,
       })
+      track('Lead', { content_name: 'Bundle enquiry', content_category: 'bundle', value: order.total, currency: 'INR', num_items: order.items.length }, leadId)
       setStep(DONE)
       onPlaced()
     } catch (error) {

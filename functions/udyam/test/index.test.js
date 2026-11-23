@@ -53,7 +53,7 @@ describe('udyamVerify (Cloud Function entry point)', () => {
         expect(endpoint.region).toEqual(['asia-south1']);
         expect(endpoint.httpsTrigger).toBeDefined();
         const secrets = endpoint.secretEnvironmentVariables.map((s) => s.key).sort();
-        expect(secrets).toEqual(['CASHFREE_CLIENT_ID', 'CASHFREE_CLIENT_SECRET', 'CASHFREE_PG_CLIENT_ID', 'CASHFREE_PG_CLIENT_SECRET', 'CASHFREE_PUBLIC_KEY', 'FAST2SMS_API_KEY']);
+        expect(secrets).toEqual(['CASHFREE_CLIENT_ID', 'CASHFREE_CLIENT_SECRET', 'CASHFREE_PG_CLIENT_ID', 'CASHFREE_PG_CLIENT_SECRET', 'CASHFREE_PUBLIC_KEY', 'FAST2SMS_API_KEY', 'META_CAPI_TOKEN']);
     });
     it('calls Cashfree production with the secrets and returns the handler response', async () => {
         vi.spyOn(console, 'info').mockImplementation(() => { });

@@ -11,6 +11,8 @@ import { BUNDLE_MESSAGE_ID, DLT_MESSAGE_ID, sendFast2Sms } from './sms.js';
 import { certificateBody } from './certificate.js';
 import { rememberLead, savedLeadRecord } from '../leads/store.js';
 import { OTP_ENABLED, PAYMENT_ENABLED } from '../udyam/features.js';
+import { trackPreview } from '../handler.js';
+import { metaContext, newEventId, sendMetaEvents } from '../meta/capi.js';
 
 const PHONE = /^[6-9]\d{9}$/;
 const otpSendLimiter = new RateLimiter(5, 20);
@@ -210,6 +212,7 @@ export async function handleCertificateRequest(req, deps) {
     // Payment switched off: the report opens straight away
     if (!(deps.paymentEnabled ?? PAYMENT_ENABLED))
         return reply(200, { ok: true, data: record });
+    await trackPreview(req, deps, body, phone, CERTIFICATE_PRICE_INR);
     return reply(200, {
         ok: true,
         preview: publicPreview(record),
@@ -299,5 +302,13 @@ export async function handleEnquiryRequest(req, deps) {
         return failure('SERVICE_UNAVAILABLE', 'Your enquiry could not be saved. Please try again later.', 503);
     }
     logEvent('info', 'udyam_enquiry', { outcome: 'saved', phone: maskPhone(proof.phone), items: items.length });
+    const ctx = metaContext(body, req.headers);
+    await sendMetaEvents(deps, req.headers, [{
+        name: 'Lead',
+        eventId: ctx.eventId || newEventId('lead'),
+        ctx,
+        user: { name, email, phone: proof.phone },
+        custom: { content_name: 'Bundle enquiry', content_category: 'bundle', value: total, currency: 'INR', num_items: items.length },
+    }]);
     return reply(200, { ok: true });
 }

@@ -27,6 +27,9 @@ const CASHFREE_PG_CLIENT_SECRET = defineSecret('CASHFREE_PG_CLIENT_SECRET');
 // Fast2SMS Dev API key (https://www.fast2sms.com → Dev API). Used only to text the OTP.
 //   firebase functions:secrets:set FAST2SMS_API_KEY
 const FAST2SMS_API_KEY = defineSecret('FAST2SMS_API_KEY');
+// Meta Conversions API access token (Events Manager → dataset → Settings → Conversions API).
+//   firebase functions:secrets:set META_CAPI_TOKEN
+const META_CAPI_TOKEN = defineSecret('META_CAPI_TOKEN');
 const orderStore = realtimeOrderStore();
 let config = null;
 function loadConfig() {
@@ -58,12 +61,16 @@ function loadPgConfig() {
         clientSecret: CASHFREE_PG_CLIENT_SECRET.value().trim(),
     };
 }
+function loadMetaConfig() {
+    // META_TEST_EVENT_CODE (optional, in functions/.env) sends events to Events Manager → Test events
+    return { token: META_CAPI_TOKEN.value(), testCode: (process.env.META_TEST_EVENT_CODE || '').trim() };
+}
 function loadSmsConfig() {
     return { apiKey: FAST2SMS_API_KEY.value().trim() };
 }
 export const udyamVerify = onRequest({
     region: REGION,
-    secrets: [CASHFREE_CLIENT_ID, CASHFREE_CLIENT_SECRET, CASHFREE_PUBLIC_KEY, CASHFREE_PG_CLIENT_ID, CASHFREE_PG_CLIENT_SECRET, FAST2SMS_API_KEY],
+    secrets: [CASHFREE_CLIENT_ID, CASHFREE_CLIENT_SECRET, CASHFREE_PUBLIC_KEY, CASHFREE_PG_CLIENT_ID, CASHFREE_PG_CLIENT_SECRET, FAST2SMS_API_KEY, META_CAPI_TOKEN],
     timeoutSeconds: 30,
     memory: '256MiB',
     // Caps spend if someone hammers the endpoint; raise if you expect heavy traffic.
@@ -87,11 +94,13 @@ export const udyamVerify = onRequest({
         loadSealSecret,
         loadPgConfig,
         loadSmsConfig,
+        loadMetaConfig,
         saveLead: realtimeLeadStore(),
         findLead: realtimeLeadLookup(),
         saveEnquiry: realtimeEnquiryStore(),
         saveOrder: orderStore.save,
         markOrderPaid: orderStore.markPaid,
+        findOrder: orderStore.find,
         findCoupon: realtimeCouponLookup(),
         redeemCoupon: realtimeCouponRedemption(),
     };

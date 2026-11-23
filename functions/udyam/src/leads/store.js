@@ -64,6 +64,7 @@ export function realtimeOrderStore() {
         markPaid: async (orderId, fields) => {
             await database().ref(`orders/${orderId}`).update({ ...jsonValue(fields), paid_at: ServerValue.TIMESTAMP });
         },
+        find: async (orderId) => (await database().ref(`orders/${orderId}`).get()).val(),
     };
 }
 

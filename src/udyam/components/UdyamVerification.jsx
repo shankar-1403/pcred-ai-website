@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { REPORT_PARAMS, metaFields, newEventId, track } from '../../lib/metaPixel';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import { checkUdyamNumber } from '../../../functions/udyam/src/udyam/validate.js';
@@ -318,7 +319,8 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     // `next` carries the method and number when called in the same click that set them
     async function finish(proof, next = {}) {
         const how = next.method ?? method;
-        const details = { proof, women, name: form.name.trim(), email: form.email.trim(), phone: form.phone };
+        const viewId = newEventId('vc');
+        const details = { proof, women, name: form.name.trim(), email: form.email.trim(), phone: form.phone, meta: metaFields(viewId) };
         const url = how === 'pdf' ? '/api/udyam/certificate' : '/api/udyam/verify';
         const body = how === 'pdf' ? { ...details, record: extracted } : { ...details, udyam: next.udyam ?? value };
         const { current, res, payload, failed, timedOut } = await request(url, body);
@@ -336,6 +338,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
             return;
         }
         if (payload?.ok && payload.preview && payload.sealed && payload.price) {
+            track('ViewContent', { ...REPORT_PARAMS, value: payload.price.amount, currency: payload.price.currency || 'INR' }, viewId);
             const pack = {
                 preview: payload.preview,
                 sealed: payload.sealed,
