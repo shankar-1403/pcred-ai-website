@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router'
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import CartProvider from './components/CartProvider'
@@ -49,8 +49,12 @@ function App() {
               <Route element={<><Header /><Refund /><Footer /><CartDrawer /></>} path="/refund-policy" />
               <Route element={<><Header /><Shipping /><Footer /><CartDrawer /></>} path="/shipping-policy" />
               <Route element={<><Header /><Suspense fallback={<ReportLoading />}><Report /></Suspense><Footer /><CartDrawer /></>} path="/report" />
-              {/* Same report page after a successful payment: its own address so ads can track purchases */}
-              <Route element={<><Header /><Suspense fallback={<ReportLoading />}><Report /></Suspense><Footer /><CartDrawer /></>} path="/report/thank-you" />
+              {/* Same report page, with the step in the address: payment at /report/checkout, the
+                  open report at /report/thankyou (ads and analytics track the steps by URL) */}
+              <Route element={<><Header /><Suspense fallback={<ReportLoading />}><Report /></Suspense><Footer /><CartDrawer /></>} path="/report/checkout" />
+              <Route element={<><Header /><Suspense fallback={<ReportLoading />}><Report /></Suspense><Footer /><CartDrawer /></>} path="/report/thankyou" />
+              {/* The earlier address of the open report */}
+              <Route element={<Navigate to="/report/thankyou" replace />} path="/report/thank-you" />
             </Routes>
 
             <Routes>

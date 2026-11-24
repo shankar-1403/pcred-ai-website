@@ -7,8 +7,8 @@ import { DETAILS_CARD_HTML, QUESTIONS_CARD_HTML } from './legacy-markup';
 import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
 import { loadLiveSchemes } from '../lib/live-schemes';
 
-/** Where the report opens after a successful payment, so purchases can be tracked by URL. */
-const PAID_PATH = '/report/thank-you';
+/** The address for each step, so checkouts and purchases can be tracked by URL. */
+const STEP_PATH = { pay: '/report/checkout', report: '/report/thankyou' };
 
 const PREVIEW_KEY = 'pcred_udyam_preview';
 // The report opened in this tab (after payment), so a refresh shows it again instead of an empty page
@@ -220,8 +220,7 @@ export default function ReportApp() {
                 return;
             sessionStorage.removeItem(PREVIEW_KEY);
             storeReport(r, pack);
-            // Paid: the report opens at its own address (Meta and analytics track purchases by URL)
-            navigate(PAID_PATH, { replace: true });
+            // The report opens; the address moves to /report/thankyou (see the step-address effect)
             setRecord(r);
             applyRecord(r, pack);
         })
@@ -262,7 +261,8 @@ export default function ReportApp() {
         else
             queued.current = { record: null };
     }, [showDetails]);
-    const handlePaid = useCallback((r, { paid = false } = {}) => {
+    // Paid through Cashfree or opened with a free coupon: the address moves to /report/thankyou below
+    const handlePaid = useCallback((r) => {
         const extra = { source: previewPack?.source, women: previewPack?.women };
         sessionStorage.removeItem(PREVIEW_KEY);
         storeReport(r, extra);
@@ -270,13 +270,23 @@ export default function ReportApp() {
         setPreviewPack(null);
         setRecord(r);
         applyRecord(r, extra);
-        // Paid through Cashfree (not a free coupon): same report, at its own address
-        if (paid)
-            navigate(PAID_PATH, { replace: true });
-    }, [applyRecord, navigate, previewPack]);
+    }, [applyRecord, previewPack]);
 
     // start → verify → pay → report
     const stage = record ? 'report' : previewPack ? 'pay' : verifyStep === 'otp' || verifyStep === 'women' ? 'verify' : 'start';
+    // The address follows the step: payment at /report/checkout, the open report (PDF ready) at
+    // /report/thankyou. The first steps never move the address back, so a refresh on either
+    // address restores that step from this tab's storage before anything changes.
+    useEffect(() => {
+        const want = STEP_PATH[stage];
+        if (!want || location.pathname === want)
+            return;
+        // Back from Cashfree (?order_id=): stay put until the payment is confirmed, so a failed
+        // confirmation keeps its message and its payment reference
+        if (stage !== 'report' && new URLSearchParams(location.search).get('order_id'))
+            return;
+        navigate(want, { replace: true });
+    }, [stage, location.pathname, location.search, navigate]);
     // Mobile verification happens in a pop-up within "Your details", so it has no step of its own
     const current = { start: 0, verify: 0, pay: 1, report: STAGES.length - 1 }[stage];
     // Business details sit above the ownership question in the first step and beside the open
