@@ -172,10 +172,15 @@ export default function ReportApp() {
             active = false;
         };
     }, []);
-    // The banner's hand-off is used once; drop it so a refresh starts clean
+    // The banner's hand-off is used once; drop it so a refresh starts clean. Only once: `navigate`
+    // changes whenever the address does, and running this again would pull the visitor back from
+    // /report/checkout or /report/thankyou to /report.
+    const handoffCleared = useRef(false);
     useEffect(() => {
-        if (start)
+        if (start && !handoffCleared.current) {
+            handoffCleared.current = true;
             navigate('/report', { replace: true, state: null });
+        }
     }, [start, navigate]);
     // Certificate details (read on this device) go into the Details card before payment
     const showDetails = useCallback((details, source = 'cert') => {
