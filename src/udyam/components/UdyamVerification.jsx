@@ -170,6 +170,24 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     const busy = useRef(false);
     const started = useRef(false);
 
+    // While the empty-fields message shows, keep the red outlines and the message in step with
+    // the visitor's edits (the report engine redraws the card on every change)
+    useEffect(() => {
+        if (!detailsError)
+            return undefined;
+        const recheck = (event) => {
+            if (!(event.target instanceof Element) || !event.target.id?.startsWith('f-'))
+                return;
+            // After the engine's own change handler has redrawn the card
+            window.setTimeout(() => {
+                const missing = markMissingFields(readDetailFields());
+                setDetailsError(missing.length ? `Fill in ${missing.join(', ')} in Business details to continue.` : '');
+            }, 0);
+        };
+        document.addEventListener('change', recheck);
+        return () => document.removeEventListener('change', recheck);
+    }, [detailsError]);
+
     const setField = (key) => (event) => {
         const raw = event.target.value;
         setForm((current) => ({ ...current, [key]: key === 'phone' ? raw.replace(/\D/g, '').slice(0, 10) : raw }));
@@ -188,7 +206,8 @@ export default function UdyamVerification({ start, stage = 'start', women = null
             const missing = markMissingFields(values);
             if (missing.length) {
                 setDetailsError(`Fill in ${missing.join(', ')} in Business details to continue.`);
-                document.querySelector('.field.is-missing select, .field.is-missing input')?.focus();
+                // Bring the first empty field into view (not focused, so it stays outlined in red)
+                document.querySelector('.field.is-missing')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
             setDetailsError('');
@@ -523,7 +542,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         body = (<>
         <p className="uv-status__text">{method === 'pdf' || fetched || fetchedPack ? `${method === 'pdf' ? 'We read your certificate.' : 'We fetched your Udyam record.'} Answer the ownership question above, then ${NEXT_STEP}.` : `Answer the ownership question above, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
         <button type="button" className="btn uv-status__cta" onClick={openModal}>{CONTINUE_LABEL}</button>
-        {detailsError ? <p className="uv__msg uv__msg--err" role="alert">{detailsError}</p> : null}
+        {detailsError ? <p className="uv__msg uv__msg--details" role="alert">{detailsError}</p> : null}
       </>);
     }
     else {

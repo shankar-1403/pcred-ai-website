@@ -159,6 +159,10 @@
 .udyam-app .field input,.udyam-app .field select{border-radius:11px;border:1.5px solid #CDE6FB;background:#F8FBFF;padding:7px 10px;font:500 13.5px/1.3 var(--f-body)}
 .udyam-app .field input:hover,.udyam-app .field select:hover{border-color:rgba(0,178,252,.6)}
 .udyam-app .field input:focus,.udyam-app .field select:focus{border-color:#00B2FC;background:#fff;box-shadow:0 0 0 4px rgba(0,178,252,.18)}
+/* An empty required field stays red while focused */
+.udyam-app .field.is-missing input,.udyam-app .field.is-missing select,.udyam-app .field.is-missing input:focus,.udyam-app .field.is-missing select:focus{border-color:var(--danger);background:var(--danger-soft);box-shadow:0 0 0 4px rgba(194,38,28,.12)}
+/* The empty-fields message beside Continue (not .uv__msg--err, which moves the Continue bar to the top) */
+.udyam-app .uv__msg--details{background:var(--danger-soft);color:var(--danger);font-weight:500}
 .udyam-app .seg{border-radius:999px;background:#EAF6FF;padding:4px}
 .udyam-app .seg button{border-radius:999px;font:600 13.5px/1 var(--f-body)}
 .udyam-app .chip{border-radius:999px;border:1.5px solid var(--line-2);padding:8px 14px;font:600 13px/1.15 var(--f-body)}
