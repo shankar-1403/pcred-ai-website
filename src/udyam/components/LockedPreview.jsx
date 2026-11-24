@@ -151,7 +151,7 @@ export default function LockedPreview({ pack, teaser, onPaid }) {
             if (opened.payload?.ok && opened.payload.data) {
                 trackPaidOrder(opened.payload.payment);
                 setPhase('idle');
-                onPaid(opened.payload.data);
+                onPaid(opened.payload.data, { paid: true });
                 return;
             }
             setPhase('error');

@@ -7,6 +7,9 @@ import { DETAILS_CARD_HTML, QUESTIONS_CARD_HTML } from './legacy-markup';
 import { PAYMENT_ENABLED } from '../../../functions/udyam/src/udyam/features.js';
 import { loadLiveSchemes } from '../lib/live-schemes';
 
+/** Where the report opens after a successful payment, so purchases can be tracked by URL. */
+const PAID_PATH = '/report/thank-you';
+
 const PREVIEW_KEY = 'pcred_udyam_preview';
 // The report opened in this tab (after payment), so a refresh shows it again instead of an empty page
 const REPORT_KEY = 'pcred_udyam_report';
@@ -217,7 +220,8 @@ export default function ReportApp() {
                 return;
             sessionStorage.removeItem(PREVIEW_KEY);
             storeReport(r, pack);
-            navigate('/report', { replace: true });
+            // Paid: the report opens at its own address (Meta and analytics track purchases by URL)
+            navigate(PAID_PATH, { replace: true });
             setRecord(r);
             applyRecord(r, pack);
         })
@@ -258,7 +262,7 @@ export default function ReportApp() {
         else
             queued.current = { record: null };
     }, [showDetails]);
-    const handlePaid = useCallback((r) => {
+    const handlePaid = useCallback((r, { paid = false } = {}) => {
         const extra = { source: previewPack?.source, women: previewPack?.women };
         sessionStorage.removeItem(PREVIEW_KEY);
         storeReport(r, extra);
@@ -266,7 +270,10 @@ export default function ReportApp() {
         setPreviewPack(null);
         setRecord(r);
         applyRecord(r, extra);
-    }, [applyRecord, previewPack]);
+        // Paid through Cashfree (not a free coupon): same report, at its own address
+        if (paid)
+            navigate(PAID_PATH, { replace: true });
+    }, [applyRecord, navigate, previewPack]);
 
     // start → verify → pay → report
     const stage = record ? 'report' : previewPack ? 'pay' : verifyStep === 'otp' || verifyStep === 'women' ? 'verify' : 'start';
