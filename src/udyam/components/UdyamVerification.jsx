@@ -84,6 +84,56 @@ function Spinner({ light = false }) {
  * Business details card (`women`, `onNeedOwnership`), and must be answered before the pop-up opens. The fetched record is then
  * handed to the page for payment.
  */
+// Business details fields (src/udyam/components/legacy-markup.js) that must be filled before a
+// certificate upload continues, with the labels shown on the page
+const REQUIRED_FIELDS = [
+    ['name', 'Business name'], ['urn', 'Udyam number'], ['size', 'Category'], ['activity', 'Main activity'],
+    ['social', "Owner's social category"], ['state', 'State / UT'], ['district', 'District'],
+    ['orgType', 'Business type'], ['commenced', 'Started business'], ['nic', 'NIC codes'],
+];
+const SIZE_TEXT = { micro: 'Micro', small: 'Small', medium: 'Medium' };
+const ACTIVITY_TEXT = { manufacturing: 'Manufacturing', services: 'Services', trading: 'Trading' };
+const SOCIAL_TEXT = { general: 'General', obc: 'OBC', sc: 'SC', st: 'ST' };
+const ORG_TEXT = { proprietorship: 'Proprietorship', partnership: 'Partnership Firm', llp: 'Limited Liability Partnership', pvt: 'Private Limited Company', public: 'Public Limited Company', other: 'Others' };
+
+/** What the visitor has in the Business details card now (read from the certificate, or corrected by them). */
+function readDetailFields() {
+    const out = {};
+    for (const [key] of REQUIRED_FIELDS)
+        out[key] = (document.getElementById(`f-${key}`)?.value ?? '').trim();
+    return out;
+}
+
+/** Labels of the empty fields, which are also outlined in red on the page. */
+function markMissingFields(values) {
+    const missing = [];
+    for (const [key, label] of REQUIRED_FIELDS) {
+        const empty = !values[key] || (key === 'nic' && !/\d{5}/.test(values[key]));
+        document.getElementById(`f-${key}`)?.closest('.field')?.classList.toggle('is-missing', empty);
+        if (empty)
+            missing.push(label);
+    }
+    return missing;
+}
+
+/** The certificate record with the visitor's corrections, so the paid report uses what they see. */
+function withDetailEdits(record, v) {
+    const codes = [...new Set(v.nic.match(/\d{5}/g) || [])];
+    const known = Array.isArray(record.nic_codes) ? record.nic_codes : [];
+    return {
+        ...record,
+        enterprise_name: v.name,
+        udyam_number: v.urn.toUpperCase(),
+        enterprise_type: SIZE_TEXT[v.size] || record.enterprise_type,
+        major_activity: ACTIVITY_TEXT[v.activity] || record.major_activity,
+        social_category: SOCIAL_TEXT[v.social] || record.social_category,
+        organization_type: ORG_TEXT[v.orgType] || record.organization_type,
+        date_of_commencement: v.commenced,
+        split_address: { ...(record.split_address || {}), state: v.state, district: v.district },
+        nic_codes: codes.map((code) => known.find((n) => n?.nic_5_digit === code) || { nic_5_digit: code, nic_5_description: '', activity: '' }),
+    };
+}
+
 export default function UdyamVerification({ start, stage = 'start', women = null, onNeedOwnership, onStep, onRead, onVerified, onReport }) {
     const [method, setMethod] = useState(null);
     const [value, setValue] = useState('');
@@ -103,6 +153,10 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     const [devCode, setDevCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [fieldError, setFieldError] = useState('');
+    // Shown beside Continue when Business details has empty fields (certificate uploads)
+    const [detailsError, setDetailsError] = useState('');
+    // The certificate record with the visitor's corrections, set when they continue
+    const certificateRef = useRef(null);
     const [error, setError] = useState({ message: '', reference: '' });
     const [doneMessage, setDoneMessage] = useState('');
     // Payment off: the record fetched for a Udyam number, shown in Business details until the
@@ -127,6 +181,19 @@ export default function UdyamVerification({ start, stage = 'start', women = null
     };
 
     function openModal() {
+        // A certificate upload: every Business details field must be filled (the visitor can
+        // correct any of them); their values then go into the report they pay for
+        if (method === 'pdf' && extracted) {
+            const values = readDetailFields();
+            const missing = markMissingFields(values);
+            if (missing.length) {
+                setDetailsError(`Fill in ${missing.join(', ')} in Business details to continue.`);
+                document.querySelector('.field.is-missing select, .field.is-missing input')?.focus();
+                return;
+            }
+            setDetailsError('');
+            certificateRef.current = withDetailEdits(extracted, values);
+        }
         // OTP off: a number is fetched first, before the ownership question (again if that failed)
         if (!OTP_ENABLED && method === 'number' && !fetched && !fetchedPack) {
             setError({ message: '', reference: '' });
@@ -212,6 +279,8 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         setFetched(null);
         const seq = ++requestSeq.current;
         setExtracted(null);
+        certificateRef.current = null;
+        setDetailsError('');
         setReading(true);
         setProgress('Opening the certificate…');
         setError({ message: '', reference: '' });
@@ -234,6 +303,8 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         if (!record || seq !== requestSeq.current)
             return;
         setExtracted(record);
+        certificateRef.current = null;
+        setDetailsError('');
         if (record.udyam_number)
             onRead?.(record);
         if (!record.enterprise_name || record.enterprise_name.length < 2) {
@@ -322,7 +393,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         const viewId = newEventId('vc');
         const details = { proof, women, name: form.name.trim(), email: form.email.trim(), phone: form.phone, meta: metaFields(viewId) };
         const url = how === 'pdf' ? '/api/udyam/certificate' : '/api/udyam/verify';
-        const body = how === 'pdf' ? { ...details, record: extracted } : { ...details, udyam: next.udyam ?? value };
+        const body = how === 'pdf' ? { ...details, record: certificateRef.current ?? extracted } : { ...details, udyam: next.udyam ?? value };
         const { current, res, payload, failed, timedOut } = await request(url, body);
         if (!current)
             return;
@@ -347,7 +418,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
                 ...(payload.match ? { match: payload.match } : {}),
                 source: how === 'pdf' ? 'cert' : 'udyam',
                 // The certificate's own details, so the Details card stays filled after a refresh
-                ...(how === 'pdf' ? { details: extracted } : {}),
+                ...(how === 'pdf' ? { details: certificateRef.current ?? extracted } : {}),
             };
             // A Udyam number fetched on arrival: fill Business details and wait for the ownership
             // answer and Continue before payment
@@ -452,6 +523,7 @@ export default function UdyamVerification({ start, stage = 'start', women = null
         body = (<>
         <p className="uv-status__text">{method === 'pdf' || fetched || fetchedPack ? `${method === 'pdf' ? 'We read your certificate.' : 'We fetched your Udyam record.'} Answer the ownership question above, then ${NEXT_STEP}.` : `Answer the ownership question above, then ${NEXT_STEP} to fetch your official Udyam record.`}</p>
         <button type="button" className="btn uv-status__cta" onClick={openModal}>{CONTINUE_LABEL}</button>
+        {detailsError ? <p className="uv__msg uv__msg--err" role="alert">{detailsError}</p> : null}
       </>);
     }
     else {
