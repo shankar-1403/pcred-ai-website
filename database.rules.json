@@ -222,11 +222,17 @@
     "orders": {
       ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
       ".write": false,
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists() && !newData.exists()"
+      },
       ".indexOn": ["created_at"]
     },
     "leads": {
       ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
       ".write": false,
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists() && !newData.exists()"
+      },
       ".indexOn": [
         "udyam_number",
         "created_at"

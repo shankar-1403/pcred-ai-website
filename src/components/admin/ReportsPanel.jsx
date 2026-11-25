@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { onValue, ref } from 'firebase/database'
+import { onValue, ref, remove } from 'firebase/database'
 import { db } from '../../lib/firebase'
 import { formatDateTime } from '../../lib/enquiries'
-import { Notice, inputClass } from './ui'
+import { Button, Notice, inputClass } from './ui'
 
 const ALL = 'all'
 
@@ -133,8 +133,8 @@ function TableShell({ head, loading, empty, colSpan, children }) {
       <table className="w-full min-w-[56rem] text-left text-sm">
         <thead className="border-b border-[#00245A]/8 bg-[#F4F9FF] text-xs font-semibold text-[#00245A]/60">
           <tr>
-            {head.map((label, index) => (
-              <th key={label} scope="col" className={`px-5 py-3 ${index === head.length - 1 && label === 'Paid' ? 'text-right' : ''}`}>
+            {head.map((label) => (
+              <th key={label} scope="col" className={`px-5 py-3 ${label === 'Paid' || label === 'Actions' ? 'text-right' : ''}`}>
                 {label}
               </th>
             ))}
@@ -180,6 +180,19 @@ function ReportsPanel() {
   const [view, setView] = useState('orders')
   const [status, setStatus] = useState(ALL)
   const [query, setQuery] = useState('')
+  const [notice, setNotice] = useState(null)
+
+  // Removes a test order or lead for good (admins only, see database.rules.json)
+  const onDelete = async (kind, item) => {
+    const who = item.name || item.business || item.udyam || 'this entry'
+    if (!window.confirm(`Delete the ${kind} from ${who}? This cannot be undone.`)) return
+    try {
+      await remove(ref(db, `${kind === 'order' ? 'orders' : 'leads'}/${item.id}`))
+      setNotice({ tone: 'success', text: kind === 'order' ? 'Order deleted.' : 'Lead deleted.' })
+    } catch (deleteError) {
+      setNotice({ tone: 'error', text: `Could not delete: ${deleteError.message}` })
+    }
+  }
 
   const needle = query.trim().toLowerCase()
   const paidOrders = orders.items.filter((order) => order.status === 'paid')
@@ -202,6 +215,7 @@ function ReportsPanel() {
         </p>
       </div>
 
+      {notice ? <Notice tone={notice.tone}>{notice.text}</Notice> : null}
       {error ? <Notice tone="error">Could not load reports: {error.message}</Notice> : null}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -258,8 +272,8 @@ function ReportsPanel() {
 
       {view === 'orders' ? (
         <TableShell
-          head={['Date', 'Customer', 'Business', 'Report', 'Status', 'Paid']}
-          colSpan={6}
+          head={['Date', 'Customer', 'Business', 'Report', 'Status', 'Paid', 'Actions']}
+          colSpan={7}
           loading={orders.loading}
           empty={
             visibleOrders.length
@@ -295,14 +309,19 @@ function ReportsPanel() {
                   <p className="font-semibold">{order.status === 'pending' ? '—' : rupees(order.paid)}</p>
                   {order.status === 'pending' ? <p className="text-xs text-[#00245A]/45">{rupees(order.total)} due</p> : null}
                 </td>
+                <td className="px-5 py-3.5 text-right">
+                  <Button tone="ghost" className="px-3 text-[#C2261C] hover:bg-[#FDECEA] hover:text-[#C2261C]" onClick={() => onDelete('order', order)}>
+                    Delete<span className="sr-only"> order from {order.name || order.business}</span>
+                  </Button>
+                </td>
               </tr>
             )
           })}
         </TableShell>
       ) : (
         <TableShell
-          head={['Date', 'Visitor', 'Business', 'Started with', 'Bought']}
-          colSpan={5}
+          head={['Date', 'Visitor', 'Business', 'Started with', 'Bought', 'Actions']}
+          colSpan={6}
           loading={leads.loading}
           empty={
             visibleLeads.length ? '' : leads.items.length ? 'No leads match this search.' : 'No leads yet. They appear here when a visitor fetches their Udyam details.'
@@ -331,6 +350,11 @@ function ReportsPanel() {
                   <span className="inline-flex rounded-full bg-[#F1F4F9] px-3 py-1 text-xs font-semibold text-[#00245A]/55">Not yet</span>
                 )}
               </td>
+              <td className="px-5 py-3.5 text-right">
+                  <Button tone="ghost" className="px-3 text-[#C2261C] hover:bg-[#FDECEA] hover:text-[#C2261C]" onClick={() => onDelete('lead', lead)}>
+                    Delete<span className="sr-only"> lead from {lead.name || lead.business}</span>
+                  </Button>
+                </td>
             </tr>
           ))}
         </TableShell>
