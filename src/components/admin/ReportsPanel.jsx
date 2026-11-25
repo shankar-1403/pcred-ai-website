@@ -41,6 +41,7 @@ function normalizeOrders(value) {
       source: order.source ?? 'udyam_number',
       price: Number(order.price ?? 0),
       coupon: order.coupon ?? '',
+      discount: Number(order.discount ?? 0),
       total: Number(order.total ?? 0),
       paid: Number(order.amount_paid ?? 0),
       createdAt: Number(order.created_at ?? order.paid_at ?? 0),
@@ -272,8 +273,8 @@ function ReportsPanel() {
 
       {view === 'orders' ? (
         <TableShell
-          head={['Date', 'Customer', 'Business', 'Report', 'Status', 'Paid', 'Actions']}
-          colSpan={7}
+          head={['Date', 'Customer', 'Business', 'Report', 'Coupon', 'Status', 'Paid', 'Actions']}
+          colSpan={8}
           loading={orders.loading}
           empty={
             visibleOrders.length
@@ -299,8 +300,18 @@ function ReportsPanel() {
                 <td className="px-5 py-3.5 whitespace-nowrap">
                   <p>{sourceLabel(order.source)}</p>
                   <p className="text-xs text-[#00245A]/50">
-                    {rupees(order.price)} + GST{order.coupon ? ` · ${order.coupon}` : ''}
+                    {rupees(order.price)} + GST
                   </p>
+                </td>
+                <td className="px-5 py-3.5 whitespace-nowrap">
+                  {order.coupon ? (
+                    <>
+                      <span className="inline-flex rounded-full bg-[#F3EFFF] px-3 py-1 font-mono text-xs font-semibold text-[#6D28D9]">{order.coupon}</span>
+                      {order.discount ? <p className="mt-1 text-xs text-[#00245A]/50">{rupees(order.discount)} off</p> : null}
+                    </>
+                  ) : (
+                    <span className="text-[#00245A]/35">—</span>
+                  )}
                 </td>
                 <td className="px-5 py-3.5">
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${meta.tone}`}>{meta.label}</span>
